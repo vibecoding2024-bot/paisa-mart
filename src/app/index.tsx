@@ -130,9 +130,10 @@ export default function LoginScreen() {
 
               {/* Phone Input */}
               <View
-                className={`flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 ${
+                className={`flex-row items-center bg-gray-50 rounded-xl px-4 border-2 ${
                   isFocused ? 'border-orange-500' : 'border-gray-200'
                 }`}
+                style={{ minHeight: 56 }}
               >
                 <View className="flex-row items-center mr-3 pr-3 border-r border-gray-300">
                   <Text className="text-gray-700 font-semibold">+91</Text>
@@ -140,17 +141,18 @@ export default function LoginScreen() {
                 <Phone size={20} color="#6B7280" />
                 <TextInput
                   className="flex-1 ml-3 text-gray-800 text-base"
-                  style={{ minHeight: 44 }}
+                  style={{ height: 50, fontSize: 16, paddingVertical: 0 }}
                   placeholder="Mobile Number"
                   placeholderTextColor="#9CA3AF"
-                  keyboardType="phone-pad"
+                  keyboardType="number-pad"
                   value={phoneNumber}
                   onChangeText={(text) => setPhoneNumber(formatPhoneDisplay(text))}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   maxLength={10}
                   autoCorrect={false}
-                  autoComplete="tel"
+                  textContentType="telephoneNumber"
+                  returnKeyType="done"
                 />
               </View>
 

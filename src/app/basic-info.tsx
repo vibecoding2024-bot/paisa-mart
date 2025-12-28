@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X } from 'lucide-react-native';
+import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 const OCCUPATIONS = [
@@ -117,14 +117,15 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
     <View className="mb-4">
       <Text className="text-gray-600 text-sm mb-2 ml-1">{label}</Text>
       <View
-        className={`flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 ${
+        className={`flex-row items-center bg-gray-50 rounded-xl px-4 border-2 ${
           isFocused ? 'border-orange-500' : 'border-gray-200'
         }`}
+        style={{ minHeight: 56 }}
       >
         {icon}
         <TextInput
           className="flex-1 ml-3 text-gray-800 text-base"
-          style={{ minHeight: 44 }}
+          style={{ height: 50, fontSize: 16, paddingVertical: 0 }}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           value={value}
@@ -134,6 +135,7 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={false}
+          returnKeyType="done"
         />
       </View>
     </View>
@@ -170,10 +172,49 @@ function DropdownInput({ label, value, placeholder, icon, onPress }: DropdownInp
   );
 }
 
+interface PhoneInputProps {
+  value: string;
+  onChangeText: (text: string) => void;
+}
+
+function PhoneInput({ value, onChangeText }: PhoneInputProps) {
+  const [isFocused, setIsFocused] = useState(false);
+
+  return (
+    <View
+      className={`flex-row items-center bg-gray-50 rounded-xl px-4 border-2 ${
+        isFocused ? 'border-orange-500' : 'border-gray-200'
+      }`}
+      style={{ minHeight: 56 }}
+    >
+      <View className="flex-row items-center mr-3 pr-3 border-r border-gray-300">
+        <Text className="text-gray-700 font-semibold">+91</Text>
+      </View>
+      <Phone size={20} color="#6B7280" />
+      <TextInput
+        className="flex-1 ml-3 text-gray-800 text-base"
+        style={{ height: 50, fontSize: 16, paddingVertical: 0 }}
+        placeholder="Enter phone number"
+        placeholderTextColor="#9CA3AF"
+        keyboardType="number-pad"
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => setIsFocused(false)}
+        maxLength={10}
+        autoCorrect={false}
+        textContentType="telephoneNumber"
+        returnKeyType="done"
+      />
+    </View>
+  );
+}
+
 export default function BasicInfoScreen() {
   const router = useRouter();
 
   const [name, setName] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [occupation, setOccupation] = useState('');
   const [qualification, setQualification] = useState('');
@@ -191,7 +232,7 @@ export default function BasicInfoScreen() {
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
 
-  const isFormValid = name.trim() && email.trim() && occupation && qualification && annualIncome && pincode.length === 6 && dobDay && dobMonth && dobYear;
+  const isFormValid = name.trim() && phoneNumber.length === 10 && email.trim() && occupation && qualification && annualIncome && pincode.length === 6 && dobDay && dobMonth && dobYear;
 
   const handleSubmit = () => {
     if (isFormValid) {
@@ -247,6 +288,15 @@ export default function BasicInfoScreen() {
                   icon={<User size={20} color="#6B7280" />}
                   autoCapitalize="words"
                 />
+
+                {/* Phone Number Input */}
+                <View className="mb-4">
+                  <Text className="text-gray-600 text-sm mb-2 ml-1">Phone Number</Text>
+                  <PhoneInput
+                    value={phoneNumber}
+                    onChangeText={(text) => setPhoneNumber(text.replace(/\D/g, '').slice(0, 10))}
+                  />
+                </View>
 
                 <FormInput
                   label="Email Address"
