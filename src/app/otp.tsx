@@ -136,7 +136,7 @@ export default function OTPScreen() {
 
       setTimeout(() => {
         if (isNavigationReady) {
-          router.replace('/(tabs)');
+          router.replace('/basic-info');
         }
       }, 1000);
     } else {
