@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const QUICK_ACTIONS = [
@@ -12,6 +12,8 @@ const QUICK_ACTIONS = [
   { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2' },
   { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF' },
   { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8' },
+  { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8' },
+  { icon: Building2, label: 'Real Estate', color: '#0EA5E9', bg: '#F0F9FF' },
   { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4' },
   { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF' },
 ];
