@@ -1,14 +1,19 @@
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const QUICK_ACTIONS = [
-  { icon: CreditCard, label: 'Credit Card', color: '#3B82F6', bg: '#EFF6FF' },
-  { icon: Landmark, label: 'Loans', color: '#10B981', bg: '#ECFDF5' },
-  { icon: Shield, label: 'Insurance', color: '#8B5CF6', bg: '#F5F3FF' },
-  { icon: Wallet, label: 'Savings A/C', color: '#F59E0B', bg: '#FFFBEB' },
+  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF' },
+  { icon: Zap, label: 'Insta Loans', color: '#F59E0B', bg: '#FFFBEB' },
+  { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5' },
+  { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF' },
+  { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2' },
+  { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF' },
+  { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8' },
+  { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4' },
+  { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF' },
 ];
 
 const PRODUCTS = [
@@ -71,16 +76,16 @@ export default function HomeScreen() {
           >
             <View className="bg-white rounded-2xl p-4 shadow-sm">
               <Text className="text-gray-800 font-semibold mb-3">Quick Actions</Text>
-              <View className="flex-row justify-between">
+              <View className="flex-row flex-wrap justify-between">
                 {QUICK_ACTIONS.map((action, index) => (
-                  <Pressable key={index} className="items-center">
+                  <Pressable key={index} className="items-center mb-4" style={{ width: '30%' }}>
                     <View
-                      className="w-14 h-14 rounded-2xl items-center justify-center mb-2"
+                      className="w-12 h-12 rounded-2xl items-center justify-center mb-1.5"
                       style={{ backgroundColor: action.bg }}
                     >
-                      <action.icon size={24} color={action.color} />
+                      <action.icon size={22} color={action.color} />
                     </View>
-                    <Text className="text-gray-600 text-xs text-center">{action.label}</Text>
+                    <Text className="text-gray-600 text-xs text-center" numberOfLines={2}>{action.label}</Text>
                   </Pressable>
                 ))}
               </View>
