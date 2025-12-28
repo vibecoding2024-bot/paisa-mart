@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, useNavigationContainerRef } from 'expo-router';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -32,6 +32,19 @@ export default function OTPScreen() {
   const [resendTimer, setResendTimer] = useState(30);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const router = useRouter();
+  const rootNavigation = useNavigationContainerRef();
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
+
+  useEffect(() => {
+    const checkNavigation = () => {
+      if (rootNavigation?.isReady()) {
+        setIsNavigationReady(true);
+      } else {
+        setTimeout(checkNavigation, 100);
+      }
+    };
+    checkNavigation();
+  }, [rootNavigation]);
 
   const shakeValue = useSharedValue(0);
 
@@ -101,7 +114,7 @@ export default function OTPScreen() {
   };
 
   const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
-    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+    if (e?.nativeEvent?.key === 'Backspace' && !otp[index] && index > 0) {
       setActiveIndex(index - 1);
       inputRefs.current[index - 1]?.focus();
       const newOtp = [...otp];
@@ -122,7 +135,9 @@ export default function OTPScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setTimeout(() => {
-        router.replace('/(tabs)');
+        if (isNavigationReady) {
+          router.replace('/(tabs)');
+        }
       }, 1000);
     } else {
       triggerShake();
@@ -162,7 +177,11 @@ export default function OTPScreen() {
                 className="flex-row items-center mt-4"
               >
                 <Pressable
-                  onPress={() => router.back()}
+                  onPress={() => {
+                    if (isNavigationReady) {
+                      router.back();
+                    }
+                  }}
                   className="w-11 h-11 rounded-full items-center justify-center border border-amber-500/30"
                   style={{ backgroundColor: 'rgba(212, 175, 55, 0.1)' }}
                 >
