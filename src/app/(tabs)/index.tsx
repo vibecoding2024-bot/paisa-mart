@@ -31,7 +31,7 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="w-10 h-10 bg-orange-500 rounded-full items-center justify-center mr-3">
-                  <Text className="text-white font-bold text-lg">G</Text>
+                  <Text className="text-white font-bold text-lg">R</Text>
                 </View>
                 <View>
                   <Text className="text-white/70 text-xs">Welcome back,</Text>
