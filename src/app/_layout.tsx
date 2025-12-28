@@ -26,7 +26,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="basic-info" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="admin/index" options={{ headerShown: false }} />
-        <Stack.Screen name="admin/(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="admin/(dashboard)" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

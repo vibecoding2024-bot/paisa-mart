@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { Tabs, useRouter, usePathname } from 'expo-router';
+import { useRouter, usePathname, Slot } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   LayoutDashboard,
@@ -15,7 +15,7 @@ import {
 } from 'lucide-react-native';
 import { useAdminStore } from '@/lib/admin-store';
 
-export default function AdminLayout() {
+export default function AdminTabsLayout() {
   const router = useRouter();
   const pathname = usePathname();
   const isAuthenticated = useAdminStore(s => s.isAuthenticated);
@@ -33,17 +33,21 @@ export default function AdminLayout() {
   }
 
   const navItems = [
-    { path: '/admin/dashboard', icon: LayoutDashboard, label: 'Overview' },
-    { path: '/admin/leads', icon: Users, label: 'Leads' },
-    { path: '/admin/pipeline', icon: Kanban, label: 'Pipeline' },
-    { path: '/admin/tasks', icon: ClipboardList, label: 'Tasks' },
-    { path: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
-    { path: '/admin/settings', icon: Settings, label: 'Settings' },
+    { path: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
+    { path: '/admin/leads', label: 'Leads', icon: Users },
+    { path: '/admin/pipeline', label: 'Pipeline', icon: Kanban },
+    { path: '/admin/tasks', label: 'Tasks', icon: ClipboardList },
+    { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+    { path: '/admin/settings', label: 'Settings', icon: Settings },
   ];
 
   const handleLogout = () => {
     logout();
     router.replace('/admin');
+  };
+
+  const handleNavPress = (path: string) => {
+    router.push(path as any);
   };
 
   return (
@@ -93,7 +97,7 @@ export default function AdminLayout() {
               return (
                 <Pressable
                   key={item.path}
-                  onPress={() => router.push(item.path as any)}
+                  onPress={() => handleNavPress(item.path)}
                   className={`flex-row items-center px-4 py-2 rounded-lg mr-2 ${
                     isActive ? 'bg-orange-500' : 'bg-slate-800'
                   }`}
@@ -112,21 +116,10 @@ export default function AdminLayout() {
           </ScrollView>
         </View>
 
-        {/* Content - Using Tabs for navigation */}
-        <Tabs
-          screenOptions={{
-            headerShown: false,
-            tabBarStyle: { display: 'none' },
-          }}
-        >
-          <Tabs.Screen name="dashboard" />
-          <Tabs.Screen name="leads" />
-          <Tabs.Screen name="pipeline" />
-          <Tabs.Screen name="tasks" />
-          <Tabs.Screen name="analytics" />
-          <Tabs.Screen name="settings" />
-          <Tabs.Screen name="lead-details" />
-        </Tabs>
+        {/* Content */}
+        <View className="flex-1">
+          <Slot />
+        </View>
       </SafeAreaView>
     </View>
   );
