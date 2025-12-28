@@ -1,7 +1,8 @@
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { User, ChevronRight, Settings, HelpCircle, FileText, Share2, Star, LogOut, Award, Bell, Shield, CreditCard } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { User, ChevronRight, Settings, HelpCircle, FileText, Share2, Star, LogOut, Award, Bell, Shield, CreditCard, Lock } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const MENU_ITEMS = [
@@ -15,6 +16,8 @@ const MENU_ITEMS = [
 ];
 
 export default function ProfileScreen() {
+  const router = useRouter();
+
   return (
     <View className="flex-1 bg-gray-50">
       <SafeAreaView className="flex-1" edges={['top']}>
@@ -115,6 +118,26 @@ export default function ProfileScreen() {
                 </Pressable>
               ))}
             </View>
+          </Animated.View>
+
+          {/* Admin Portal Access */}
+          <Animated.View
+            entering={FadeInDown.delay(350).springify()}
+            className="px-4 mt-4"
+          >
+            <Pressable
+              onPress={() => router.push('/admin')}
+              className="bg-slate-800 rounded-xl p-4 flex-row items-center"
+            >
+              <View className="w-10 h-10 bg-orange-500 rounded-xl items-center justify-center mr-3">
+                <Lock size={20} color="#fff" />
+              </View>
+              <View className="flex-1">
+                <Text className="text-white font-medium">Admin Portal</Text>
+                <Text className="text-gray-400 text-xs mt-0.5">Internal operations dashboard</Text>
+              </View>
+              <ChevronRight size={20} color="#94A3B8" />
+            </Pressable>
           </Animated.View>
 
           {/* Logout */}
