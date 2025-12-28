@@ -1,53 +1,82 @@
 import React from 'react';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
-
-import { useColorScheme } from '@/lib/useColorScheme';
-import { useClientOnlyValue } from '@/lib/useClientOnlyValue';
-
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
-function TabBarIcon(props: {
-  name: React.ComponentProps<typeof FontAwesome>['name'];
-  color: string;
-}) {
-  return <FontAwesome size={28} className="-mb-1" {...props} />;
-}
+import { Tabs } from 'expo-router';
+import { View } from 'react-native';
+import { Home, Grid3X3, Wallet, User, GraduationCap } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colorScheme === 'dark' ? 'white' : 'blue',
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
-        headerShown: useClientOnlyValue(false, true),
-      }}>
+        tabBarActiveTintColor: '#FF8C00',
+        tabBarInactiveTintColor: '#6B7280',
+        tabBarStyle: {
+          backgroundColor: '#fff',
+          borderTopWidth: 1,
+          borderTopColor: '#E5E7EB',
+          height: 60,
+          paddingBottom: 8,
+          paddingTop: 8,
+        },
+        tabBarLabelStyle: {
+          fontSize: 11,
+          fontWeight: '500',
+        },
+        headerShown: false,
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="code" color={color} />,
-          headerRight: () => (
-            <Link href="/modal" asChild>
-              <Pressable className="mr-4 active:opacity-50">
-                <FontAwesome
-                  name="info-circle"
-                  size={25}
-                  color={colorScheme === 'dark' ? 'white' : 'black'}
-                />
-              </Pressable>
-            </Link>
+          title: 'Home',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <Home size={22} color={color} />
+            </View>
           ),
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="products"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }: { color: string }) => <TabBarIcon name="code" color={color} />,
+          title: 'Products',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <Grid3X3 size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="learn"
+        options={{
+          title: 'Learn',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <GraduationCap size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="earnings"
+        options={{
+          title: 'Earnings',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <Wallet size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <User size={22} color={color} />
+            </View>
+          ),
         }}
       />
     </Tabs>

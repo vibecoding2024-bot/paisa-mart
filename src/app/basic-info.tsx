@@ -12,7 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { ChevronDown, Calendar, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X } from 'lucide-react-native';
+import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Calendar } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 const OCCUPATIONS = [
@@ -64,16 +64,13 @@ interface DropdownModalProps {
 function DropdownModal({ visible, onClose, options, onSelect, title }: DropdownModalProps) {
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <Pressable
-        className="flex-1 bg-black/70 justify-end"
-        onPress={onClose}
-      >
+      <Pressable className="flex-1 bg-black/50 justify-end" onPress={onClose}>
         <Pressable onPress={(e) => e.stopPropagation()}>
-          <View className="bg-neutral-900 rounded-t-3xl max-h-[70%]">
-            <View className="flex-row items-center justify-between p-4 border-b border-amber-500/20">
-              <Text className="text-white text-lg font-semibold">{title}</Text>
+          <View className="bg-white rounded-t-3xl max-h-[70%]">
+            <View className="flex-row items-center justify-between p-4 border-b border-gray-100">
+              <Text className="text-gray-800 text-lg font-semibold">{title}</Text>
               <Pressable onPress={onClose} className="p-2">
-                <X size={20} color="#D4AF37" />
+                <X size={20} color="#6B7280" />
               </Pressable>
             </View>
             <FlatList
@@ -86,9 +83,9 @@ function DropdownModal({ visible, onClose, options, onSelect, title }: DropdownM
                     onClose();
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
-                  className="p-4 border-b border-white/5 active:bg-amber-500/10"
+                  className="p-4 border-b border-gray-50 active:bg-orange-50"
                 >
-                  <Text className="text-white text-base">{item}</Text>
+                  <Text className="text-gray-700 text-base">{item}</Text>
                 </Pressable>
               )}
             />
@@ -114,18 +111,17 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
 
   return (
     <View className="mb-4">
-      <Text className="text-white/70 text-sm mb-2 ml-1">{label}</Text>
+      <Text className="text-gray-600 text-sm mb-2 ml-1">{label}</Text>
       <View
-        className={`flex-row items-center rounded-xl px-4 py-3.5 border ${
-          isFocused ? 'border-amber-400' : 'border-amber-500/20'
+        className={`flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 ${
+          isFocused ? 'border-orange-500' : 'border-gray-200'
         }`}
-        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
       >
         {icon}
         <TextInput
-          className="flex-1 ml-3 text-white text-base"
+          className="flex-1 ml-3 text-gray-800 text-base"
           placeholder={placeholder}
-          placeholderTextColor="#6B7280"
+          placeholderTextColor="#9CA3AF"
           value={value}
           onChangeText={onChangeText}
           onFocus={() => setIsFocused(true)}
@@ -149,20 +145,19 @@ interface DropdownInputProps {
 function DropdownInput({ label, value, placeholder, icon, onPress }: DropdownInputProps) {
   return (
     <View className="mb-4">
-      <Text className="text-white/70 text-sm mb-2 ml-1">{label}</Text>
+      <Text className="text-gray-600 text-sm mb-2 ml-1">{label}</Text>
       <Pressable
         onPress={() => {
           onPress();
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }}
-        className="flex-row items-center rounded-xl px-4 py-3.5 border border-amber-500/20"
-        style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
+        className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 border-gray-200"
       >
         {icon}
-        <Text className={`flex-1 ml-3 text-base ${value ? 'text-white' : 'text-gray-500'}`}>
+        <Text className={`flex-1 ml-3 text-base ${value ? 'text-gray-800' : 'text-gray-400'}`}>
           {value || placeholder}
         </Text>
-        <ChevronDown size={20} color="#D4AF37" />
+        <ChevronDown size={20} color="#6B7280" />
       </Pressable>
     </View>
   );
@@ -198,183 +193,170 @@ export default function BasicInfoScreen() {
     }
   };
 
-  const formatDob = () => {
-    if (dobDay && dobMonth && dobYear) {
-      return `${dobDay} ${dobMonth} ${dobYear}`;
-    }
-    return '';
-  };
-
   return (
-    <View className="flex-1">
-      <LinearGradient
-        colors={['#1A1A1A', '#0D0D0D', '#1A1A1A']}
-        style={{ flex: 1 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView className="flex-1" edges={['top']}>
-          <ScrollView
-            className="flex-1"
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
+    <View className="flex-1 bg-white">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        {/* Header */}
+        <LinearGradient
+          colors={['#002561', '#003380']}
+          style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+        >
+          <View className="px-6 pt-4">
+            <Animated.View entering={FadeInDown.delay(100).springify()}>
+              <Text className="text-white text-xl font-semibold">Complete Your Profile</Text>
+              <Text className="text-white/70 text-sm mt-1">Fill in your details to get started</Text>
+            </Animated.View>
+          </View>
+        </LinearGradient>
+
+        <ScrollView
+          className="flex-1 -mt-4"
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          {/* Form Card */}
+          <Animated.View
+            entering={FadeInUp.delay(200).springify()}
+            className="mx-6 bg-white rounded-2xl p-5 shadow-lg mb-6"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.1,
+              shadowRadius: 12,
+              elevation: 8,
+            }}
           >
-            <View className="px-6 pb-6">
-              {/* Header */}
-              <Animated.View
-                entering={FadeInDown.delay(100).springify()}
-                className="mt-4 mb-6"
-              >
-                <Text className="text-3xl font-bold text-white">
-                  Basic Information
-                </Text>
-                <Text className="text-white/60 mt-2 text-base">
-                  Complete your profile to get started
-                </Text>
-              </Animated.View>
+            <FormInput
+              label="Full Name"
+              value={name}
+              onChangeText={setName}
+              placeholder="Enter your full name"
+              icon={<User size={20} color="#6B7280" />}
+              autoCapitalize="words"
+            />
 
-              {/* Form */}
-              <Animated.View entering={FadeInUp.delay(200).springify()}>
-                <FormInput
-                  label="Full Name"
-                  value={name}
-                  onChangeText={setName}
-                  placeholder="Enter your full name"
-                  icon={<User size={20} color="#D4AF37" />}
-                  autoCapitalize="words"
-                />
+            <FormInput
+              label="Email Address"
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              icon={<Mail size={20} color="#6B7280" />}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
 
-                <FormInput
-                  label="Email Address"
-                  value={email}
-                  onChangeText={setEmail}
-                  placeholder="Enter your email"
-                  icon={<Mail size={20} color="#D4AF37" />}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                />
+            <DropdownInput
+              label="Occupation"
+              value={occupation}
+              placeholder="Select your occupation"
+              icon={<Briefcase size={20} color="#6B7280" />}
+              onPress={() => setShowOccupationModal(true)}
+            />
 
-                <DropdownInput
-                  label="Occupation"
-                  value={occupation}
-                  placeholder="Select your occupation"
-                  icon={<Briefcase size={20} color="#D4AF37" />}
-                  onPress={() => setShowOccupationModal(true)}
-                />
+            <DropdownInput
+              label="Qualification"
+              value={qualification}
+              placeholder="Select your qualification"
+              icon={<GraduationCap size={20} color="#6B7280" />}
+              onPress={() => setShowQualificationModal(true)}
+            />
 
-                <DropdownInput
-                  label="Qualification"
-                  value={qualification}
-                  placeholder="Select your qualification"
-                  icon={<GraduationCap size={20} color="#D4AF37" />}
-                  onPress={() => setShowQualificationModal(true)}
-                />
+            <DropdownInput
+              label="Annual Income"
+              value={annualIncome}
+              placeholder="Select annual income"
+              icon={<IndianRupee size={20} color="#6B7280" />}
+              onPress={() => setShowIncomeModal(true)}
+            />
 
-                <DropdownInput
-                  label="Annual Income"
-                  value={annualIncome}
-                  placeholder="Select annual income"
-                  icon={<IndianRupee size={20} color="#D4AF37" />}
-                  onPress={() => setShowIncomeModal(true)}
-                />
+            <FormInput
+              label="Pincode"
+              value={pincode}
+              onChangeText={(text) => setPincode(text.replace(/\D/g, '').slice(0, 6))}
+              placeholder="Enter 6-digit pincode"
+              icon={<MapPin size={20} color="#6B7280" />}
+              keyboardType="numeric"
+            />
 
-                <FormInput
-                  label="Pincode"
-                  value={pincode}
-                  onChangeText={(text) => setPincode(text.replace(/\D/g, '').slice(0, 6))}
-                  placeholder="Enter 6-digit pincode"
-                  icon={<MapPin size={20} color="#D4AF37" />}
-                  keyboardType="numeric"
-                />
-
-                {/* Date of Birth */}
-                <View className="mb-4">
-                  <Text className="text-white/70 text-sm mb-2 ml-1">Date of Birth</Text>
-                  <View className="flex-row gap-2">
-                    <Pressable
-                      onPress={() => {
-                        setShowDayModal(true);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      className="flex-1 flex-row items-center justify-between rounded-xl px-3 py-3.5 border border-amber-500/20"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-                    >
-                      <Text className={`text-base ${dobDay ? 'text-white' : 'text-gray-500'}`}>
-                        {dobDay || 'Day'}
-                      </Text>
-                      <ChevronDown size={16} color="#D4AF37" />
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        setShowMonthModal(true);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      className="flex-[2] flex-row items-center justify-between rounded-xl px-3 py-3.5 border border-amber-500/20"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-                    >
-                      <Text className={`text-base ${dobMonth ? 'text-white' : 'text-gray-500'}`}>
-                        {dobMonth || 'Month'}
-                      </Text>
-                      <ChevronDown size={16} color="#D4AF37" />
-                    </Pressable>
-
-                    <Pressable
-                      onPress={() => {
-                        setShowYearModal(true);
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }}
-                      className="flex-1 flex-row items-center justify-between rounded-xl px-3 py-3.5 border border-amber-500/20"
-                      style={{ backgroundColor: 'rgba(0,0,0,0.3)' }}
-                    >
-                      <Text className={`text-base ${dobYear ? 'text-white' : 'text-gray-500'}`}>
-                        {dobYear || 'Year'}
-                      </Text>
-                      <ChevronDown size={16} color="#D4AF37" />
-                    </Pressable>
-                  </View>
-                </View>
-
-                <FormInput
-                  label="Referral Code (Optional)"
-                  value={referralCode}
-                  onChangeText={setReferralCode}
-                  placeholder="Enter referral code"
-                  icon={<Gift size={20} color="#D4AF37" />}
-                  autoCapitalize="none"
-                />
-
-                {/* Submit Button */}
+            {/* Date of Birth */}
+            <View className="mb-4">
+              <Text className="text-gray-600 text-sm mb-2 ml-1">Date of Birth</Text>
+              <View className="flex-row gap-2">
                 <Pressable
-                  onPress={handleSubmit}
-                  disabled={!isFormValid}
-                  className="mt-4 mb-8"
+                  onPress={() => {
+                    setShowDayModal(true);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
                 >
-                  {({ pressed }) => (
-                    <LinearGradient
-                      colors={isFormValid ? ['#D4AF37', '#B8860B'] : ['#374151', '#374151']}
-                      style={{
-                        borderRadius: 16,
-                        padding: 18,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        opacity: pressed ? 0.9 : 1,
-                        transform: [{ scale: pressed ? 0.98 : 1 }],
-                      }}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                    >
-                      <Text className={`text-lg font-bold ${isFormValid ? 'text-black' : 'text-gray-500'}`}>
-                        Submit Profile
-                      </Text>
-                    </LinearGradient>
-                  )}
+                  <Text className={`text-base ${dobDay ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {dobDay || 'Day'}
+                  </Text>
+                  <ChevronDown size={16} color="#6B7280" />
                 </Pressable>
-              </Animated.View>
+
+                <Pressable
+                  onPress={() => {
+                    setShowMonthModal(true);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  className="flex-[2] flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
+                >
+                  <Text className={`text-base ${dobMonth ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {dobMonth || 'Month'}
+                  </Text>
+                  <ChevronDown size={16} color="#6B7280" />
+                </Pressable>
+
+                <Pressable
+                  onPress={() => {
+                    setShowYearModal(true);
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }}
+                  className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
+                >
+                  <Text className={`text-base ${dobYear ? 'text-gray-800' : 'text-gray-400'}`}>
+                    {dobYear || 'Year'}
+                  </Text>
+                  <ChevronDown size={16} color="#6B7280" />
+                </Pressable>
+              </View>
             </View>
-          </ScrollView>
-        </SafeAreaView>
-      </LinearGradient>
+
+            <FormInput
+              label="Referral Code (Optional)"
+              value={referralCode}
+              onChangeText={setReferralCode}
+              placeholder="Enter referral code"
+              icon={<Gift size={20} color="#6B7280" />}
+              autoCapitalize="none"
+            />
+
+            {/* Submit Button */}
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!isFormValid}
+              className="mt-4"
+            >
+              {({ pressed }) => (
+                <View
+                  className={`rounded-xl py-4 items-center justify-center ${
+                    isFormValid ? 'bg-orange-500' : 'bg-gray-300'
+                  }`}
+                  style={{
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.98 : 1 }],
+                  }}
+                >
+                  <Text className={`text-base font-bold ${isFormValid ? 'text-white' : 'text-gray-500'}`}>
+                    Submit Profile
+                  </Text>
+                </View>
+              )}
+            </Pressable>
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
 
       {/* Dropdown Modals */}
       <DropdownModal

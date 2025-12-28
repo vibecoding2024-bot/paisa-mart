@@ -6,6 +6,7 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,29 +20,12 @@ import Animated, {
   withTiming,
   withSequence,
 } from 'react-native-reanimated';
-import { Phone, ArrowRight, Shield, Crown, Briefcase } from 'lucide-react-native';
+import { Phone, ArrowRight, Users, Wallet, Award, Star } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const router = useRouter();
-
-  const pulseValue = useSharedValue(1);
-
-  useEffect(() => {
-    pulseValue.value = withRepeat(
-      withSequence(
-        withTiming(1.05, { duration: 1500 }),
-        withTiming(1, { duration: 1500 })
-      ),
-      -1,
-      true
-    );
-  }, []);
-
-  const animatedLogoStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseValue.value }],
-  }));
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
@@ -57,197 +41,196 @@ export default function LoginScreen() {
   };
 
   return (
-    <View className="flex-1">
-      <LinearGradient
-        colors={['#1A1A1A', '#0D0D0D', '#1A1A1A']}
-        style={{ flex: 1 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView className="flex-1" edges={['top']}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
+    <View className="flex-1 bg-white">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          {/* Top Section - Blue Background */}
+          <LinearGradient
+            colors={['#002561', '#003380']}
+            style={{ paddingBottom: 40, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
           >
-            <View className="flex-1 px-6">
-              {/* Logo Section */}
+            <View className="px-6 pt-4">
+              {/* Logo */}
               <Animated.View
                 entering={FadeInDown.delay(100).springify()}
-                className="items-center mt-12"
+                className="flex-row items-center"
               >
-                <Animated.View style={animatedLogoStyle}>
-                  <LinearGradient
-                    colors={['#D4AF37', '#B8860B', '#DAA520']}
-                    style={{
-                      width: 90,
-                      height: 90,
-                      borderRadius: 24,
-                      justifyContent: 'center',
-                      alignItems: 'center',
-                      shadowColor: '#D4AF37',
-                      shadowOffset: { width: 0, height: 8 },
-                      shadowOpacity: 0.4,
-                      shadowRadius: 16,
-                      elevation: 12,
-                    }}
-                  >
-                    <Crown size={44} color="#fff" strokeWidth={2} />
-                  </LinearGradient>
-                </Animated.View>
-                <Text className="text-3xl font-bold text-white mt-5 tracking-wide">Retire Early</Text>
-                <Text className="text-amber-400 text-base mt-1 font-medium">Build Your Financial Freedom</Text>
+                <View className="w-10 h-10 bg-orange-500 rounded-lg items-center justify-center mr-2">
+                  <Text className="text-white font-bold text-lg">G</Text>
+                </View>
+                <Text className="text-white text-2xl font-bold">GroMo</Text>
               </Animated.View>
 
-              {/* Features */}
+              {/* Hero Text */}
               <Animated.View
                 entering={FadeInDown.delay(200).springify()}
-                className="flex-row justify-center mt-10 gap-8"
+                className="mt-6"
               >
-                <View className="items-center">
-                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
-                    <Briefcase size={24} color="#D4AF37" />
-                  </View>
-                  <Text className="text-white/80 text-xs mt-2 font-medium">High Earnings</Text>
-                </View>
-                <View className="items-center">
-                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
-                    <Shield size={24} color="#D4AF37" />
-                  </View>
-                  <Text className="text-white/80 text-xs mt-2 font-medium">100% Secure</Text>
-                </View>
-                <View className="items-center">
-                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
-                    <Crown size={24} color="#D4AF37" />
-                  </View>
-                  <Text className="text-white/80 text-xs mt-2 font-medium">Premium</Text>
-                </View>
-              </Animated.View>
-
-              {/* Login Card */}
-              <Animated.View
-                entering={FadeInUp.delay(300).springify()}
-                className="mt-10"
-              >
-                <View
-                  className="rounded-3xl p-6 border border-amber-500/20"
-                  style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)' }}
-                >
-                  <Text className="text-white text-xl font-semibold mb-2">
-                    Welcome, Future Partner
-                  </Text>
-                  <Text className="text-white/60 text-sm mb-6">
-                    Enter your phone number to begin your journey
-                  </Text>
-
-                  {/* Phone Input */}
-                  <View
-                    className={`flex-row items-center rounded-2xl px-4 py-4 border ${
-                      isFocused ? 'border-amber-400' : 'border-amber-500/30'
-                    }`}
-                    style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
-                  >
-                    <View className="flex-row items-center mr-3 pr-3 border-r border-amber-500/30">
-                      <Text className="text-amber-400 font-semibold">+91</Text>
-                    </View>
-                    <Phone size={20} color="#D4AF37" />
-                    <TextInput
-                      className="flex-1 ml-3 text-white text-lg"
-                      placeholder="Phone Number"
-                      placeholderTextColor="#6B7280"
-                      keyboardType="phone-pad"
-                      value={phoneNumber}
-                      onChangeText={(text) => setPhoneNumber(formatPhoneDisplay(text))}
-                      onFocus={() => setIsFocused(true)}
-                      onBlur={() => setIsFocused(false)}
-                      maxLength={10}
-                    />
-                    {phoneNumber.length > 0 && (
-                      <Text className={`text-sm ${isValidPhone ? 'text-amber-400' : 'text-white/40'}`}>
-                        {phoneNumber.length}/10
-                      </Text>
-                    )}
-                  </View>
-
-                  {/* Continue Button */}
-                  <Pressable
-                    onPress={handleContinue}
-                    disabled={!isValidPhone}
-                    className="mt-6"
-                  >
-                    {({ pressed }) => (
-                      <LinearGradient
-                        colors={isValidPhone ? ['#D4AF37', '#B8860B'] : ['#374151', '#374151']}
-                        style={{
-                          borderRadius: 16,
-                          padding: 18,
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          opacity: pressed ? 0.9 : 1,
-                          transform: [{ scale: pressed ? 0.98 : 1 }],
-                        }}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                      >
-                        <Text className={`text-lg font-bold mr-2 ${isValidPhone ? 'text-black' : 'text-gray-500'}`}>
-                          Get Started
-                        </Text>
-                        <ArrowRight size={20} color={isValidPhone ? '#000' : '#6B7280'} />
-                      </LinearGradient>
-                    )}
-                  </Pressable>
-                </View>
-              </Animated.View>
-
-              {/* Trust Indicators */}
-              <Animated.View
-                entering={FadeInUp.delay(400).springify()}
-                className="mt-8 items-center"
-              >
-                <View className="flex-row items-center gap-2">
-                  <View className="h-px w-12 bg-amber-500/30" />
-                  <Text className="text-amber-500/60 text-xs font-medium tracking-wider">
-                    TRUSTED BY THOUSANDS
-                  </Text>
-                  <View className="h-px w-12 bg-amber-500/30" />
-                </View>
-                <View className="flex-row items-center mt-4 gap-2">
-                  <View className="flex-row">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <View
-                        key={i}
-                        className="w-9 h-9 rounded-full items-center justify-center border-2 border-neutral-900"
-                        style={{
-                          marginLeft: i > 1 ? -14 : 0,
-                          backgroundColor: `rgba(212, 175, 55, ${0.2 + i * 0.1})`
-                        }}
-                      >
-                        <Text className="text-amber-400 text-xs font-bold">
-                          {String.fromCharCode(64 + i)}
-                        </Text>
-                      </View>
-                    ))}
-                  </View>
-                  <Text className="text-white/50 text-sm ml-2">& many more partners</Text>
-                </View>
-              </Animated.View>
-
-              {/* Terms */}
-              <Animated.View
-                entering={FadeInUp.delay(500).springify()}
-                className="mt-auto mb-6"
-              >
-                <Text className="text-white/40 text-xs text-center leading-5">
-                  By continuing, you agree to our{' '}
-                  <Text className="text-amber-400">Terms of Service</Text>
-                  {' '}and{' '}
-                  <Text className="text-amber-400">Privacy Policy</Text>
+                <Text className="text-white text-2xl font-bold leading-8">
+                  Sell financial products{'\n'}and earn real money{'\n'}online!
                 </Text>
               </Animated.View>
+
+              {/* Stats Row */}
+              <Animated.View
+                entering={FadeInDown.delay(300).springify()}
+                className="flex-row mt-6 gap-6"
+              >
+                <View className="flex-row items-center">
+                  <Users size={20} color="#FF8C00" />
+                  <View className="ml-2">
+                    <Text className="text-white font-bold text-lg">40 Lakh+</Text>
+                    <Text className="text-white/70 text-xs">Partners</Text>
+                  </View>
+                </View>
+                <View className="flex-row items-center">
+                  <Wallet size={20} color="#FF8C00" />
+                  <View className="ml-2">
+                    <Text className="text-white font-bold text-lg">₹100 Cr+</Text>
+                    <Text className="text-white/70 text-xs">Earned</Text>
+                  </View>
+                </View>
+              </Animated.View>
+
+              {/* Rating */}
+              <Animated.View
+                entering={FadeInDown.delay(400).springify()}
+                className="flex-row items-center mt-4 bg-white/10 self-start px-3 py-1.5 rounded-full"
+              >
+                <Star size={14} color="#FFD700" fill="#FFD700" />
+                <Text className="text-white text-sm ml-1 font-medium">4.5</Text>
+                <Text className="text-white/70 text-xs ml-1">• 50K+ Reviews</Text>
+              </Animated.View>
             </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </LinearGradient>
+          </LinearGradient>
+
+          {/* Bottom Section - White Background */}
+          <View className="flex-1 px-6 -mt-6">
+            {/* Login Card */}
+            <Animated.View
+              entering={FadeInUp.delay(300).springify()}
+              className="bg-white rounded-2xl p-5 shadow-lg"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              <Text className="text-gray-800 text-lg font-semibold mb-1">
+                Get Started
+              </Text>
+              <Text className="text-gray-500 text-sm mb-4">
+                Enter your mobile number to continue
+              </Text>
+
+              {/* Phone Input */}
+              <View
+                className={`flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 ${
+                  isFocused ? 'border-orange-500' : 'border-gray-200'
+                }`}
+              >
+                <View className="flex-row items-center mr-3 pr-3 border-r border-gray-300">
+                  <Text className="text-gray-700 font-semibold">+91</Text>
+                </View>
+                <Phone size={20} color="#6B7280" />
+                <TextInput
+                  className="flex-1 ml-3 text-gray-800 text-base"
+                  placeholder="Mobile Number"
+                  placeholderTextColor="#9CA3AF"
+                  keyboardType="phone-pad"
+                  value={phoneNumber}
+                  onChangeText={(text) => setPhoneNumber(formatPhoneDisplay(text))}
+                  onFocus={() => setIsFocused(true)}
+                  onBlur={() => setIsFocused(false)}
+                  maxLength={10}
+                />
+              </View>
+
+              {/* Continue Button */}
+              <Pressable
+                onPress={handleContinue}
+                disabled={!isValidPhone}
+                className="mt-4"
+              >
+                {({ pressed }) => (
+                  <View
+                    className={`rounded-xl py-4 flex-row items-center justify-center ${
+                      isValidPhone ? 'bg-orange-500' : 'bg-gray-300'
+                    }`}
+                    style={{
+                      opacity: pressed ? 0.9 : 1,
+                      transform: [{ scale: pressed ? 0.98 : 1 }],
+                    }}
+                  >
+                    <Text className={`text-base font-bold mr-2 ${isValidPhone ? 'text-white' : 'text-gray-500'}`}>
+                      Continue
+                    </Text>
+                    <ArrowRight size={20} color={isValidPhone ? '#fff' : '#9CA3AF'} />
+                  </View>
+                )}
+              </Pressable>
+
+              {/* Terms */}
+              <Text className="text-gray-400 text-xs text-center mt-4 leading-5">
+                By continuing, you agree to our{' '}
+                <Text className="text-orange-500">Terms of Service</Text>
+                {' '}and{' '}
+                <Text className="text-orange-500">Privacy Policy</Text>
+              </Text>
+            </Animated.View>
+
+            {/* How it works */}
+            <Animated.View
+              entering={FadeInUp.delay(500).springify()}
+              className="mt-6"
+            >
+              <Text className="text-gray-800 font-semibold text-base mb-4">How it works</Text>
+              <View className="flex-row justify-between">
+                <View className="items-center flex-1">
+                  <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center border-2 border-blue-600">
+                    <Text className="text-blue-600 font-bold">1</Text>
+                  </View>
+                  <Text className="text-gray-600 text-xs mt-2 text-center">Register{'\n'}& Train</Text>
+                </View>
+                <View className="items-center flex-1">
+                  <View className="w-12 h-12 rounded-full bg-orange-50 items-center justify-center border-2 border-orange-500">
+                    <Text className="text-orange-500 font-bold">2</Text>
+                  </View>
+                  <Text className="text-gray-600 text-xs mt-2 text-center">Sell{'\n'}Products</Text>
+                </View>
+                <View className="items-center flex-1">
+                  <View className="w-12 h-12 rounded-full bg-green-50 items-center justify-center border-2 border-green-500">
+                    <Text className="text-green-500 font-bold">3</Text>
+                  </View>
+                  <Text className="text-gray-600 text-xs mt-2 text-center">Earn{'\n'}Money</Text>
+                </View>
+              </View>
+            </Animated.View>
+
+            {/* Partner Benefits */}
+            <Animated.View
+              entering={FadeInUp.delay(600).springify()}
+              className="mt-6 flex-row gap-3"
+            >
+              <View className="flex-1 bg-blue-50 rounded-xl p-3">
+                <Award size={20} color="#002561" />
+                <Text className="text-gray-800 font-medium text-sm mt-2">Zero Investment</Text>
+                <Text className="text-gray-500 text-xs">Start earning with no money down</Text>
+              </View>
+              <View className="flex-1 bg-orange-50 rounded-xl p-3">
+                <Wallet size={20} color="#FF8C00" />
+                <Text className="text-gray-800 font-medium text-sm mt-2">Instant Payout</Text>
+                <Text className="text-gray-500 text-xs">Get paid directly to bank</Text>
+              </View>
+            </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </View>
   );
 }

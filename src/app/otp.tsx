@@ -56,7 +56,6 @@ export default function OTPScreen() {
   }, []);
 
   useEffect(() => {
-    // Auto-focus first input
     setTimeout(() => {
       inputRefs.current[0]?.focus();
     }, 500);
@@ -79,7 +78,6 @@ export default function OTPScreen() {
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length > 1) {
-      // Handle paste
       const pastedOtp = value.slice(0, OTP_LENGTH).split('');
       const newOtp = [...otp];
       pastedOtp.forEach((digit, i) => {
@@ -101,7 +99,6 @@ export default function OTPScreen() {
         inputRefs.current[index + 1]?.focus();
       }
 
-      // Auto verify when all digits entered
       if (value && index === OTP_LENGTH - 1) {
         const fullOtp = newOtp.join('');
         if (fullOtp.length === OTP_LENGTH) {
@@ -125,11 +122,8 @@ export default function OTPScreen() {
 
   const verifyOtp = async (otpValue: string) => {
     setIsVerifying(true);
-
-    // Simulate API call
     await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // For demo, accept any 6-digit OTP
     if (otpValue.length === OTP_LENGTH) {
       setIsVerified(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -158,23 +152,21 @@ export default function OTPScreen() {
   const maskedPhone = phone ? `+91 ${phone.slice(0, 2)}****${phone.slice(-2)}` : '+91 ******';
 
   return (
-    <View className="flex-1">
-      <LinearGradient
-        colors={['#1A1A1A', '#0D0D0D', '#1A1A1A']}
-        style={{ flex: 1 }}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      >
-        <SafeAreaView className="flex-1" edges={['top']}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            className="flex-1"
+    <View className="flex-1 bg-white">
+      <SafeAreaView className="flex-1" edges={['top']}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
+        >
+          {/* Header */}
+          <LinearGradient
+            colors={['#002561', '#003380']}
+            style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
           >
-            <View className="flex-1 px-6">
-              {/* Header */}
+            <View className="px-6 pt-4">
               <Animated.View
                 entering={FadeInDown.delay(100).springify()}
-                className="flex-row items-center mt-4"
+                className="flex-row items-center"
               >
                 <Pressable
                   onPress={() => {
@@ -182,35 +174,40 @@ export default function OTPScreen() {
                       router.back();
                     }
                   }}
-                  className="w-11 h-11 rounded-full items-center justify-center border border-amber-500/30"
-                  style={{ backgroundColor: 'rgba(212, 175, 55, 0.1)' }}
+                  className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mr-4"
                 >
-                  <ArrowLeft size={20} color="#D4AF37" />
+                  <ArrowLeft size={20} color="#fff" />
                 </Pressable>
+                <Text className="text-white text-xl font-semibold">Verify OTP</Text>
               </Animated.View>
+            </View>
+          </LinearGradient>
 
-              {/* Title */}
-              <Animated.View
-                entering={FadeInDown.delay(200).springify()}
-                className="mt-8"
-              >
-                <Text className="text-3xl font-bold text-white">
-                  Verify OTP
-                </Text>
-                <Text className="text-white/60 mt-2 text-base">
-                  We've sent a 6-digit code to
-                </Text>
-                <Text className="text-amber-400 font-semibold text-lg mt-1">
-                  {maskedPhone}
-                </Text>
-              </Animated.View>
+          <View className="flex-1 px-6">
+            {/* OTP Card */}
+            <Animated.View
+              entering={FadeInUp.delay(200).springify()}
+              className="bg-white rounded-2xl p-5 -mt-4 shadow-lg"
+              style={{
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.1,
+                shadowRadius: 12,
+                elevation: 8,
+              }}
+            >
+              <Text className="text-gray-800 text-lg font-semibold mb-1">
+                Enter Verification Code
+              </Text>
+              <Text className="text-gray-500 text-sm mb-1">
+                We've sent a 6-digit code to
+              </Text>
+              <Text className="text-orange-500 font-semibold mb-6">
+                {maskedPhone}
+              </Text>
 
               {/* OTP Input */}
-              <Animated.View
-                entering={FadeInUp.delay(300).springify()}
-                style={shakeStyle}
-                className="mt-10"
-              >
+              <Animated.View style={shakeStyle}>
                 <View className="flex-row justify-between">
                   {Array(OTP_LENGTH)
                     .fill(0)
@@ -219,28 +216,19 @@ export default function OTPScreen() {
                         key={index}
                         className={`w-12 h-14 rounded-xl border-2 items-center justify-center ${
                           isVerified
-                            ? 'border-amber-400'
+                            ? 'border-green-500 bg-green-50'
                             : activeIndex === index
-                            ? 'border-amber-400'
+                            ? 'border-orange-500 bg-orange-50'
                             : otp[index]
-                            ? 'border-amber-500/50'
-                            : 'border-amber-500/20'
+                            ? 'border-gray-300 bg-gray-50'
+                            : 'border-gray-200 bg-gray-50'
                         }`}
-                        style={{
-                          backgroundColor: isVerified
-                            ? 'rgba(212, 175, 55, 0.2)'
-                            : activeIndex === index
-                            ? 'rgba(212, 175, 55, 0.1)'
-                            : otp[index]
-                            ? 'rgba(212, 175, 55, 0.08)'
-                            : 'rgba(0, 0, 0, 0.3)'
-                        }}
                       >
                         <TextInput
                           ref={(ref) => {
                             inputRefs.current[index] = ref;
                           }}
-                          className="text-2xl font-bold text-amber-400 text-center w-full h-full"
+                          className="text-2xl font-bold text-gray-800 text-center w-full h-full"
                           keyboardType="number-pad"
                           maxLength={index === 0 ? OTP_LENGTH : 1}
                           value={otp[index]}
@@ -256,14 +244,11 @@ export default function OTPScreen() {
               </Animated.View>
 
               {/* Status */}
-              <Animated.View
-                entering={FadeInUp.delay(400).springify()}
-                className="mt-8 items-center"
-              >
+              <View className="mt-6 items-center">
                 {isVerifying && !isVerified && (
                   <View className="flex-row items-center">
-                    <RefreshCw size={20} color="#D4AF37" />
-                    <Text className="text-white/70 ml-2">Verifying...</Text>
+                    <RefreshCw size={20} color="#FF8C00" />
+                    <Text className="text-gray-600 ml-2">Verifying...</Text>
                   </View>
                 )}
                 {isVerified && (
@@ -271,20 +256,17 @@ export default function OTPScreen() {
                     entering={FadeInUp.springify()}
                     className="flex-row items-center"
                   >
-                    <CheckCircle size={24} color="#D4AF37" />
-                    <Text className="text-amber-400 ml-2 font-semibold">
+                    <CheckCircle size={24} color="#22C55E" />
+                    <Text className="text-green-500 ml-2 font-semibold">
                       Verified Successfully!
                     </Text>
                   </Animated.View>
                 )}
-              </Animated.View>
+              </View>
 
               {/* Resend */}
-              <Animated.View
-                entering={FadeInUp.delay(500).springify()}
-                className="mt-8 items-center"
-              >
-                <Text className="text-white/50 text-sm">
+              <View className="mt-6 items-center">
+                <Text className="text-gray-500 text-sm">
                   Didn't receive the code?
                 </Text>
                 <Pressable
@@ -294,29 +276,29 @@ export default function OTPScreen() {
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      resendTimer > 0 ? 'text-white/30' : 'text-amber-400'
+                      resendTimer > 0 ? 'text-gray-400' : 'text-orange-500'
                     }`}
                   >
                     {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
                   </Text>
                 </Pressable>
-              </Animated.View>
+              </View>
+            </Animated.View>
 
-              {/* Help */}
-              <Animated.View
-                entering={FadeInUp.delay(600).springify()}
-                className="mt-auto mb-6"
-              >
-                <Pressable className="py-4 items-center">
-                  <Text className="text-amber-400 font-medium">
-                    Need help? Contact Support
-                  </Text>
-                </Pressable>
-              </Animated.View>
-            </View>
-          </KeyboardAvoidingView>
-        </SafeAreaView>
-      </LinearGradient>
+            {/* Help */}
+            <Animated.View
+              entering={FadeInUp.delay(400).springify()}
+              className="mt-auto mb-6"
+            >
+              <Pressable className="py-4 items-center">
+                <Text className="text-orange-500 font-medium">
+                  Need help? Contact Support
+                </Text>
+              </Pressable>
+            </Animated.View>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </View>
   );
 }

@@ -1,13 +1,36 @@
-# Retire Early - Financial Products Partner App
+# GroMo Clone - Financial Products Partner App
 
-A premium mobile app similar to GroMo that allows partners to earn money by selling financial products like credit cards, loans, insurance, and more. Features an elegant black and gold color scheme.
+A mobile app clone of GroMo that allows partners to earn money by selling financial products like credit cards, loans, insurance, and more.
 
 ## Features
 
 - Phone number based authentication with OTP verification
-- Partner dashboard (coming soon)
-- Financial products catalog (coming soon)
-- Earnings tracking (coming soon)
+- Basic information collection form
+- Partner dashboard with earnings overview
+- Products catalog with categories
+- Learning/Training modules
+- Earnings & wallet management
+- Profile management
+
+## Screens
+
+### Auth Flow
+1. **Login Screen** - Phone number input with GroMo-style blue/orange theme
+2. **OTP Screen** - 6-digit verification
+3. **Basic Info Screen** - Profile completion form
+
+### Main App (Tabs)
+1. **Home** - Dashboard with earnings, quick actions, products
+2. **Products** - Browse financial products by category
+3. **Learn** - Training modules and certification
+4. **Earnings** - Wallet, transactions, withdrawals
+5. **Profile** - User settings and account management
+
+## Design
+- Primary: Dark Blue (#002561)
+- Accent: Orange (#FF8C00)
+- Clean white cards with shadows
+- GroMo-inspired UI/UX
 
 ## Screens
 
