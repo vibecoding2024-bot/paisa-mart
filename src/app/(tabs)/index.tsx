@@ -3,20 +3,21 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useRouter } from 'expo-router';
 
 const QUICK_ACTIONS = [
-  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF' },
-  { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF' },
-  { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF' },
-  { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5' },
-  { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2' },
-  { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8' },
-  { icon: Zap, label: 'Insta Loans', color: '#F59E0B', bg: '#FFFBEB' },
-  { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4' },
-  { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF' },
-  { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF' },
-  { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8' },
-  { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC' },
+  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
+  { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF', categoryId: 'bank-accounts' },
+  { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'home-loans' },
+  { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5', categoryId: 'personal-loans' },
+  { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2', categoryId: 'vehicle-loans' },
+  { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8', categoryId: 'business-loans' },
+  { icon: Zap, label: 'Insta Loans', color: '#F59E0B', bg: '#FFFBEB', categoryId: 'insta-loans' },
+  { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4', categoryId: 'health-insurance' },
+  { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF', categoryId: 'life-insurance' },
+  { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
+  { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
+  { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
 ];
 
 const PRODUCTS = [
@@ -27,6 +28,12 @@ const PRODUCTS = [
 ];
 
 export default function HomeScreen() {
+  const router = useRouter();
+
+  const handleQuickAction = (categoryId: string) => {
+    router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
+  };
+
   return (
     <View className="flex-1 bg-gray-50">
       <SafeAreaView className="flex-1" edges={['top']}>
@@ -81,7 +88,12 @@ export default function HomeScreen() {
               <Text className="text-gray-800 font-semibold mb-3">Quick Actions</Text>
               <View className="flex-row flex-wrap justify-between">
                 {QUICK_ACTIONS.map((action, index) => (
-                  <Pressable key={index} className="items-center mb-4" style={{ width: '30%' }}>
+                  <Pressable
+                    key={index}
+                    className="items-center mb-4"
+                    style={{ width: '30%' }}
+                    onPress={() => handleQuickAction(action.categoryId)}
+                  >
                     <View
                       className="w-12 h-12 rounded-2xl items-center justify-center mb-1.5"
                       style={{ backgroundColor: action.bg }}

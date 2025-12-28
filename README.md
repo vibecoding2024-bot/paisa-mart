@@ -20,8 +20,12 @@ A mobile app clone of GroMo that allows partners to earn money by selling financ
 3. **Basic Info Screen** - Profile completion form
 
 ### Main App (Tabs)
-1. **Home** - Dashboard with earnings, quick actions, products
-2. **Products** - Browse financial products by category
+1. **Home** - Dashboard with earnings, quick actions (12 categories), products
+   - Quick Actions navigate directly to Products tab with selected category
+2. **Products** - Browse financial products by 12 categories with partner listings
+   - Credit Cards, Bank Accounts, Home Loans, Personal Loans, Vehicle Loans
+   - Business Loans, Insta Loans, Health Insurance, Life Insurance
+   - Motor Insurance, Gold Loans, Real Estate
 3. **Learn** - Training modules and certification
 4. **Earnings** - Wallet, transactions, withdrawals
 5. **Profile** - User settings and account management

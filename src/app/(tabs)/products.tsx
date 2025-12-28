@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useLocalSearchParams } from 'expo-router';
 
 const CATEGORIES = [
   { id: 'credit-cards', icon: CreditCard, label: 'Credit Cards', color: '#3B82F6' },
@@ -264,8 +265,16 @@ const getTagColor = (tag: string) => {
 };
 
 export default function ProductsScreen() {
+  const { category } = useLocalSearchParams<{ category?: string }>();
   const [selectedCategory, setSelectedCategory] = useState('credit-cards');
   const categoryData = CATEGORY_DATA[selectedCategory];
+
+  // Set category from navigation params
+  useEffect(() => {
+    if (category && CATEGORIES.some(c => c.id === category)) {
+      setSelectedCategory(category);
+    }
+  }, [category]);
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
 
   return (
