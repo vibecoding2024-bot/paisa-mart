@@ -7,12 +7,16 @@ import {
   ScrollView,
   Modal,
   FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Calendar } from 'lucide-react-native';
+import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 const OCCUPATIONS = [
@@ -120,6 +124,7 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
         {icon}
         <TextInput
           className="flex-1 ml-3 text-gray-800 text-base"
+          style={{ minHeight: 44 }}
           placeholder={placeholder}
           placeholderTextColor="#9CA3AF"
           value={value}
@@ -128,6 +133,7 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
           onBlur={() => setIsFocused(false)}
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
+          autoCorrect={false}
         />
       </View>
     </View>
@@ -152,6 +158,7 @@ function DropdownInput({ label, value, placeholder, icon, onPress }: DropdownInp
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
         }}
         className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border-2 border-gray-200"
+        style={{ minHeight: 52 }}
       >
         {icon}
         <Text className={`flex-1 ml-3 text-base ${value ? 'text-gray-800' : 'text-gray-400'}`}>
@@ -196,166 +203,177 @@ export default function BasicInfoScreen() {
   return (
     <View className="flex-1 bg-white">
       <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Header */}
-        <LinearGradient
-          colors={['#002561', '#003380']}
-          style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          className="flex-1"
         >
-          <View className="px-6 pt-4">
-            <Animated.View entering={FadeInDown.delay(100).springify()}>
-              <Text className="text-white text-xl font-semibold">Complete Your Profile</Text>
-              <Text className="text-white/70 text-sm mt-1">Fill in your details to get started</Text>
-            </Animated.View>
-          </View>
-        </LinearGradient>
-
-        <ScrollView
-          className="flex-1 -mt-4"
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Form Card */}
-          <Animated.View
-            entering={FadeInUp.delay(200).springify()}
-            className="mx-6 bg-white rounded-2xl p-5 shadow-lg mb-6"
-            style={{
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 12,
-              elevation: 8,
-            }}
+          {/* Header */}
+          <LinearGradient
+            colors={['#002561', '#003380']}
+            style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
           >
-            <FormInput
-              label="Full Name"
-              value={name}
-              onChangeText={setName}
-              placeholder="Enter your full name"
-              icon={<User size={20} color="#6B7280" />}
-              autoCapitalize="words"
-            />
-
-            <FormInput
-              label="Email Address"
-              value={email}
-              onChangeText={setEmail}
-              placeholder="Enter your email"
-              icon={<Mail size={20} color="#6B7280" />}
-              keyboardType="email-address"
-              autoCapitalize="none"
-            />
-
-            <DropdownInput
-              label="Occupation"
-              value={occupation}
-              placeholder="Select your occupation"
-              icon={<Briefcase size={20} color="#6B7280" />}
-              onPress={() => setShowOccupationModal(true)}
-            />
-
-            <DropdownInput
-              label="Qualification"
-              value={qualification}
-              placeholder="Select your qualification"
-              icon={<GraduationCap size={20} color="#6B7280" />}
-              onPress={() => setShowQualificationModal(true)}
-            />
-
-            <DropdownInput
-              label="Annual Income"
-              value={annualIncome}
-              placeholder="Select annual income"
-              icon={<IndianRupee size={20} color="#6B7280" />}
-              onPress={() => setShowIncomeModal(true)}
-            />
-
-            <FormInput
-              label="Pincode"
-              value={pincode}
-              onChangeText={(text) => setPincode(text.replace(/\D/g, '').slice(0, 6))}
-              placeholder="Enter 6-digit pincode"
-              icon={<MapPin size={20} color="#6B7280" />}
-              keyboardType="numeric"
-            />
-
-            {/* Date of Birth */}
-            <View className="mb-4">
-              <Text className="text-gray-600 text-sm mb-2 ml-1">Date of Birth</Text>
-              <View className="flex-row gap-2">
-                <Pressable
-                  onPress={() => {
-                    setShowDayModal(true);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
-                >
-                  <Text className={`text-base ${dobDay ? 'text-gray-800' : 'text-gray-400'}`}>
-                    {dobDay || 'Day'}
-                  </Text>
-                  <ChevronDown size={16} color="#6B7280" />
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    setShowMonthModal(true);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  className="flex-[2] flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
-                >
-                  <Text className={`text-base ${dobMonth ? 'text-gray-800' : 'text-gray-400'}`}>
-                    {dobMonth || 'Month'}
-                  </Text>
-                  <ChevronDown size={16} color="#6B7280" />
-                </Pressable>
-
-                <Pressable
-                  onPress={() => {
-                    setShowYearModal(true);
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }}
-                  className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
-                >
-                  <Text className={`text-base ${dobYear ? 'text-gray-800' : 'text-gray-400'}`}>
-                    {dobYear || 'Year'}
-                  </Text>
-                  <ChevronDown size={16} color="#6B7280" />
-                </Pressable>
-              </View>
+            <View className="px-6 pt-4">
+              <Animated.View entering={FadeInDown.delay(100).springify()}>
+                <Text className="text-white text-xl font-semibold">Complete Your Profile</Text>
+                <Text className="text-white/70 text-sm mt-1">Fill in your details to get started</Text>
+              </Animated.View>
             </View>
+          </LinearGradient>
 
-            <FormInput
-              label="Referral Code (Optional)"
-              value={referralCode}
-              onChangeText={setReferralCode}
-              placeholder="Enter referral code"
-              icon={<Gift size={20} color="#6B7280" />}
-              autoCapitalize="none"
-            />
-
-            {/* Submit Button */}
-            <Pressable
-              onPress={handleSubmit}
-              disabled={!isFormValid}
-              className="mt-4"
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <ScrollView
+              className="flex-1 -mt-4"
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={{ paddingBottom: 40 }}
             >
-              {({ pressed }) => (
-                <View
-                  className={`rounded-xl py-4 items-center justify-center ${
-                    isFormValid ? 'bg-orange-500' : 'bg-gray-300'
-                  }`}
-                  style={{
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.98 : 1 }],
-                  }}
-                >
-                  <Text className={`text-base font-bold ${isFormValid ? 'text-white' : 'text-gray-500'}`}>
-                    Submit Profile
-                  </Text>
+              {/* Form Card */}
+              <Animated.View
+                entering={FadeInUp.delay(200).springify()}
+                className="mx-6 bg-white rounded-2xl p-5 shadow-lg mb-6"
+                style={{
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 12,
+                  elevation: 8,
+                }}
+              >
+                <FormInput
+                  label="Full Name"
+                  value={name}
+                  onChangeText={setName}
+                  placeholder="Enter your full name"
+                  icon={<User size={20} color="#6B7280" />}
+                  autoCapitalize="words"
+                />
+
+                <FormInput
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="Enter your email"
+                  icon={<Mail size={20} color="#6B7280" />}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+
+                <DropdownInput
+                  label="Occupation"
+                  value={occupation}
+                  placeholder="Select your occupation"
+                  icon={<Briefcase size={20} color="#6B7280" />}
+                  onPress={() => setShowOccupationModal(true)}
+                />
+
+                <DropdownInput
+                  label="Qualification"
+                  value={qualification}
+                  placeholder="Select your qualification"
+                  icon={<GraduationCap size={20} color="#6B7280" />}
+                  onPress={() => setShowQualificationModal(true)}
+                />
+
+                <DropdownInput
+                  label="Annual Income"
+                  value={annualIncome}
+                  placeholder="Select annual income"
+                  icon={<IndianRupee size={20} color="#6B7280" />}
+                  onPress={() => setShowIncomeModal(true)}
+                />
+
+                <FormInput
+                  label="Pincode"
+                  value={pincode}
+                  onChangeText={(text) => setPincode(text.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter 6-digit pincode"
+                  icon={<MapPin size={20} color="#6B7280" />}
+                  keyboardType="numeric"
+                />
+
+                {/* Date of Birth */}
+                <View className="mb-4">
+                  <Text className="text-gray-600 text-sm mb-2 ml-1">Date of Birth</Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={() => {
+                        setShowDayModal(true);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
+                      style={{ minHeight: 52 }}
+                    >
+                      <Text className={`text-base ${dobDay ? 'text-gray-800' : 'text-gray-400'}`}>
+                        {dobDay || 'Day'}
+                      </Text>
+                      <ChevronDown size={16} color="#6B7280" />
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => {
+                        setShowMonthModal(true);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      className="flex-[2] flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
+                      style={{ minHeight: 52 }}
+                    >
+                      <Text className={`text-base ${dobMonth ? 'text-gray-800' : 'text-gray-400'}`}>
+                        {dobMonth || 'Month'}
+                      </Text>
+                      <ChevronDown size={16} color="#6B7280" />
+                    </Pressable>
+
+                    <Pressable
+                      onPress={() => {
+                        setShowYearModal(true);
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      }}
+                      className="flex-1 flex-row items-center justify-between bg-gray-50 rounded-xl px-3 py-3 border-2 border-gray-200"
+                      style={{ minHeight: 52 }}
+                    >
+                      <Text className={`text-base ${dobYear ? 'text-gray-800' : 'text-gray-400'}`}>
+                        {dobYear || 'Year'}
+                      </Text>
+                      <ChevronDown size={16} color="#6B7280" />
+                    </Pressable>
+                  </View>
                 </View>
-              )}
-            </Pressable>
-          </Animated.View>
-        </ScrollView>
+
+                <FormInput
+                  label="Referral Code (Optional)"
+                  value={referralCode}
+                  onChangeText={setReferralCode}
+                  placeholder="Enter referral code"
+                  icon={<Gift size={20} color="#6B7280" />}
+                  autoCapitalize="none"
+                />
+
+                {/* Submit Button */}
+                <Pressable
+                  onPress={handleSubmit}
+                  disabled={!isFormValid}
+                  className="mt-4"
+                >
+                  {({ pressed }) => (
+                    <View
+                      className={`rounded-xl py-4 items-center justify-center ${
+                        isFormValid ? 'bg-orange-500' : 'bg-gray-300'
+                      }`}
+                      style={{
+                        opacity: pressed ? 0.9 : 1,
+                        transform: [{ scale: pressed ? 0.98 : 1 }],
+                      }}
+                    >
+                      <Text className={`text-base font-bold ${isFormValid ? 'text-white' : 'text-gray-500'}`}>
+                        Submit Profile
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              </Animated.View>
+            </ScrollView>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </SafeAreaView>
 
       {/* Dropdown Modals */}

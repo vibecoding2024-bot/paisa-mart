@@ -140,6 +140,7 @@ export default function LoginScreen() {
                 <Phone size={20} color="#6B7280" />
                 <TextInput
                   className="flex-1 ml-3 text-gray-800 text-base"
+                  style={{ minHeight: 44 }}
                   placeholder="Mobile Number"
                   placeholderTextColor="#9CA3AF"
                   keyboardType="phone-pad"
@@ -148,6 +149,8 @@ export default function LoginScreen() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   maxLength={10}
+                  autoCorrect={false}
+                  autoComplete="tel"
                 />
               </View>
 
