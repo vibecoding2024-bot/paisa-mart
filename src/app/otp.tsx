@@ -17,7 +17,6 @@ import Animated, {
   useSharedValue,
   withTiming,
   withSequence,
-  withSpring,
 } from 'react-native-reanimated';
 import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
@@ -146,7 +145,7 @@ export default function OTPScreen() {
   return (
     <View className="flex-1">
       <LinearGradient
-        colors={['#0A1628', '#1A365D', '#0A1628']}
+        colors={['#1A1A1A', '#0D0D0D', '#1A1A1A']}
         style={{ flex: 1 }}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -164,9 +163,10 @@ export default function OTPScreen() {
               >
                 <Pressable
                   onPress={() => router.back()}
-                  className="w-10 h-10 rounded-full bg-white/10 items-center justify-center"
+                  className="w-11 h-11 rounded-full items-center justify-center border border-amber-500/30"
+                  style={{ backgroundColor: 'rgba(212, 175, 55, 0.1)' }}
                 >
-                  <ArrowLeft size={20} color="#fff" />
+                  <ArrowLeft size={20} color="#D4AF37" />
                 </Pressable>
               </Animated.View>
 
@@ -181,7 +181,7 @@ export default function OTPScreen() {
                 <Text className="text-white/60 mt-2 text-base">
                   We've sent a 6-digit code to
                 </Text>
-                <Text className="text-emerald-400 font-semibold text-lg mt-1">
+                <Text className="text-amber-400 font-semibold text-lg mt-1">
                   {maskedPhone}
                 </Text>
               </Animated.View>
@@ -200,19 +200,28 @@ export default function OTPScreen() {
                         key={index}
                         className={`w-12 h-14 rounded-xl border-2 items-center justify-center ${
                           isVerified
-                            ? 'border-emerald-400 bg-emerald-400/20'
+                            ? 'border-amber-400'
                             : activeIndex === index
-                            ? 'border-emerald-400 bg-white/10'
+                            ? 'border-amber-400'
                             : otp[index]
-                            ? 'border-white/30 bg-white/10'
-                            : 'border-white/10 bg-white/5'
+                            ? 'border-amber-500/50'
+                            : 'border-amber-500/20'
                         }`}
+                        style={{
+                          backgroundColor: isVerified
+                            ? 'rgba(212, 175, 55, 0.2)'
+                            : activeIndex === index
+                            ? 'rgba(212, 175, 55, 0.1)'
+                            : otp[index]
+                            ? 'rgba(212, 175, 55, 0.08)'
+                            : 'rgba(0, 0, 0, 0.3)'
+                        }}
                       >
                         <TextInput
                           ref={(ref) => {
                             inputRefs.current[index] = ref;
                           }}
-                          className="text-2xl font-bold text-white text-center w-full h-full"
+                          className="text-2xl font-bold text-amber-400 text-center w-full h-full"
                           keyboardType="number-pad"
                           maxLength={index === 0 ? OTP_LENGTH : 1}
                           value={otp[index]}
@@ -234,19 +243,7 @@ export default function OTPScreen() {
               >
                 {isVerifying && !isVerified && (
                   <View className="flex-row items-center">
-                    <Animated.View
-                      style={{
-                        transform: [
-                          {
-                            rotate: withTiming('360deg', {
-                              duration: 1000,
-                            }),
-                          },
-                        ],
-                      }}
-                    >
-                      <RefreshCw size={20} color="#10B981" />
-                    </Animated.View>
+                    <RefreshCw size={20} color="#D4AF37" />
                     <Text className="text-white/70 ml-2">Verifying...</Text>
                   </View>
                 )}
@@ -255,8 +252,8 @@ export default function OTPScreen() {
                     entering={FadeInUp.springify()}
                     className="flex-row items-center"
                   >
-                    <CheckCircle size={24} color="#10B981" />
-                    <Text className="text-emerald-400 ml-2 font-semibold">
+                    <CheckCircle size={24} color="#D4AF37" />
+                    <Text className="text-amber-400 ml-2 font-semibold">
                       Verified Successfully!
                     </Text>
                   </Animated.View>
@@ -278,7 +275,7 @@ export default function OTPScreen() {
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      resendTimer > 0 ? 'text-white/30' : 'text-emerald-400'
+                      resendTimer > 0 ? 'text-white/30' : 'text-amber-400'
                     }`}
                   >
                     {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
@@ -292,7 +289,7 @@ export default function OTPScreen() {
                 className="mt-auto mb-6"
               >
                 <Pressable className="py-4 items-center">
-                  <Text className="text-emerald-400 font-medium">
+                  <Text className="text-amber-400 font-medium">
                     Need help? Contact Support
                   </Text>
                 </Pressable>

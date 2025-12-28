@@ -6,8 +6,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Dimensions,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,9 +19,7 @@ import Animated, {
   withTiming,
   withSequence,
 } from 'react-native-reanimated';
-import { Phone, ArrowRight, Shield, TrendingUp, Wallet } from 'lucide-react-native';
-
-const { width } = Dimensions.get('window');
+import { Phone, ArrowRight, Shield, Crown, Briefcase } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -63,7 +59,7 @@ export default function LoginScreen() {
   return (
     <View className="flex-1">
       <LinearGradient
-        colors={['#0A1628', '#1A365D', '#0A1628']}
+        colors={['#1A1A1A', '#0D0D0D', '#1A1A1A']}
         style={{ flex: 1 }}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -81,44 +77,49 @@ export default function LoginScreen() {
               >
                 <Animated.View style={animatedLogoStyle}>
                   <LinearGradient
-                    colors={['#10B981', '#059669']}
+                    colors={['#D4AF37', '#B8860B', '#DAA520']}
                     style={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: 20,
+                      width: 90,
+                      height: 90,
+                      borderRadius: 24,
                       justifyContent: 'center',
                       alignItems: 'center',
+                      shadowColor: '#D4AF37',
+                      shadowOffset: { width: 0, height: 8 },
+                      shadowOpacity: 0.4,
+                      shadowRadius: 16,
+                      elevation: 12,
                     }}
                   >
-                    <TrendingUp size={40} color="#fff" strokeWidth={2.5} />
+                    <Crown size={44} color="#fff" strokeWidth={2} />
                   </LinearGradient>
                 </Animated.View>
-                <Text className="text-3xl font-bold text-white mt-4">EarnPro</Text>
-                <Text className="text-emerald-400 text-base mt-1">Sell & Earn</Text>
+                <Text className="text-3xl font-bold text-white mt-5 tracking-wide">Retire Early</Text>
+                <Text className="text-amber-400 text-base mt-1 font-medium">Build Your Financial Freedom</Text>
               </Animated.View>
 
               {/* Features */}
               <Animated.View
                 entering={FadeInDown.delay(200).springify()}
-                className="flex-row justify-center mt-8 gap-6"
+                className="flex-row justify-center mt-10 gap-8"
               >
                 <View className="items-center">
-                  <View className="w-12 h-12 rounded-full bg-emerald-500/20 items-center justify-center">
-                    <Wallet size={22} color="#10B981" />
+                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
+                    <Briefcase size={24} color="#D4AF37" />
                   </View>
-                  <Text className="text-white/70 text-xs mt-2">Earn ₹1L+</Text>
+                  <Text className="text-white/80 text-xs mt-2 font-medium">High Earnings</Text>
                 </View>
                 <View className="items-center">
-                  <View className="w-12 h-12 rounded-full bg-blue-500/20 items-center justify-center">
-                    <Shield size={22} color="#3B82F6" />
+                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
+                    <Shield size={24} color="#D4AF37" />
                   </View>
-                  <Text className="text-white/70 text-xs mt-2">100% Safe</Text>
+                  <Text className="text-white/80 text-xs mt-2 font-medium">100% Secure</Text>
                 </View>
                 <View className="items-center">
-                  <View className="w-12 h-12 rounded-full bg-amber-500/20 items-center justify-center">
-                    <TrendingUp size={22} color="#F59E0B" />
+                  <View className="w-14 h-14 rounded-2xl bg-amber-500/15 items-center justify-center border border-amber-500/30">
+                    <Crown size={24} color="#D4AF37" />
                   </View>
-                  <Text className="text-white/70 text-xs mt-2">Instant Pay</Text>
+                  <Text className="text-white/80 text-xs mt-2 font-medium">Premium</Text>
                 </View>
               </Animated.View>
 
@@ -127,24 +128,28 @@ export default function LoginScreen() {
                 entering={FadeInUp.delay(300).springify()}
                 className="mt-10"
               >
-                <View className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 border border-white/10">
+                <View
+                  className="rounded-3xl p-6 border border-amber-500/20"
+                  style={{ backgroundColor: 'rgba(212, 175, 55, 0.08)' }}
+                >
                   <Text className="text-white text-xl font-semibold mb-2">
-                    Welcome Partner!
+                    Welcome, Future Partner
                   </Text>
                   <Text className="text-white/60 text-sm mb-6">
-                    Enter your phone number to get started
+                    Enter your phone number to begin your journey
                   </Text>
 
                   {/* Phone Input */}
                   <View
-                    className={`flex-row items-center bg-white/10 rounded-2xl px-4 py-4 border ${
-                      isFocused ? 'border-emerald-400' : 'border-transparent'
+                    className={`flex-row items-center rounded-2xl px-4 py-4 border ${
+                      isFocused ? 'border-amber-400' : 'border-amber-500/30'
                     }`}
+                    style={{ backgroundColor: 'rgba(0,0,0,0.4)' }}
                   >
-                    <View className="flex-row items-center mr-3 pr-3 border-r border-white/20">
-                      <Text className="text-white font-medium">+91</Text>
+                    <View className="flex-row items-center mr-3 pr-3 border-r border-amber-500/30">
+                      <Text className="text-amber-400 font-semibold">+91</Text>
                     </View>
-                    <Phone size={20} color="#9CA3AF" />
+                    <Phone size={20} color="#D4AF37" />
                     <TextInput
                       className="flex-1 ml-3 text-white text-lg"
                       placeholder="Phone Number"
@@ -157,7 +162,7 @@ export default function LoginScreen() {
                       maxLength={10}
                     />
                     {phoneNumber.length > 0 && (
-                      <Text className={`text-sm ${isValidPhone ? 'text-emerald-400' : 'text-white/40'}`}>
+                      <Text className={`text-sm ${isValidPhone ? 'text-amber-400' : 'text-white/40'}`}>
                         {phoneNumber.length}/10
                       </Text>
                     )}
@@ -171,7 +176,7 @@ export default function LoginScreen() {
                   >
                     {({ pressed }) => (
                       <LinearGradient
-                        colors={isValidPhone ? ['#10B981', '#059669'] : ['#374151', '#374151']}
+                        colors={isValidPhone ? ['#D4AF37', '#B8860B'] : ['#374151', '#374151']}
                         style={{
                           borderRadius: 16,
                           padding: 18,
@@ -184,10 +189,10 @@ export default function LoginScreen() {
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 0 }}
                       >
-                        <Text className={`text-lg font-semibold mr-2 ${isValidPhone ? 'text-white' : 'text-gray-500'}`}>
-                          Continue
+                        <Text className={`text-lg font-bold mr-2 ${isValidPhone ? 'text-black' : 'text-gray-500'}`}>
+                          Get Started
                         </Text>
-                        <ArrowRight size={20} color={isValidPhone ? '#fff' : '#6B7280'} />
+                        <ArrowRight size={20} color={isValidPhone ? '#000' : '#6B7280'} />
                       </LinearGradient>
                     )}
                   </Pressable>
@@ -197,26 +202,33 @@ export default function LoginScreen() {
               {/* Trust Indicators */}
               <Animated.View
                 entering={FadeInUp.delay(400).springify()}
-                className="mt-6 items-center"
+                className="mt-8 items-center"
               >
-                <Text className="text-white/40 text-xs">
-                  Trusted by 14 Lakh+ Partners across India
-                </Text>
-                <View className="flex-row items-center mt-3 gap-2">
+                <View className="flex-row items-center gap-2">
+                  <View className="h-px w-12 bg-amber-500/30" />
+                  <Text className="text-amber-500/60 text-xs font-medium tracking-wider">
+                    TRUSTED BY THOUSANDS
+                  </Text>
+                  <View className="h-px w-12 bg-amber-500/30" />
+                </View>
+                <View className="flex-row items-center mt-4 gap-2">
                   <View className="flex-row">
                     {[1, 2, 3, 4, 5].map((i) => (
                       <View
                         key={i}
-                        className="w-8 h-8 rounded-full bg-emerald-500/30 border-2 border-slate-800 items-center justify-center"
-                        style={{ marginLeft: i > 1 ? -12 : 0 }}
+                        className="w-9 h-9 rounded-full items-center justify-center border-2 border-neutral-900"
+                        style={{
+                          marginLeft: i > 1 ? -14 : 0,
+                          backgroundColor: `rgba(212, 175, 55, ${0.2 + i * 0.1})`
+                        }}
                       >
-                        <Text className="text-white text-xs font-bold">
+                        <Text className="text-amber-400 text-xs font-bold">
                           {String.fromCharCode(64 + i)}
                         </Text>
                       </View>
                     ))}
                   </View>
-                  <Text className="text-white/60 text-sm ml-2">& many more</Text>
+                  <Text className="text-white/50 text-sm ml-2">& many more partners</Text>
                 </View>
               </Animated.View>
 
@@ -227,9 +239,9 @@ export default function LoginScreen() {
               >
                 <Text className="text-white/40 text-xs text-center leading-5">
                   By continuing, you agree to our{' '}
-                  <Text className="text-emerald-400">Terms of Service</Text>
+                  <Text className="text-amber-400">Terms of Service</Text>
                   {' '}and{' '}
-                  <Text className="text-emerald-400">Privacy Policy</Text>
+                  <Text className="text-amber-400">Privacy Policy</Text>
                 </Text>
               </Animated.View>
             </View>

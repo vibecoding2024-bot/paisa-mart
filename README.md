@@ -1,6 +1,6 @@
-# EarnPro - Financial Products Partner App
+# Retire Early - Financial Products Partner App
 
-A mobile app similar to GroMo that allows partners to earn money by selling financial products like credit cards, loans, insurance, and more.
+A premium mobile app similar to GroMo that allows partners to earn money by selling financial products like credit cards, loans, insurance, and more. Features an elegant black and gold color scheme.
 
 ## Features
 
