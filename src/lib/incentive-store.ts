@@ -1,6 +1,42 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Commission rates per product category
+export const COMMISSION_RATES: Record<string, { rate: string; rateValue: number }> = {
+  'home-loans': { rate: 'up to 1.5%', rateValue: 1.5 },
+  'personal-loans': { rate: 'up to 2.5%', rateValue: 2.5 },
+  'vehicle-loans': { rate: 'up to 2.5%', rateValue: 2.5 },
+  'business-loans': { rate: 'up to 2.5%', rateValue: 2.5 },
+  'insta-loans': { rate: 'up to 3.5%', rateValue: 3.5 },
+  'health-insurance': { rate: 'up to 15%', rateValue: 15 },
+  'life-insurance': { rate: 'up to 20%', rateValue: 20 },
+  'motor-insurance': { rate: 'up to 30%', rateValue: 30 },
+  'gold-loans': { rate: '0.7%', rateValue: 0.7 },
+  'real-estate': { rate: 'up to 20%', rateValue: 20 },
+  'credit-cards': { rate: 'Fixed', rateValue: 0 },
+  'bank-accounts': { rate: 'Fixed', rateValue: 0 },
+};
+
+// Helper function to calculate potential commission
+export const calculatePotentialCommission = (productCategory: string, amount?: number): string => {
+  const commissionInfo = COMMISSION_RATES[productCategory];
+  if (!commissionInfo) return 'N/A';
+
+  // For fixed rate products (credit cards, bank accounts), just show the rate text
+  if (commissionInfo.rateValue === 0) {
+    return commissionInfo.rate;
+  }
+
+  // If amount is provided, calculate the potential commission
+  if (amount && amount > 0) {
+    const potentialEarning = (amount * commissionInfo.rateValue) / 100;
+    return `${commissionInfo.rate} (₹${potentialEarning.toLocaleString()})`;
+  }
+
+  // If no amount, just show the rate
+  return commissionInfo.rate;
+};
+
 // Types
 export type IncentiveStatus = 'pending' | 'approved' | 'paid';
 export type PayoutStatus = 'initiated' | 'processing' | 'completed' | 'failed';
