@@ -1,8 +1,12 @@
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { useState, useMemo } from 'react';
+import { View, Text, ScrollView, Pressable, Modal, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, XCircle } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
+import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, XCircle, X, AlertTriangle, Shield } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
+import { useIncentiveStore } from '@/lib/incentive-store';
 
 const TRANSACTIONS = [
   { type: 'credit', title: 'HDFC Credit Card Sale', amount: '₹2,100', date: 'Today', status: 'completed' },
@@ -13,6 +17,93 @@ const TRANSACTIONS = [
 ];
 
 export default function EarningsScreen() {
+  const router = useRouter();
+  const userKYC = useIncentiveStore(s => s.userKYC);
+  const bankAccounts = useIncentiveStore(s => s.bankAccounts);
+  const minWithdrawalAmount = useIncentiveStore(s => s.minWithdrawalAmount);
+  const initiatePayout = useIncentiveStore(s => s.initiatePayout);
+
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
+
+  const availableBalance = 7900; // In real app, this would come from the store
+
+  const canWithdraw = useMemo(() => {
+    return userKYC?.status === 'verified' && bankAccounts.length > 0;
+  }, [userKYC, bankAccounts]);
+
+  const primaryBank = useMemo(() => {
+    return bankAccounts.find(a => a.isPrimary) || bankAccounts[0];
+  }, [bankAccounts]);
+
+  const handleWithdraw = () => {
+    if (!canWithdraw) {
+      if (userKYC?.status !== 'verified') {
+        Alert.alert(
+          'KYC Required',
+          'Please complete your KYC verification before making a withdrawal.',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Complete KYC', onPress: () => router.push('/kyc') },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'Bank Account Required',
+          'Please add a bank account before making a withdrawal.',
+          [
+            { text: 'Later', style: 'cancel' },
+            { text: 'Add Account', onPress: () => router.push('/bank-details') },
+          ]
+        );
+      }
+      return;
+    }
+    setShowWithdrawModal(true);
+    setSelectedBankId(primaryBank?.id || null);
+  };
+
+  const handleConfirmWithdraw = () => {
+    const amount = parseInt(withdrawAmount, 10);
+
+    if (isNaN(amount) || amount <= 0) {
+      Alert.alert('Invalid Amount', 'Please enter a valid withdrawal amount.');
+      return;
+    }
+
+    if (amount < minWithdrawalAmount) {
+      Alert.alert('Minimum Amount', `Minimum withdrawal amount is ₹${minWithdrawalAmount}`);
+      return;
+    }
+
+    if (amount > availableBalance) {
+      Alert.alert('Insufficient Balance', 'You don\'t have enough balance for this withdrawal.');
+      return;
+    }
+
+    if (!selectedBankId) {
+      Alert.alert('Select Bank', 'Please select a bank account for withdrawal.');
+      return;
+    }
+
+    const success = initiatePayout('user-current', 'Partner Name', amount, selectedBankId);
+
+    if (success) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Withdrawal Initiated',
+        `₹${amount} withdrawal has been initiated. You'll receive it within 24-48 hours.`,
+        [{ text: 'OK' }]
+      );
+      setShowWithdrawModal(false);
+      setWithdrawAmount('');
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert('Error', 'Failed to initiate withdrawal. Please try again.');
+    }
+  };
+
   return (
     <View className="flex-1 bg-gray-50">
       <SafeAreaView className="flex-1" edges={['top']}>
@@ -27,10 +118,13 @@ export default function EarningsScreen() {
             {/* Balance Card */}
             <View className="bg-white/10 rounded-2xl p-4 mt-4">
               <Text className="text-white/70 text-xs">Available Balance</Text>
-              <Text className="text-white font-bold text-3xl mt-1">₹7,900</Text>
+              <Text className="text-white font-bold text-3xl mt-1">₹{availableBalance.toLocaleString()}</Text>
 
               <View className="flex-row mt-4 gap-3">
-                <Pressable className="flex-1 bg-orange-500 rounded-xl py-3 flex-row items-center justify-center">
+                <Pressable
+                  onPress={handleWithdraw}
+                  className="flex-1 bg-orange-500 rounded-xl py-3 flex-row items-center justify-center"
+                >
                   <ArrowUpRight size={18} color="#fff" />
                   <Text className="text-white font-semibold ml-2">Withdraw</Text>
                 </Pressable>
@@ -44,6 +138,35 @@ export default function EarningsScreen() {
         </LinearGradient>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+          {/* KYC/Bank Warning */}
+          {!canWithdraw && (
+            <Animated.View entering={FadeInDown.delay(50).springify()} className="px-4 mt-4">
+              <Pressable
+                onPress={() => {
+                  if (userKYC?.status !== 'verified') {
+                    router.push('/kyc');
+                  } else {
+                    router.push('/bank-details');
+                  }
+                }}
+                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex-row items-center"
+              >
+                <AlertTriangle size={20} color="#F59E0B" />
+                <View className="flex-1 ml-3">
+                  <Text className="text-yellow-800 font-medium">
+                    {userKYC?.status !== 'verified' ? 'Complete KYC' : 'Add Bank Account'}
+                  </Text>
+                  <Text className="text-yellow-700 text-sm">
+                    {userKYC?.status !== 'verified'
+                      ? 'Verify your identity to enable withdrawals'
+                      : 'Add bank account to receive payouts'}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color="#F59E0B" />
+              </Pressable>
+            </Animated.View>
+          )}
+
           {/* Stats */}
           <Animated.View
             entering={FadeInDown.delay(100).springify()}
@@ -142,6 +265,112 @@ export default function EarningsScreen() {
           <View className="h-6" />
         </ScrollView>
       </SafeAreaView>
+
+      {/* Withdraw Modal */}
+      <Modal visible={showWithdrawModal} transparent animationType="slide">
+        <Pressable
+          className="flex-1 bg-black/50 justify-end"
+          onPress={() => setShowWithdrawModal(false)}
+        >
+          <Pressable onPress={(e) => e.stopPropagation()}>
+            <View className="bg-white rounded-t-3xl p-6">
+              <View className="flex-row items-center justify-between mb-6">
+                <Text className="text-gray-800 text-xl font-bold">Withdraw Funds</Text>
+                <Pressable onPress={() => setShowWithdrawModal(false)} className="p-2">
+                  <X size={20} color="#6B7280" />
+                </Pressable>
+              </View>
+
+              {/* Available Balance */}
+              <View className="bg-gray-100 rounded-xl p-4 mb-4">
+                <Text className="text-gray-500 text-xs">Available Balance</Text>
+                <Text className="text-gray-800 text-2xl font-bold">₹{availableBalance.toLocaleString()}</Text>
+              </View>
+
+              {/* Amount Input */}
+              <View className="mb-4">
+                <Text className="text-gray-600 text-sm mb-2">Enter Amount</Text>
+                <View className="flex-row items-center bg-gray-50 rounded-xl px-4 border-2 border-gray-200">
+                  <Text className="text-gray-800 text-xl font-bold">₹</Text>
+                  <TextInput
+                    className="flex-1 ml-2 text-gray-800 text-xl font-bold py-3"
+                    placeholder="0"
+                    placeholderTextColor="#9CA3AF"
+                    value={withdrawAmount}
+                    onChangeText={(text) => setWithdrawAmount(text.replace(/\D/g, ''))}
+                    keyboardType="number-pad"
+                  />
+                </View>
+                <Text className="text-gray-500 text-xs mt-1">
+                  Minimum withdrawal: ₹{minWithdrawalAmount}
+                </Text>
+              </View>
+
+              {/* Quick Amounts */}
+              <View className="flex-row gap-2 mb-4">
+                {[500, 1000, 2000, 5000].map((amount) => (
+                  <Pressable
+                    key={amount}
+                    onPress={() => setWithdrawAmount(String(amount))}
+                    className={`flex-1 py-2 rounded-lg items-center ${
+                      withdrawAmount === String(amount) ? 'bg-orange-500' : 'bg-gray-100'
+                    }`}
+                  >
+                    <Text
+                      className={`font-medium ${
+                        withdrawAmount === String(amount) ? 'text-white' : 'text-gray-600'
+                      }`}
+                    >
+                      ₹{amount}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+
+              {/* Bank Account Selection */}
+              {bankAccounts.length > 0 && (
+                <View className="mb-4">
+                  <Text className="text-gray-600 text-sm mb-2">Withdraw to</Text>
+                  {bankAccounts.map((account) => (
+                    <Pressable
+                      key={account.id}
+                      onPress={() => setSelectedBankId(account.id)}
+                      className={`flex-row items-center p-3 rounded-xl mb-2 border-2 ${
+                        selectedBankId === account.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-gray-50'
+                      }`}
+                    >
+                      <View className="w-10 h-10 bg-gray-200 rounded-lg items-center justify-center mr-3">
+                        <Shield size={20} color="#6B7280" />
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-gray-800 font-medium">{account.bankName}</Text>
+                        <Text className="text-gray-500 text-xs">•••• {account.accountNumber.slice(-4)}</Text>
+                      </View>
+                      {selectedBankId === account.id && (
+                        <CheckCircle size={20} color="#F97316" />
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+
+              {/* Confirm Button */}
+              <Pressable
+                onPress={handleConfirmWithdraw}
+                className="bg-orange-500 py-4 rounded-xl items-center"
+              >
+                <Text className="text-white font-bold text-base">
+                  Withdraw ₹{withdrawAmount || '0'}
+                </Text>
+              </Pressable>
+
+              <Text className="text-gray-500 text-center text-xs mt-3">
+                Funds will be transferred within 24-48 hours
+              </Text>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }

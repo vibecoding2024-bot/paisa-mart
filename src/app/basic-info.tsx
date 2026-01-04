@@ -41,12 +41,12 @@ const QUALIFICATIONS = [
 ];
 
 const ANNUAL_INCOMES = [
-  'Below 2.5 Lakhs',
-  '2.5 - 5 Lakhs',
-  '5 - 10 Lakhs',
-  '10 - 25 Lakhs',
-  '25 - 50 Lakhs',
-  'Above 50 Lakhs',
+  '5 Lakhs to 7 Lakhs',
+  '7.5 Lakhs to 10 Lakhs',
+  '10 Lakhs to 15 Lakhs',
+  '15 Lakhs to 20 Lakhs',
+  '20 Lakhs to 30 Lakhs',
+  '30 Lakhs and Above',
 ];
 
 const MONTHS = [

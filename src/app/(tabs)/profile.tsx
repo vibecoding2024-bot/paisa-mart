@@ -6,13 +6,13 @@ import { User, ChevronRight, Settings, HelpCircle, FileText, Share2, Star, LogOu
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const MENU_ITEMS = [
-  { icon: CreditCard, label: 'Bank Details', description: 'Manage payout account' },
-  { icon: Bell, label: 'Notifications', description: 'Manage alerts' },
-  { icon: Shield, label: 'KYC Verification', description: 'Complete your KYC' },
-  { icon: Share2, label: 'Refer & Earn', description: 'Invite friends, earn ₹500' },
-  { icon: FileText, label: 'Terms & Conditions', description: 'Read our policies' },
-  { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance' },
-  { icon: Star, label: 'Rate Us', description: 'Share your feedback' },
+  { icon: CreditCard, label: 'Bank Details', description: 'Manage payout account', route: '/bank-details' },
+  { icon: Bell, label: 'Notifications', description: 'Manage alerts', route: null },
+  { icon: Shield, label: 'KYC Verification', description: 'Complete your KYC', route: '/kyc' },
+  { icon: Share2, label: 'Refer & Earn', description: 'Invite friends, earn ₹500', route: null },
+  { icon: FileText, label: 'Terms & Conditions', description: 'Read our policies', route: null },
+  { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance', route: null },
+  { icon: Star, label: 'Rate Us', description: 'Share your feedback', route: null },
 ];
 
 export default function ProfileScreen() {
@@ -103,6 +103,7 @@ export default function ProfileScreen() {
               {MENU_ITEMS.map((item, index) => (
                 <Pressable
                   key={index}
+                  onPress={() => item.route && router.push(item.route as any)}
                   className={`flex-row items-center p-4 ${
                     index < MENU_ITEMS.length - 1 ? 'border-b border-gray-50' : ''
                   }`}

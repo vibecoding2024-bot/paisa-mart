@@ -12,6 +12,8 @@ import {
   LogOut,
   Shield,
   Bell,
+  Wallet,
+  CreditCard,
 } from 'lucide-react-native';
 import { useAdminStore } from '@/lib/admin-store';
 
@@ -36,6 +38,8 @@ export default function AdminTabsLayout() {
     { path: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
     { path: '/admin/leads', label: 'Leads', icon: Users },
     { path: '/admin/pipeline', label: 'Pipeline', icon: Kanban },
+    { path: '/admin/incentives', label: 'Incentives', icon: Wallet },
+    { path: '/admin/payouts', label: 'Payouts', icon: CreditCard },
     { path: '/admin/tasks', label: 'Tasks', icon: ClipboardList },
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
