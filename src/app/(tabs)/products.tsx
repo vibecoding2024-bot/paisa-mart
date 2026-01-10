@@ -1,10 +1,11 @@
-import { useState, useEffect } from 'react';
-import { View, Text, ScrollView, Pressable, Image } from 'react-native';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
+import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella, Share2 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useProductStore } from '@/lib/product-store';
 
 const CATEGORIES = [
   { id: 'credit-cards', icon: CreditCard, label: 'Credit Cards', color: '#3B82F6' },
@@ -22,9 +23,11 @@ const CATEGORIES = [
 ];
 
 interface Partner {
+  id?: string;
   name: string;
   tag?: string;
   commission?: string;
+  productType?: string;
 }
 
 interface CategoryData {
@@ -36,24 +39,46 @@ interface CategoryData {
   };
 }
 
+// Map bank names to product IDs in the product store
+const getProductId = (partnerName: string, categoryId: string): string => {
+  const normalized = partnerName.toLowerCase().replace(/\s+/g, '-');
+  const categoryMapping: { [key: string]: string } = {
+    'credit-cards': 'credit-card',
+    'bank-accounts': 'savings-account',
+    'home-loans': 'home-loan',
+    'personal-loans': 'personal-loan',
+    'insta-loans': 'insta-loan',
+    'vehicle-loans': 'vehicle-loan',
+    'business-loans': 'business-loan',
+    'health-insurance': 'health-insurance',
+    'life-insurance': 'life-insurance',
+    'motor-insurance': 'motor-insurance',
+    'gold-loans': 'gold-loan',
+    'real-estate': 'real-estate',
+  };
+
+  const productType = categoryMapping[categoryId] || 'product';
+  return `${normalized}-${productType}`;
+};
+
 const CATEGORY_DATA: CategoryData = {
   'credit-cards': {
     sections: [
       {
         title: 'Credit Cards',
         partners: [
-          { name: 'Axis Bank', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'Federal Bank', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'HDFC Bank', tag: 'Bank', commission: 'Earn up to ₹3,000' },
-          { name: 'Yes Bank', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'Bank of Baroda', tag: 'Bank', commission: 'Earn up to ₹1,500' },
-          { name: 'SBI', tag: 'Bank', commission: 'Earn up to ₹3,000' },
-          { name: 'Equitas Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹3,000' },
-          { name: 'RBL', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'AU Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹2,000' },
-          { name: 'IndusInd Bank', tag: 'Bank', commission: 'Earn up to ₹2,000' },
-          { name: 'HSBC', tag: 'Bank', commission: 'Earn up to ₹4,000' },
+          { name: 'Axis Bank', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'axis-bank-credit-card' },
+          { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'idfc-first-bank-credit-card' },
+          { name: 'Federal Bank', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'federal-bank-credit-card' },
+          { name: 'HDFC Bank', tag: 'Bank', commission: 'Earn up to ₹3,000', id: 'hdfc-bank-credit-card' },
+          { name: 'Yes Bank', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'yes-bank-credit-card' },
+          { name: 'Bank of Baroda', tag: 'Bank', commission: 'Earn up to ₹1,500', id: 'bank-of-baroda-credit-card' },
+          { name: 'SBI', tag: 'Bank', commission: 'Earn up to ₹3,000', id: 'sbi-credit-card' },
+          { name: 'Equitas Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹3,000', id: 'equitas-credit-card' },
+          { name: 'RBL', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'rbl-credit-card' },
+          { name: 'AU Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹2,000', id: 'au-small-finance-bank-credit-card' },
+          { name: 'IndusInd Bank', tag: 'Bank', commission: 'Earn up to ₹2,000', id: 'indusind-bank-credit-card' },
+          { name: 'HSBC', tag: 'Bank', commission: 'Earn up to ₹4,000', id: 'hsbc-credit-card' },
         ],
       },
     ],
@@ -63,11 +88,11 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Savings Accounts',
         partners: [
-          { name: 'Kotak Mahindra Bank', tag: 'Bank', commission: 'Earn up to ₹600' },
-          { name: 'Airtel Payments Bank', tag: 'Payments Bank', commission: 'Earn up to ₹600' },
-          { name: 'DBS Bank', tag: 'Bank', commission: 'Earn up to ₹600' },
-          { name: 'Equitas Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹600' },
-          { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹600' },
+          { name: 'Kotak Mahindra Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'kotak-savings-account' },
+          { name: 'Airtel Payments Bank', tag: 'Payments Bank', commission: 'Earn up to ₹600', id: 'airtel-savings-account' },
+          { name: 'DBS Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'dbs-savings-account' },
+          { name: 'Equitas Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹600', id: 'equitas-savings-account' },
+          { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'idfc-savings-account' },
         ],
       },
     ],
@@ -77,25 +102,25 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Banks',
         partners: [
-          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 1.5%' },
-          { name: 'Yes Bank', tag: 'Bank', commission: 'up to 1.5%' },
-          { name: 'DCB Bank', tag: 'Bank', commission: 'up to 1.5%' },
-          { name: 'ICICI Bank', tag: 'Bank', commission: 'up to 1.5%' },
-          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 1.5%' },
+          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 1.5%', id: 'axis-bank-home-loan' },
+          { name: 'Yes Bank', tag: 'Bank', commission: 'up to 1.5%', id: 'yes-bank-home-loan' },
+          { name: 'DCB Bank', tag: 'Bank', commission: 'up to 1.5%', id: 'dcb-bank-home-loan' },
+          { name: 'ICICI Bank', tag: 'Bank', commission: 'up to 1.5%', id: 'icici-bank-home-loan' },
+          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 1.5%', id: 'hdfc-bank-home-loan' },
         ],
       },
       {
         title: 'Housing Finance / NBFCs',
         partners: [
-          { name: 'ICICI Home Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'Bajaj Housing Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'L&T Housing Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'Muthoot Home Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'IIFL Home Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'InCred Home Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'Cholamandalam Home Finance', tag: 'HFC', commission: 'up to 1.5%' },
-          { name: 'Piramal Finance', tag: 'NBFC', commission: 'up to 1.5%' },
-          { name: 'UGRO Capital', tag: 'NBFC', commission: 'up to 1.5%' },
+          { name: 'ICICI Home Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'icici-home-finance-home-loan' },
+          { name: 'Bajaj Housing Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'bajaj-housing-finance-home-loan' },
+          { name: 'L&T Housing Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'lt-housing-finance-home-loan' },
+          { name: 'Muthoot Home Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'muthoot-home-finance-home-loan' },
+          { name: 'IIFL Home Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'iifl-home-finance-home-loan' },
+          { name: 'InCred Home Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'incred-home-finance-home-loan' },
+          { name: 'Cholamandalam Home Finance', tag: 'HFC', commission: 'up to 1.5%', id: 'cholamandalam-home-finance-home-loan' },
+          { name: 'Piramal Finance', tag: 'NBFC', commission: 'up to 1.5%', id: 'piramal-finance-home-loan' },
+          { name: 'UGRO Capital', tag: 'NBFC', commission: 'up to 1.5%', id: 'ugro-capital-home-loan' },
         ],
       },
     ],
@@ -105,19 +130,19 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Bank Loans (DSA)',
         partners: [
-          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 2.5%' },
-          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 2.5%' },
-          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'InCred', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'L&T Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Cholamandalam', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Piramal', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Aditya Birla Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Hero Fincorp', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'IIFL', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Muthoot Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Lendingkart', tag: 'Fintech', commission: 'up to 2.5%' },
-          { name: 'Tata Capital', tag: 'NBFC', commission: 'up to 2.5%' },
+          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 2.5%', id: 'axis-bank-personal-loan' },
+          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 2.5%', id: 'hdfc-bank-personal-loan' },
+          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'bajaj-personal-loan' },
+          { name: 'InCred', tag: 'NBFC', commission: 'up to 2.5%', id: 'incred-personal-loan' },
+          { name: 'L&T Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'lt-finance-personal-loan' },
+          { name: 'Cholamandalam', tag: 'NBFC', commission: 'up to 2.5%', id: 'cholamandalam-personal-loan' },
+          { name: 'Piramal', tag: 'NBFC', commission: 'up to 2.5%', id: 'piramal-personal-loan' },
+          { name: 'Aditya Birla Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'aditya-birla-personal-loan' },
+          { name: 'Hero Fincorp', tag: 'NBFC', commission: 'up to 2.5%', id: 'hero-fincorp-personal-loan' },
+          { name: 'IIFL', tag: 'NBFC', commission: 'up to 2.5%', id: 'iifl-personal-loan' },
+          { name: 'Muthoot Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'muthoot-personal-loan' },
+          { name: 'Lendingkart', tag: 'Fintech', commission: 'up to 2.5%', id: 'lendingkart-personal-loan' },
+          { name: 'Tata Capital', tag: 'NBFC', commission: 'up to 2.5%', id: 'tata-capital-personal-loan' },
         ],
       },
     ],
@@ -127,19 +152,19 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'App-Based Fintechs',
         partners: [
-          { name: 'Moneyview', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'InCred Finance', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Kissht', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Fi Money', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'CASHe', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'FlexiLoans', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Prefr', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'KreditBee', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Te2 Credit', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'My Flot', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'ZYPE', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Credit Sea', tag: 'App-Based', commission: 'up to 3.5%' },
-          { name: 'Ring Power', tag: 'App-Based', commission: 'up to 3.5%' },
+          { name: 'Moneyview', tag: 'App-Based', commission: 'up to 3.5%', id: 'moneyview-insta-loan' },
+          { name: 'InCred Finance', tag: 'App-Based', commission: 'up to 3.5%', id: 'incred-finance-insta-loan' },
+          { name: 'Kissht', tag: 'App-Based', commission: 'up to 3.5%', id: 'kissht-insta-loan' },
+          { name: 'Fi Money', tag: 'App-Based', commission: 'up to 3.5%', id: 'fi-money-insta-loan' },
+          { name: 'CASHe', tag: 'App-Based', commission: 'up to 3.5%', id: 'cashe-insta-loan' },
+          { name: 'FlexiLoans', tag: 'App-Based', commission: 'up to 3.5%', id: 'flexiloans-insta-loan' },
+          { name: 'Prefr', tag: 'App-Based', commission: 'up to 3.5%', id: 'prefr-insta-loan' },
+          { name: 'KreditBee', tag: 'App-Based', commission: 'up to 3.5%', id: 'kreditbee-insta-loan' },
+          { name: 'Te2 Credit', tag: 'App-Based', commission: 'up to 3.5%', id: 'te2-credit-insta-loan' },
+          { name: 'My Flot', tag: 'App-Based', commission: 'up to 3.5%', id: 'my-flot-insta-loan' },
+          { name: 'ZYPE', tag: 'App-Based', commission: 'up to 3.5%', id: 'zype-insta-loan' },
+          { name: 'Credit Sea', tag: 'App-Based', commission: 'up to 3.5%', id: 'credit-sea-insta-loan' },
+          { name: 'Ring Power', tag: 'App-Based', commission: 'up to 3.5%', id: 'ring-power-insta-loan' },
         ],
       },
     ],
@@ -149,11 +174,11 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Vehicle Finance Partners',
         partners: [
-          { name: 'Cholamandalam', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 2.5%' },
-          { name: 'ICICI Bank', tag: 'Bank', commission: 'up to 2.5%' },
-          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 2.5%' },
-          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%' },
+          { name: 'Cholamandalam', tag: 'NBFC', commission: 'up to 2.5%', id: 'cholamandalam-vehicle-loan' },
+          { name: 'HDFC Bank', tag: 'Bank', commission: 'up to 2.5%', id: 'hdfc-bank-vehicle-loan' },
+          { name: 'ICICI Bank', tag: 'Bank', commission: 'up to 2.5%', id: 'icici-bank-vehicle-loan' },
+          { name: 'Axis Bank', tag: 'Bank', commission: 'up to 2.5%', id: 'axis-bank-vehicle-loan' },
+          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'bajaj-finance-vehicle-loan' },
         ],
       },
     ],
@@ -163,12 +188,12 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Business Finance Partners',
         partners: [
-          { name: 'Lendingkart', tag: 'Fintech', commission: 'up to 2.5%' },
-          { name: 'UGRO Capital', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'FlexiLoans', tag: 'Fintech', commission: 'up to 2.5%' },
-          { name: 'L&T Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%' },
-          { name: 'Tata Capital', tag: 'NBFC', commission: 'up to 2.5%' },
+          { name: 'Lendingkart', tag: 'Fintech', commission: 'up to 2.5%', id: 'lendingkart-business-loan' },
+          { name: 'UGRO Capital', tag: 'NBFC', commission: 'up to 2.5%', id: 'ugro-capital-business-loan' },
+          { name: 'FlexiLoans', tag: 'Fintech', commission: 'up to 2.5%', id: 'flexiloans-business-loan' },
+          { name: 'L&T Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'lt-finance-business-loan' },
+          { name: 'Bajaj Finance', tag: 'NBFC', commission: 'up to 2.5%', id: 'bajaj-finance-business-loan' },
+          { name: 'Tata Capital', tag: 'NBFC', commission: 'up to 2.5%', id: 'tata-capital-business-loan' },
         ],
       },
     ],
@@ -178,9 +203,9 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Health Insurance Partners',
         partners: [
-          { name: 'Star Health Assure', tag: 'Insurance', commission: 'up to 15%' },
-          { name: 'HDFC Ergo Health', tag: 'Insurance', commission: 'up to 15%' },
-          { name: 'ICICI Lombard Health', tag: 'Insurance', commission: 'up to 15%' },
+          { name: 'Star Health Assure', tag: 'Insurance', commission: 'up to 15%', id: 'star-health-insurance' },
+          { name: 'HDFC Ergo Health', tag: 'Insurance', commission: 'up to 15%', id: 'hdfc-ergo-health-insurance' },
+          { name: 'ICICI Lombard Health', tag: 'Insurance', commission: 'up to 15%', id: 'icici-lombard-health-insurance' },
         ],
       },
     ],
@@ -190,10 +215,10 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Life Insurance Partners',
         partners: [
-          { name: 'LIC', tag: 'Insurance', commission: 'up to 20%' },
-          { name: 'HDFC Life', tag: 'Insurance', commission: 'up to 20%' },
-          { name: 'ICICI Prudential', tag: 'Insurance', commission: 'up to 20%' },
-          { name: 'SBI Life', tag: 'Insurance', commission: 'up to 20%' },
+          { name: 'LIC', tag: 'Insurance', commission: 'up to 20%', id: 'lic-life-insurance' },
+          { name: 'HDFC Life', tag: 'Insurance', commission: 'up to 20%', id: 'hdfc-life-insurance' },
+          { name: 'ICICI Prudential', tag: 'Insurance', commission: 'up to 20%', id: 'icici-prudential-life-insurance' },
+          { name: 'SBI Life', tag: 'Insurance', commission: 'up to 20%', id: 'sbi-life-insurance' },
         ],
       },
     ],
@@ -203,19 +228,19 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Motor Insurance Partners',
         partners: [
-          { name: 'Digit Insurance', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'ICICI Lombard', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'Magma HDI', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'New India Assurance', tag: 'PSU', commission: 'up to 30%' },
-          { name: 'Liberty General', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'SBI General', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'Reliance General', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'Royal Sundaram', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'IFFCO Tokio', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'Universal Sompo', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'TATA AIG', tag: 'Insurance', commission: 'up to 30%' },
-          { name: 'National Insurance', tag: 'PSU', commission: 'up to 30%' },
-          { name: 'Shriram General', tag: 'Insurance', commission: 'up to 30%' },
+          { name: 'Digit Insurance', tag: 'Insurance', commission: 'up to 30%', id: 'digit-motor-insurance' },
+          { name: 'ICICI Lombard', tag: 'Insurance', commission: 'up to 30%', id: 'icici-lombard-motor-insurance' },
+          { name: 'Magma HDI', tag: 'Insurance', commission: 'up to 30%', id: 'magma-hdi-motor-insurance' },
+          { name: 'New India Assurance', tag: 'PSU', commission: 'up to 30%', id: 'new-india-assurance-motor-insurance' },
+          { name: 'Liberty General', tag: 'Insurance', commission: 'up to 30%', id: 'liberty-general-motor-insurance' },
+          { name: 'SBI General', tag: 'Insurance', commission: 'up to 30%', id: 'sbi-general-motor-insurance' },
+          { name: 'Reliance General', tag: 'Insurance', commission: 'up to 30%', id: 'reliance-general-motor-insurance' },
+          { name: 'Royal Sundaram', tag: 'Insurance', commission: 'up to 30%', id: 'royal-sundaram-motor-insurance' },
+          { name: 'IFFCO Tokio', tag: 'Insurance', commission: 'up to 30%', id: 'iffco-tokio-motor-insurance' },
+          { name: 'Universal Sompo', tag: 'Insurance', commission: 'up to 30%', id: 'universal-sompo-motor-insurance' },
+          { name: 'TATA AIG', tag: 'Insurance', commission: 'up to 30%', id: 'tata-aig-motor-insurance' },
+          { name: 'National Insurance', tag: 'PSU', commission: 'up to 30%', id: 'national-insurance-motor-insurance' },
+          { name: 'Shriram General', tag: 'Insurance', commission: 'up to 30%', id: 'shriram-general-motor-insurance' },
         ],
       },
     ],
@@ -225,10 +250,10 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Gold Loan Partners',
         partners: [
-          { name: 'Muthoot Finance', tag: 'NBFC', commission: '0.7%' },
-          { name: 'Manappuram Finance', tag: 'NBFC', commission: '0.7%' },
-          { name: 'IIFL Gold Loan', tag: 'NBFC', commission: '0.7%' },
-          { name: 'Federal Bank Gold Loan', tag: 'Bank', commission: '0.7%' },
+          { name: 'Muthoot Finance', tag: 'NBFC', commission: '0.7%', id: 'muthoot-gold-loan' },
+          { name: 'Manappuram Finance', tag: 'NBFC', commission: '0.7%', id: 'manappuram-gold-loan' },
+          { name: 'IIFL Gold Loan', tag: 'NBFC', commission: '0.7%', id: 'iifl-gold-loan' },
+          { name: 'Federal Bank Gold Loan', tag: 'Bank', commission: '0.7%', id: 'federal-bank-gold-loan' },
         ],
       },
     ],
@@ -238,10 +263,10 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Real Estate Partners',
         partners: [
-          { name: 'NoBroker', tag: 'Platform', commission: 'up to 20%' },
-          { name: 'Housing.com', tag: 'Platform', commission: 'up to 20%' },
-          { name: 'MagicBricks', tag: 'Platform', commission: 'up to 20%' },
-          { name: '99acres', tag: 'Platform', commission: 'up to 20%' },
+          { name: 'NoBroker', tag: 'Platform', commission: 'up to 20%', id: 'nobroker-real-estate' },
+          { name: 'Housing.com', tag: 'Platform', commission: 'up to 20%', id: 'housing-com-real-estate' },
+          { name: 'MagicBricks', tag: 'Platform', commission: 'up to 20%', id: 'magicbricks-real-estate' },
+          { name: '99acres', tag: 'Platform', commission: 'up to 20%', id: '99acres-real-estate' },
         ],
       },
     ],
@@ -265,9 +290,11 @@ const getTagColor = (tag: string) => {
 };
 
 export default function ProductsScreen() {
+  const router = useRouter();
   const { category } = useLocalSearchParams<{ category?: string }>();
   const [selectedCategory, setSelectedCategory] = useState('credit-cards');
   const categoryData = CATEGORY_DATA[selectedCategory];
+  const products = useProductStore((s) => s.products);
 
   // Set category from navigation params
   useEffect(() => {
@@ -275,7 +302,34 @@ export default function ProductsScreen() {
       setSelectedCategory(category);
     }
   }, [category]);
+
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
+
+  // Navigate to share card screen
+  const handleProductPress = useCallback((partner: Partner, categoryId: string) => {
+    // Check if product exists in store, otherwise create a temporary product ID
+    const productId = partner.id || getProductId(partner.name, categoryId);
+
+    // Check if the product exists in the store
+    const existingProduct = products.find(p => p.id === productId);
+
+    if (existingProduct) {
+      router.push({ pathname: '/share-card', params: { productId } });
+    } else {
+      // For products not in the store, create a dynamic ID based on name and category
+      // This will show a fallback in the share card screen
+      router.push({
+        pathname: '/share-card',
+        params: {
+          productId,
+          partnerName: partner.name,
+          category: categoryId,
+          commission: partner.commission,
+          tag: partner.tag,
+        }
+      });
+    }
+  }, [router, products]);
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -304,24 +358,25 @@ export default function ProductsScreen() {
             showsHorizontalScrollIndicator={false}
             className="py-3"
             contentContainerStyle={{ paddingHorizontal: 12 }}
+            style={{ flexGrow: 0 }}
           >
-            {CATEGORIES.map((category) => {
-              const isSelected = selectedCategory === category.id;
+            {CATEGORIES.map((cat) => {
+              const isSelected = selectedCategory === cat.id;
               return (
                 <Pressable
-                  key={category.id}
-                  onPress={() => setSelectedCategory(category.id)}
+                  key={cat.id}
+                  onPress={() => setSelectedCategory(cat.id)}
                   className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
                     isSelected ? 'bg-orange-500' : 'bg-gray-100'
                   }`}
                 >
-                  <category.icon size={16} color={isSelected ? '#fff' : category.color} />
+                  <cat.icon size={16} color={isSelected ? '#fff' : cat.color} />
                   <Text
                     className={`ml-2 text-sm font-medium ${
                       isSelected ? 'text-white' : 'text-gray-600'
                     }`}
                   >
-                    {category.label}
+                    {cat.label}
                   </Text>
                 </Pressable>
               );
@@ -353,7 +408,8 @@ export default function ProductsScreen() {
                   return (
                     <Pressable
                       key={partnerIndex}
-                      className="bg-white rounded-xl p-4 mb-2 flex-row items-center"
+                      onPress={() => handleProductPress(partner, selectedCategory)}
+                      className="bg-white rounded-xl p-4 mb-2 flex-row items-center active:bg-gray-50"
                       style={{
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: 1 },
@@ -383,9 +439,12 @@ export default function ProductsScreen() {
                           </View>
                         )}
                       </View>
-                      <View className="items-end">
+                      <View className="items-end mr-2">
                         <Text className="text-green-600 font-bold text-sm">{partner.commission}</Text>
                         <Text className="text-gray-400 text-xs">commission</Text>
+                      </View>
+                      <View className="w-8 h-8 bg-green-50 rounded-full items-center justify-center">
+                        <Share2 size={16} color="#22C55E" />
                       </View>
                     </Pressable>
                   );

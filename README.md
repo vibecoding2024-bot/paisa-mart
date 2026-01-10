@@ -9,6 +9,12 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - Basic information collection form with salary range selection
 - Partner dashboard with earnings overview
 - Products catalog with 12 categories
+- **Share Card Link Feature** (WhatsApp sharing)
+  - Branded product banners
+  - Pre-written multilingual message preview (English, Hindi, Telugu)
+  - WhatsApp share with tracked referral links
+  - T&C for Payout modal with eligibility rules
+  - Language selector for message customization
 - Learning/Training modules
 - Earnings & wallet management with withdrawal functionality
 - KYC verification flow
@@ -77,6 +83,7 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 6. **Tasks** - Follow-ups, stuck leads, overdue items
 7. **Analytics** - Approval rates, rejection analysis, provider performance
 8. **Settings** - User management, audit logs, config, exports
+9. **Products** - Product banner management, multilingual content editor
 
 ### Incentive Management (Admin)
 - **Dashboard Widgets:**
@@ -166,4 +173,41 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
   - KYC rejection or approval
 - Incentive credited only after admin approval
 - Incentive flow: Pending -> Approved -> Paid
-- Multi-language support ready (future enhancement)
+- Multi-language support: English, Hindi, Telugu
+
+## Share Card Link Feature
+
+When a partner taps on any product (e.g., Axis Bank Credit Card), the app opens a Share Card Link screen:
+
+### Share Card Link Screen
+- **Header:** "Share Card Link" with back and close buttons
+- **Message Preview:** Light green container showing:
+  - Product banner image (branded)
+  - Greeting: "Namaste 🙏,"
+  - Headline in italics
+  - Product description
+  - Benefits list with green checkmarks
+  - "Why you should apply" reasons
+  - Support phone numbers
+  - Advisor name and title
+- **Language Selector:** English, Hindi, Telugu pills
+- **Note:** Bank policy disclaimer
+- **Share Buttons:** Generic share + WhatsApp share
+
+### T&C for Payout Modal
+- Payout eligibility conditions
+- LTF (Life Time Free) payout rules
+- Continue button
+
+### WhatsApp Share Behavior
+- Composes message with selected language template
+- Replaces placeholders: advisor name, support phones, referral link
+- Opens WhatsApp share intent
+- Tracks analytics: share_clicked with productId and advisorReferralCode
+
+### Admin Product Management
+- View all products with banners
+- Enable/disable products
+- Edit product content in all 3 languages
+- Upload banner URLs
+- Configure benefits and reasons
