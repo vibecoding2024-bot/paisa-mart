@@ -1,0 +1,12 @@
+BACKUP NAME: v1_stable
+CREATED: January 10, 2026 at 02:23 AM
+DESCRIPTION: Best stable version - Complete app with all features working
+
+TO RESTORE THIS BACKUP:
+Run this command in terminal or ask Claude to restore it:
+"Restore backup v1_stable_20260110_022308"
+
+CONTENTS:
+- src/ folder (all screens, components, and libraries)
+- package.json
+- README.md
