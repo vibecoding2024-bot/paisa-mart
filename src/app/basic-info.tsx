@@ -16,7 +16,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone } from 'lucide-react-native';
+import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 
 const OCCUPATIONS = [
@@ -47,6 +47,15 @@ const ANNUAL_INCOMES = [
   '15 Lakhs to 20 Lakhs',
   '20 Lakhs to 30 Lakhs',
   '30 Lakhs and Above',
+];
+
+const CIBIL_SCORE_RANGES = [
+  '300–549 (Poor)',
+  '550–649 (Fair)',
+  '650–749 (Good)',
+  '750–799 (Very Good)',
+  '800–900 (Excellent)',
+  "I don't know my score",
 ];
 
 const MONTHS = [
@@ -219,6 +228,7 @@ export default function BasicInfoScreen() {
   const [occupation, setOccupation] = useState('');
   const [qualification, setQualification] = useState('');
   const [annualIncome, setAnnualIncome] = useState('');
+  const [cibilScoreRange, setCibilScoreRange] = useState('');
   const [pincode, setPincode] = useState('');
   const [dobDay, setDobDay] = useState('');
   const [dobMonth, setDobMonth] = useState('');
@@ -228,6 +238,7 @@ export default function BasicInfoScreen() {
   const [showOccupationModal, setShowOccupationModal] = useState(false);
   const [showQualificationModal, setShowQualificationModal] = useState(false);
   const [showIncomeModal, setShowIncomeModal] = useState(false);
+  const [showCibilScoreModal, setShowCibilScoreModal] = useState(false);
   const [showDayModal, setShowDayModal] = useState(false);
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
@@ -306,6 +317,14 @@ export default function BasicInfoScreen() {
                   icon={<Mail size={20} color="#6B7280" />}
                   keyboardType="email-address"
                   autoCapitalize="none"
+                />
+
+                <DropdownInput
+                  label="CIBIL Score Range (Optional)"
+                  value={cibilScoreRange}
+                  placeholder="Select your CIBIL score range"
+                  icon={<CreditCard size={20} color="#6B7280" />}
+                  onPress={() => setShowCibilScoreModal(true)}
                 />
 
                 <DropdownInput
@@ -447,6 +466,13 @@ export default function BasicInfoScreen() {
         options={ANNUAL_INCOMES}
         onSelect={setAnnualIncome}
         title="Select Annual Income"
+      />
+      <DropdownModal
+        visible={showCibilScoreModal}
+        onClose={() => setShowCibilScoreModal(false)}
+        options={CIBIL_SCORE_RANGES}
+        onSelect={setCibilScoreRange}
+        title="Select CIBIL Score Range"
       />
       <DropdownModal
         visible={showDayModal}
