@@ -490,6 +490,70 @@ const PRODUCT_TEMPLATES: ProductDetails[] = [
       ],
     },
   },
+  // INDUSIND BANK BUSINESS SAVINGS ACCOUNT
+  {
+    id: 'indusind-bank-business-savings-account',
+    providerName: 'IndusInd Bank',
+    productName: 'Business Savings Account',
+    category: 'bank-accounts',
+    bannerImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
+    commission: 'Earn up to ₹600',
+    tag: 'Bank',
+    enabled: true,
+    content: {
+      headline: {
+        english: 'Banking designed for business!',
+        hindi: 'व्यापार के लिए डिज़ाइन की गई बैंकिंग!',
+        telugu: 'వ్యాపారం కోసం రూపొందించిన బ్యాంకింగ్!',
+      },
+      description: {
+        english: 'IndusInd Bank Business Savings Account with premium features for entrepreneurs.',
+        hindi: 'उद्यमियों के लिए प्रीमियम सुविधाओं के साथ इंडसइंड बैंक बिजनेस सेविंग्स अकाउंट।',
+        telugu: 'వ్యవస్థాపకులకు ప్రీమియం ఫీచర్లతో ఇండస్‌ఇండ్ బ్యాంక్ బిజినెస్ సేవింగ్స్ అకౌంట్.',
+      },
+      benefits: [
+        { english: 'Higher transaction limits', hindi: 'अधिक लेनदेन सीमा', telugu: 'అధిక లావాదేవీ పరిమితులు' },
+        { english: 'Free NEFT/RTGS transfers', hindi: 'मुफ्त NEFT/RTGS ट्रांसफर', telugu: 'ఉచిత NEFT/RTGS ట్రాన్స్‌ఫర్లు' },
+        { english: 'Dedicated relationship manager', hindi: 'समर्पित रिलेशनशिप मैनेजर', telugu: 'అంకితమైన రిలేషన్‌షిప్ మేనేజర్' },
+      ],
+      reasons: [
+        { english: 'Business-friendly features', hindi: 'व्यापार-अनुकूल सुविधाएं', telugu: 'వ్యాపార-అనుకూల ఫీచర్లు' },
+        { english: 'Quick account opening', hindi: 'त्वरित खाता खोलना', telugu: 'త్వరిత ఖాతా ఓపెనింగ్' },
+      ],
+    },
+  },
+  // TIDE BUSINESS SAVINGS ACCOUNT
+  {
+    id: 'tide-business-savings-account',
+    providerName: 'Tide Business',
+    productName: 'Business Savings Account',
+    category: 'bank-accounts',
+    bannerImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
+    commission: 'Earn up to ₹600',
+    tag: 'Bank',
+    enabled: true,
+    content: {
+      headline: {
+        english: 'Modern banking for modern businesses!',
+        hindi: 'आधुनिक व्यापार के लिए आधुनिक बैंकिंग!',
+        telugu: 'ఆధునిక వ్యాపారాలకు ఆధునిక బ్యాంకింగ్!',
+      },
+      description: {
+        english: 'Tide Business Account with smart invoicing and expense management.',
+        hindi: 'स्मार्ट इनवॉइसिंग और खर्च प्रबंधन के साथ टाइड बिजनेस अकाउंट।',
+        telugu: 'స్మార్ట్ ఇన్‌వాయిసింగ్ మరియు ఖర్చు నిర్వహణతో టైడ్ బిజినెస్ అకౌంట్.',
+      },
+      benefits: [
+        { english: 'Free invoicing tools', hindi: 'मुफ्त इनवॉइसिंग टूल्स', telugu: 'ఉచిత ఇన్‌వాయిసింగ్ టూల్స్' },
+        { english: 'Automated expense tracking', hindi: 'स्वचालित खर्च ट्रैकिंग', telugu: 'ఆటోమేటెడ్ ఖర్చు ట్రాకింగ్' },
+        { english: 'Instant account setup', hindi: 'तुरंत अकाउंट सेटअप', telugu: 'తక్షణ అకౌంట్ సెటప్' },
+      ],
+      reasons: [
+        { english: 'Digital-first approach', hindi: 'डिजिटल-फर्स्ट दृष्टिकोण', telugu: 'డిజిటల్-ఫస్ట్ అప్రోచ్' },
+        { english: 'Built for SMEs', hindi: 'SME के लिए बनाया गया', telugu: 'SMEల కోసం నిర్మించబడింది' },
+      ],
+    },
+  },
   // ============================================
   // HOME LOANS - BANKS
   // ============================================
