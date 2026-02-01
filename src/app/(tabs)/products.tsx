@@ -95,6 +95,13 @@ const CATEGORY_DATA: CategoryData = {
           { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'idfc-savings-account' },
         ],
       },
+      {
+        title: 'Business Savings Accounts',
+        partners: [
+          { name: 'IndusInd Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'indusind-bank-business-savings-account' },
+          { name: 'Tide Business', tag: 'Bank', commission: 'Earn up to ₹600', id: 'tide-business-savings-account' },
+        ],
+      },
     ],
   },
   'home-loans': {
