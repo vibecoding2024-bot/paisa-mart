@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
@@ -18,6 +18,8 @@ const QUICK_ACTIONS = [
   { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
   { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
   { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
+  { icon: Smartphone, label: 'Recharge & Pay Bills', color: '#7C3AED', bg: '#F5F3FF', categoryId: 'recharge-bills', isScreen: true },
+  { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
 ];
 
 const PRODUCTS = [
