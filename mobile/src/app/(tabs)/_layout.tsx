@@ -1,7 +1,7 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
 import { View } from 'react-native';
-import { Home, Grid3X3, Wallet, User, GraduationCap } from 'lucide-react-native';
+import { Home, Grid3X3, Wallet, User, GraduationCap, CreditCard } from 'lucide-react-native';
 
 export default function TabLayout() {
   return (
@@ -42,6 +42,17 @@ export default function TabLayout() {
           tabBarIcon: ({ color, focused }) => (
             <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
               <Grid3X3 size={22} color={color} />
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="cash-cards"
+        options={{
+          title: 'Cash & Cards',
+          tabBarIcon: ({ color, focused }) => (
+            <View className={focused ? 'bg-orange-50 p-1.5 rounded-lg' : 'p-1.5'}>
+              <CreditCard size={22} color={color} />
             </View>
           ),
         }}
