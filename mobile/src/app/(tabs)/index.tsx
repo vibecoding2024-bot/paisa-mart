@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
 const QUICK_ACTIONS = [
-  { icon: CreditCard, label: 'Cash & Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'cash-cards', isScreen: true },
+  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
   { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF', categoryId: 'bank-accounts' },
   { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'home-loans' },
   { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5', categoryId: 'personal-loans' },
@@ -18,6 +18,7 @@ const QUICK_ACTIONS = [
   { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
   { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
   { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
+  { icon: Wallet, label: 'Cash & Credit Cards', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'cash-cards', isScreen: true },
   { icon: Smartphone, label: 'Recharge & Pay Bills', color: '#7C3AED', bg: '#F5F3FF', categoryId: 'recharge-bills', isScreen: true },
   { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
 ];
