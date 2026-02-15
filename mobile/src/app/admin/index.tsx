@@ -39,7 +39,7 @@ export default function AdminLoginScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace('/admin/dashboard');
       } else {
-        setError('Invalid credentials. Try admin@retire.com / admin123');
+        setError('Invalid credentials. Try admin@paisamart.com / admin123');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (err) {
@@ -66,7 +66,7 @@ export default function AdminLoginScreen() {
                 <Shield size={40} color="#fff" />
               </View>
               <Text className="text-white text-3xl font-bold">Admin Portal</Text>
-              <Text className="text-slate-400 text-base mt-2">Retire Operations Dashboard</Text>
+              <Text className="text-slate-400 text-base mt-2">Paisa Mart Operations Dashboard</Text>
             </Animated.View>
 
             {/* Login Card */}
@@ -92,7 +92,7 @@ export default function AdminLoginScreen() {
                   <TextInput
                     className="flex-1 ml-3 text-white text-base"
                     style={{ minHeight: 44 }}
-                    placeholder="admin@retire.com"
+                    placeholder="admin@paisamart.com"
                     placeholderTextColor="#64748B"
                     value={email}
                     onChangeText={setEmail}
@@ -152,7 +152,7 @@ export default function AdminLoginScreen() {
               {/* Demo Credentials */}
               <View className="mt-6 p-4 bg-slate-700/50 rounded-xl">
                 <Text className="text-slate-400 text-xs text-center mb-2">Demo Credentials</Text>
-                <Text className="text-slate-300 text-sm text-center">admin@retire.com</Text>
+                <Text className="text-slate-300 text-sm text-center">admin@paisamart.com</Text>
                 <Text className="text-slate-300 text-sm text-center">admin123</Text>
               </View>
             </Animated.View>

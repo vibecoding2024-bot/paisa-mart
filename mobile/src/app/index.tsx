@@ -59,9 +59,9 @@ export default function LoginScreen() {
                 className="flex-row items-center"
               >
                 <View className="w-10 h-10 bg-orange-500 rounded-lg items-center justify-center mr-2">
-                  <Text className="text-white font-bold text-lg">R</Text>
+                  <Text className="text-white font-bold text-lg">P</Text>
                 </View>
-                <Text className="text-white text-2xl font-bold">Retire</Text>
+                <Text className="text-white text-2xl font-bold">Paisa Mart</Text>
               </Animated.View>
 
               {/* Hero Text */}

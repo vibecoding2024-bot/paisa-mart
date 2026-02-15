@@ -1,4 +1,4 @@
-# Retire - Financial Products Partner App
+# Paisa Mart - Financial Products Partner App
 
 A mobile app (GroMo clone) that allows partners to earn money by selling financial products like credit cards, loans, insurance, and more. Includes a comprehensive Admin Dashboard for internal operations.
 
@@ -141,7 +141,7 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - **Viewer** - Read-only access
 
 ## Demo Credentials
-- Email: admin@retire.com
+- Email: admin@paisamart.com
 - Password: admin123
 
 ## Design

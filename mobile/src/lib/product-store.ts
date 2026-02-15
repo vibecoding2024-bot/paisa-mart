@@ -1856,7 +1856,7 @@ export const generateShareMessage = (
   language: Language
 ): string => {
   const content = product.content;
-  const referralLink = `https://apply.retirerich.in/${product.id}?ref=${advisor.referralCode}`;
+  const referralLink = `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
 
   const greeting = {
     english: 'Namaste 🙏,',

@@ -65,7 +65,7 @@ export default function AdminTabsLayout() {
             <View className="w-8 h-8 bg-orange-500 rounded-lg items-center justify-center mr-2">
               <Shield size={18} color="#fff" />
             </View>
-            <Text className="text-white font-bold text-lg">Retire Admin</Text>
+            <Text className="text-white font-bold text-lg">Paisa Mart Admin</Text>
           </View>
           <View className="flex-row items-center gap-3">
             <Pressable className="w-9 h-9 bg-slate-800 rounded-full items-center justify-center">

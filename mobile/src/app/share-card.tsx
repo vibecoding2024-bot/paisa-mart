@@ -189,7 +189,7 @@ export default function ShareCardScreen() {
   }
 
   const content = product.content;
-  const referralLink = `https://apply.retirerich.in/${product.id}?ref=${advisor.referralCode}`;
+  const referralLink = `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
 
   return (
     <View className="flex-1 bg-gray-100">

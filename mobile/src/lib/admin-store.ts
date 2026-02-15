@@ -246,9 +246,9 @@ interface AdminStore {
 
 // Pre-configured admin users
 const INITIAL_ADMIN_USERS: AdminUser[] = [
-  { id: 'admin-1', name: 'Super Admin', email: 'admin@retire.com', role: 'admin', createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'admin-2', name: 'Operations Lead', email: 'ops@retire.com', role: 'ops', createdAt: '2024-01-01T00:00:00Z' },
-  { id: 'admin-3', name: 'Viewer Account', email: 'viewer@retire.com', role: 'viewer', createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'admin-1', name: 'Super Admin', email: 'admin@paisamart.com', role: 'admin', createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'admin-2', name: 'Operations Lead', email: 'ops@paisamart.com', role: 'ops', createdAt: '2024-01-01T00:00:00Z' },
+  { id: 'admin-3', name: 'Viewer Account', email: 'viewer@paisamart.com', role: 'viewer', createdAt: '2024-01-01T00:00:00Z' },
 ];
 
 export const useAdminStore = create<AdminStore>((set, get) => ({
