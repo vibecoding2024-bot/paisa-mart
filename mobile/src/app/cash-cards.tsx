@@ -1,9 +1,10 @@
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CreditCard, Wallet, TrendingUp, ArrowUpRight, Plus, History, Settings } from 'lucide-react-native';
+import { CreditCard, Wallet, TrendingUp, ArrowUpRight, Plus, History, Settings, ArrowLeft } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 const CARD_TYPES = [
   { id: '1', name: 'Credit Cards', icon: CreditCard, color: '#3B82F6', bg: '#EFF6FF', count: 0 },
@@ -16,8 +17,15 @@ const RECENT_TRANSACTIONS = [
 ];
 
 export default function CashCardsScreen() {
+  const router = useRouter();
+
   const handlePress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const handleBack = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.back();
   };
 
   return (
@@ -29,6 +37,19 @@ export default function CashCardsScreen() {
           style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
         >
           <View className="px-6 pt-4">
+            {/* Back Button */}
+            <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-4">
+              <Pressable
+                onPress={handleBack}
+                className="flex-row items-center active:opacity-70"
+              >
+                <View className="w-9 h-9 bg-white/10 rounded-xl items-center justify-center mr-2">
+                  <ArrowLeft size={20} color="#fff" />
+                </View>
+                <Text className="text-white/90 text-sm font-medium">Back to Home</Text>
+              </Pressable>
+            </Animated.View>
+
             <Animated.View entering={FadeInDown.delay(100).springify()}>
               <Text className="text-white text-2xl font-bold">Cash & Credit Cards</Text>
               <Text className="text-white/70 text-sm mt-1">Manage and track all your card applications</Text>
