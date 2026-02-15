@@ -18,7 +18,7 @@ const QUICK_ACTIONS = [
   { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
   { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
   { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
-  { icon: Wallet, label: 'Cash & Credit Cards', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'cash-cards', isScreen: true },
+  { icon: Wallet, label: 'Cash on Credit Card', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'cash-cards', isScreen: true },
   { icon: Smartphone, label: 'Recharge & Pay Bills', color: '#7C3AED', bg: '#F5F3FF', categoryId: 'recharge-bills', isScreen: true },
   { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
 ];

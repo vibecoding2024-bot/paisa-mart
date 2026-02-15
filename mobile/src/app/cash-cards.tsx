@@ -51,7 +51,7 @@ export default function CashCardsScreen() {
             </Animated.View>
 
             <Animated.View entering={FadeInDown.delay(100).springify()}>
-              <Text className="text-white text-2xl font-bold">Cash & Credit Cards</Text>
+              <Text className="text-white text-2xl font-bold">Cash on Credit Card</Text>
               <Text className="text-white/70 text-sm mt-1">Manage and track all your card applications</Text>
             </Animated.View>
 
