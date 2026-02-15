@@ -6,7 +6,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
 const QUICK_ACTIONS = [
-  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
+  { icon: CreditCard, label: 'Cash & Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'cash-cards', isScreen: true },
   { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF', categoryId: 'bank-accounts' },
   { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'home-loans' },
   { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5', categoryId: 'personal-loans' },
@@ -30,8 +30,12 @@ const PRODUCTS = [
 export default function HomeScreen() {
   const router = useRouter();
 
-  const handleQuickAction = (categoryId: string) => {
-    router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
+  const handleQuickAction = (categoryId: string, isScreen?: boolean) => {
+    if (isScreen) {
+      router.push(`/${categoryId}`);
+    } else {
+      router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
+    }
   };
 
   return (
@@ -92,7 +96,7 @@ export default function HomeScreen() {
                     key={index}
                     className="items-center mb-4"
                     style={{ width: '30%' }}
-                    onPress={() => handleQuickAction(action.categoryId)}
+                    onPress={() => handleQuickAction(action.categoryId, action.isScreen)}
                   >
                     <View
                       className="w-12 h-12 rounded-2xl items-center justify-center mb-1.5"
