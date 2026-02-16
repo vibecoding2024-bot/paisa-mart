@@ -221,6 +221,127 @@ When a partner taps on any product (e.g., Axis Bank Credit Card), the app opens 
 - Upload banner URLs
 - Configure benefits and reasons
 
+## Open Plots - Real Estate Lead Capture ⭐ NEW
+
+A user-friendly, guided flow for capturing real estate plot leads (Buy/Sell) with step-by-step screens.
+
+### User Flow
+
+**Navigation:** Products → Real Estate → Open Plots
+
+#### Step 1: Intent Selection
+- **Question:** "What would you like to do?"
+- **Options:**
+  - Buy a Plot (with shopping bag icon)
+  - Sell a Plot (with tag icon)
+- Clean, large button design with icons
+
+#### Step 2: User Type
+- **Question:** "Are you a customer or an agent?"
+- **Options:**
+  - I'm a Customer
+  - I'm an Agent
+- Helps connect users with the right team
+
+#### Steps 3-7: Guided Questions (Buy Flow)
+Each question appears on its own screen with:
+- Progress bar showing completion (e.g., Step 3 of 8)
+- Single focused question
+- Clean input or selection options
+- Next button appears when valid input provided
+
+**Buy Flow Questions:**
+1. **Location:** "Where are you looking to buy?" (text input)
+2. **Area:** "Which area or locality do you prefer?" (text input)
+3. **Plot Size:** 100/150/200/300 sq yards or Custom
+4. **Budget:** ₹5L-₹10L / ₹10L-₹25L / ₹25L-₹50L / ₹50L+ / Custom
+5. **Timeline:** Immediately / Within 1 month / Within 3 months / Just exploring
+6. **Contact:** Name + Mobile Number + Optional Site Visit toggle
+7. **Success Screen**
+
+**Sell Flow Questions:**
+1. **Location:** "Where is your property located?" (text input)
+2. **Plot Size:** 100/150/200/300 sq yards or Custom
+3. **Expected Price:** ₹5L-₹10L / ₹10L-₹25L / ₹25L-₹50L / ₹50L+ / Custom
+4. **Timeline:** Immediately / Within 1 month / Within 3 months / Flexible
+5. **Contact:** Name + Mobile Number
+6. **Success Screen**
+
+#### Success Screen
+- Green theme with checkmark animation
+- "Request submitted successfully! 🎉"
+- Thank you message with timeline
+- Reference ID display
+- Site visit badge (if selected)
+- Business hours note (if after hours)
+- "Back to Home" button
+
+### Design Principles
+✅ One question per screen
+✅ Large, clear buttons
+✅ Minimal text
+✅ Soft, friendly colors
+✅ Rounded cards and buttons
+✅ Progress bar on every step
+✅ Smooth animations
+✅ No mandatory fields except location and mobile
+
+### Data Captured
+- **Lead ID:** Auto-generated (OP-XXXXX format)
+- **Intent:** Buy or Sell
+- **User Type:** Customer or Agent
+- **Location & Area**
+- **Plot Size** (if provided)
+- **Budget/Expected Price** (if provided)
+- **Timeline** (if provided)
+- **Name & Mobile** (required)
+- **Site Visit Required:** Yes/No (high priority if yes)
+- **Status:** New (default)
+- **Priority:** High (if site visit) or Normal
+- **Timestamps**
+
+### Admin Dashboard
+
+**Open Plots Leads Screen:**
+- View all open plots leads
+- Filter by intent (Buy/Sell), status, priority, date range
+- Search by name, mobile, lead ID, location
+- Quick actions: Call, WhatsApp, View Details
+- Status colors for visual tracking
+- High priority badge for site visit requests
+- Export leads to CSV
+
+**Lead Details Screen:**
+- Full customer information with contact actions
+- Property details (location, area, plot size, budget/price, timeline)
+- Site visit requirement indicator
+- Status management (New → Contacted → Site Visit Scheduled → Negotiation → Closed/Lost)
+- Priority toggle (Normal/High)
+- Assignment to team members
+- Notes system
+- Share lead via WhatsApp
+
+**Dashboard Widget:**
+- Quick access from admin dashboard
+- Shows total leads, new leads, and high priority count
+- Purple themed with landmark icon
+
+### Status Lifecycle
+1. **New** - Just submitted
+2. **Contacted** - Initial contact made
+3. **Site Visit Scheduled** - Site visit arranged (for buy leads)
+4. **Negotiation** - Price/terms discussion
+5. **Closed** - Successfully completed
+6. **Lost** - Did not convert
+
+### Business Rules
+- No documents required
+- No payment integration
+- Fields are optional except location and mobile
+- Site visit assistance marks lead as High Priority
+- After-hours submissions get next morning callback message
+- Lead reference ID provided for customer tracking
+
 ## WhatsApp Lead Capture System ⭐ NEW
 
 ### Customer Flow

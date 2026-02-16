@@ -20,6 +20,7 @@ import {
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
 import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
+import { useOpenPlotsLeadsStore } from '@/lib/open-plots-leads-store';
 
 interface MetricCardProps {
   title: string;
@@ -93,6 +94,9 @@ export default function DashboardScreen() {
   const leads = useAdminStore(s => s.leads);
   const whatsappLeads = useWhatsAppLeadsStore(s => s.leads);
   const newWhatsAppLeads = useWhatsAppLeadsStore(s => s.getLeadsByStatus('New'));
+  const openPlotsLeads = useOpenPlotsLeadsStore(s => s.leads);
+  const newOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getLeadsByStatus('New'));
+  const highPriorityOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getHighPriorityLeads());
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -382,7 +386,7 @@ export default function DashboardScreen() {
           {/* WhatsApp Leads Quick Action */}
           <Pressable
             onPress={() => router.push('/admin/whatsapp-leads' as any)}
-            className="bg-green-500/20 border border-green-500/30 rounded-xl p-4"
+            className="bg-green-500/20 border border-green-500/30 rounded-xl p-4 mb-3"
           >
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1">
@@ -397,6 +401,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#22C55E" />
+            </View>
+          </Pressable>
+
+          {/* Open Plots Leads Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/open-plots-leads' as any)}
+            className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-purple-500/20 rounded-full items-center justify-center mr-3">
+                  <Landmark size={20} color="#A855F7" />
+                </View>
+                <View>
+                  <Text className="text-purple-400 font-medium">Open Plots Leads</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {openPlotsLeads.length} total • {newOpenPlotsLeads.length} new • {highPriorityOpenPlotsLeads.length} high priority
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#A855F7" />
             </View>
           </Pressable>
         </Animated.View>

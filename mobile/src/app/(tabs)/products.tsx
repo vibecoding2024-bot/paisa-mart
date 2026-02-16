@@ -470,8 +470,14 @@ export default function ProductsScreen() {
 
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
 
-  // Navigate to share card screen
+  // Navigate to share card screen or Open Plots flow
   const handleProductPress = useCallback((partner: Partner, categoryId: string) => {
+    // Special handling for Open Plots in Real Estate
+    if (categoryId === 'real-estate' && partner.name === 'Open Plots') {
+      router.push('/open-plots');
+      return;
+    }
+
     // Check if product exists in store, otherwise create a temporary product ID
     const productId = partner.id || getProductId(partner.name, categoryId);
 
