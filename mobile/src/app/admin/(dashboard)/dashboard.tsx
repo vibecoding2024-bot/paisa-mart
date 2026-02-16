@@ -17,10 +17,12 @@ import {
   Heart,
   Landmark,
   MessageCircle,
+  Car,
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
 import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
 import { useOpenPlotsLeadsStore } from '@/lib/open-plots-leads-store';
+import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
 
 interface MetricCardProps {
   title: string;
@@ -97,6 +99,8 @@ export default function DashboardScreen() {
   const openPlotsLeads = useOpenPlotsLeadsStore(s => s.leads);
   const newOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getLeadsByStatus('New'));
   const highPriorityOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getHighPriorityLeads());
+  const vehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.leads);
+  const newVehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.getLeadsByStatus('New'));
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -407,7 +411,7 @@ export default function DashboardScreen() {
           {/* Open Plots Leads Quick Action */}
           <Pressable
             onPress={() => router.push('/admin/open-plots-leads' as any)}
-            className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4"
+            className="bg-purple-500/20 border border-purple-500/30 rounded-xl p-4 mb-3"
           >
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center flex-1">
@@ -422,6 +426,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#A855F7" />
+            </View>
+          </Pressable>
+
+          {/* Vehicle Insurance Leads Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/vehicle-insurance-leads' as any)}
+            className="bg-cyan-500/20 border border-cyan-500/30 rounded-xl p-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-cyan-500/20 rounded-full items-center justify-center mr-3">
+                  <Car size={20} color="#06B6D4" />
+                </View>
+                <View>
+                  <Text className="text-cyan-400 font-medium">Vehicle Insurance Leads</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {vehicleInsuranceLeads.length} total • {newVehicleInsuranceLeads.length} new
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#06B6D4" />
             </View>
           </Pressable>
         </Animated.View>

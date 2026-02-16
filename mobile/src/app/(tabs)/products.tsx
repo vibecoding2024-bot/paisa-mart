@@ -376,6 +376,12 @@ const CATEGORY_DATA: CategoryData = {
   'motor-insurance': {
     sections: [
       {
+        title: 'Get Insurance Quote',
+        partners: [
+          { name: 'Get Vehicle Insurance Quote', tag: 'Platform', commission: 'up to 30%', id: 'get-vehicle-insurance-quote' },
+        ],
+      },
+      {
         title: 'Vehicle Insurance Partners',
         partners: [
           { name: 'Cholamandalam MS General Insurance', tag: 'Insurance', commission: 'up to 30%', id: 'cholamandalam-ms-vehicle-insurance' },
@@ -470,11 +476,17 @@ export default function ProductsScreen() {
 
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
 
-  // Navigate to share card screen or Open Plots flow
+  // Navigate to share card screen or Open Plots flow or Vehicle Insurance flow
   const handleProductPress = useCallback((partner: Partner, categoryId: string) => {
     // Special handling for Open Plots in Real Estate
     if (categoryId === 'real-estate' && partner.name === 'Open Plots') {
       router.push('/open-plots');
+      return;
+    }
+
+    // Special handling for Vehicle Insurance Quote in Motor Insurance
+    if (categoryId === 'motor-insurance' && partner.name === 'Get Vehicle Insurance Quote') {
+      router.push('/vehicle-insurance');
       return;
     }
 

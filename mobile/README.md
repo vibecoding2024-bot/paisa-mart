@@ -176,7 +176,7 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - Credit Cards, Bank Accounts, Home Loans
 - Personal Loans, Vehicle Loans, Business Loans
 - Insta Loans, Health Insurance, Life Insurance
-- Motor Insurance, Gold Loans, Real Estate
+- Motor Insurance (with Vehicle Insurance Quote flow), Gold Loans, Real Estate
 
 ## App Behavior Rules
 - All financial actions are logged for audit trail
@@ -431,3 +431,138 @@ Lead capture is enabled for:
 - Lead Source: "WhatsApp Share"
 - Status: New (default)
 - Timestamp & Created Date
+
+## Vehicle Insurance Quote Request ⭐ NEW
+
+A simplified, guided flow for customers to request insurance quotes for any type of vehicle.
+
+### User Flow
+
+**Navigation:** Products → Motor Insurance → Get Vehicle Insurance Quote
+
+#### Step 1: Vehicle Category Selection
+- **Question:** "Select Vehicle Category"
+- **5 Categories with Large Cards:**
+  - 🚙 Four-Wheelers (Light Vehicles) - Blue theme
+  - 🚚 Commercial Vehicles - Orange theme
+  - 🚌 Passenger Vehicles - Purple theme
+  - 🚜 Special Vehicles - Green theme
+  - 🛻 Heavy Vehicles - Slate theme
+- Each card has icon, title, and distinctive color
+
+#### Step 2: Vehicle Type Selection
+Based on selected category, shows specific vehicle types:
+
+**Four-Wheelers:** Car, Jeep, Van
+
+**Commercial Vehicles:**
+- Goods Auto (3-wheeler)
+- Pickup / Mini Truck (Tata Ace, Bolero Pickup)
+- Lorry / Truck
+- Trailer / Container Vehicle
+
+**Passenger Vehicles:**
+- Auto Rickshaw
+- Taxi / Cab
+- Bus
+- Tempo Traveller
+
+**Special Vehicles:**
+- Tractor
+- JCB / Earthmover
+- Crane
+- Ambulance
+- Fire Vehicle
+
+**Heavy Vehicles:**
+- Heavy Truck
+- Tipper
+- Lorry
+- Tanker
+- Multi-axle Vehicles
+
+#### Step 3: Basic Details Form
+Clean, single-screen form with 6 fields:
+- **Owner Name** (text input)
+- **Mobile Number** (10-digit numeric)
+- **Vehicle Number** (text input with plate format hint)
+- **Registration Year** (dropdown: 2000-2026)
+- **Insurance Expiry Date** (date picker)
+- **City** (text input)
+
+All fields are required. Form validates on submit.
+
+#### Step 4: Success Screen
+- Blue theme with checkmark animation
+- "Request submitted successfully! 🎉"
+- Thank you message: "Our team from Paisa Mart will contact you within the next few hours with insurance quotes from top providers"
+- Reference ID display (VI-XXXXX format)
+- Business hours awareness (contacts next morning if after 6 PM)
+- Info badges about multiple quotes
+- "Back to Home" button
+
+### Design Principles
+✅ Clear visual hierarchy with category colors
+✅ Large, tappable cards
+✅ Simple, focused form (single screen)
+✅ No payment integration (quote request only)
+✅ Minimal fields - just what's needed for quote
+✅ Business hours awareness
+✅ Professional, trustworthy design
+
+### Data Captured
+- **Lead ID:** Auto-generated (VI-{timestamp}-{random} format)
+- **Vehicle Category:** Four-Wheelers/Commercial/Passenger/Special/Heavy
+- **Vehicle Type:** Specific type from category list
+- **Owner Name** (required)
+- **Mobile Number** (required, 10 digits)
+- **Vehicle Number** (required)
+- **Registration Year** (required)
+- **Insurance Expiry Date** (required)
+- **City** (required)
+- **Status:** New (default)
+- **Created At:** Timestamp
+- **Updated At:** Timestamp
+
+### Admin Dashboard
+
+**Vehicle Insurance Leads Screen:**
+- View all vehicle insurance quote requests
+- Filter by status, vehicle category, date range
+- Search by owner name, mobile, lead ID, vehicle number
+- Quick actions: Call, WhatsApp, View Details
+- Status colors for visual tracking
+- Export leads to CSV
+- Expiry date prominently displayed
+
+**Lead Status Types:**
+1. **New** - Just submitted
+2. **Contacted** - Initial contact made
+3. **Quote Sent** - Insurance quotes provided
+4. **Policy Issued** - Customer purchased policy
+5. **Closed** - Completed
+6. **Lost** - Did not convert
+
+**Dashboard Widget:**
+- Quick access from admin dashboard
+- Shows total leads and new leads count
+- Cyan themed with car icon
+- Positioned after Open Plots widget
+
+### Business Rules
+- No premium calculation in app
+- No payment gateway integration
+- Quote request only - admin team provides quotes
+- After-hours submissions get next morning callback message
+- Lead reference ID provided for customer tracking
+- All fields required for accurate quote generation
+- Supports all vehicle types from two-wheelers to heavy vehicles
+
+### Technical Implementation
+- Zustand store with AsyncStorage persistence
+- Lead management with status tracking
+- CSV export functionality for admin
+- Time-based business hours logic
+- Form validation on all required fields
+- Haptic feedback for better UX
+- Smooth animations with React Native Reanimated
