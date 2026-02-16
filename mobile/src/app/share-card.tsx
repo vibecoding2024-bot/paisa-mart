@@ -28,6 +28,14 @@ import {
   type Language,
   type ProductDetails,
 } from '@/lib/product-store';
+import {
+  useWhatsAppLeadsStore,
+  shouldCaptureLeadForCategory,
+  formatLeadForWhatsApp,
+  type WhatsAppLead,
+} from '@/lib/whatsapp-leads-store';
+import LeadCaptureModal, { type LeadCaptureData } from '@/components/LeadCaptureModal';
+import ShareConfirmationModal from '@/components/ShareConfirmationModal';
 
 const LANGUAGE_OPTIONS: { id: Language; label: string; icon: string }[] = [
   { id: 'english', label: 'English', icon: 'ABC' },
@@ -125,6 +133,13 @@ export default function ShareCardScreen() {
 
   const [showTnCModal, setShowTnCModal] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showLeadCaptureModal, setShowLeadCaptureModal] = useState(false);
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+  const [leadCaptureData, setLeadCaptureData] = useState<LeadCaptureData | null>(null);
+
+  // WhatsApp Leads Store
+  const addLead = useWhatsAppLeadsStore((s) => s.addLead);
+  const canCreateLead = useWhatsAppLeadsStore((s) => s.canCreateLead);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -138,6 +153,19 @@ export default function ShareCardScreen() {
   const handleShareWhatsApp = useCallback(async () => {
     if (!product) return;
 
+    // Check if this product category supports lead capture
+    if (shouldCaptureLeadForCategory(product.category)) {
+      // Show lead capture modal first
+      setShowLeadCaptureModal(true);
+    } else {
+      // For unsupported categories (bank accounts, credit cards), directly share
+      await proceedWithWhatsAppShare(null);
+    }
+  }, [product]);
+
+  const proceedWithWhatsAppShare = useCallback(async (captureData: LeadCaptureData | null) => {
+    if (!product) return;
+
     const message = generateShareMessage(product, advisor, selectedLanguage);
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `whatsapp://send?text=${encodedMessage}`;
@@ -146,6 +174,14 @@ export default function ShareCardScreen() {
       const canOpen = await Linking.canOpenURL(whatsappUrl);
       if (canOpen) {
         await Linking.openURL(whatsappUrl);
+
+        // After successful WhatsApp share, create lead (if category supports it)
+        if (shouldCaptureLeadForCategory(product.category)) {
+          await handleCreateLead(captureData);
+        }
+
+        // Show confirmation modal
+        setShowConfirmationModal(true);
       } else {
         Alert.alert(
           'WhatsApp Not Installed',
@@ -157,6 +193,93 @@ export default function ShareCardScreen() {
       Alert.alert('Error', 'Unable to open WhatsApp. Please try again.');
     }
   }, [product, advisor, selectedLanguage]);
+
+  const handleLeadCaptureSubmit = useCallback((data: LeadCaptureData) => {
+    setLeadCaptureData(data);
+    setShowLeadCaptureModal(false);
+
+    // Check anti-spam protection
+    const userMobile = advisor.phone; // In a real app, get from user profile
+    const canCreate = canCreateLead(userMobile, product?.category || '', product?.providerName || '');
+
+    if (!canCreate) {
+      Alert.alert(
+        'Request Already Sent',
+        'We already received your request. We will reach out soon.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    // Proceed with WhatsApp share
+    proceedWithWhatsAppShare(data);
+  }, [advisor, product, canCreateLead, proceedWithWhatsAppShare]);
+
+  const handleCreateLead = useCallback(async (captureData: LeadCaptureData | null) => {
+    if (!product) return;
+
+    try {
+      // Get loan amount display value
+      let loanAmountDisplay = '';
+      if (captureData?.loanAmount) {
+        if (captureData.loanAmount === 'custom' && captureData.customLoanAmount) {
+          loanAmountDisplay = captureData.customLoanAmount;
+        } else {
+          loanAmountDisplay = captureData.loanAmount;
+        }
+      }
+
+      // Get callback time display value
+      let callbackTimeDisplay = '';
+      if (captureData?.callbackTime) {
+        if (captureData.callbackTime === 'custom' && captureData.customCallbackTime) {
+          callbackTimeDisplay = captureData.customCallbackTime;
+        } else {
+          callbackTimeDisplay = captureData.callbackTime;
+        }
+      }
+
+      // Create lead
+      const newLead = addLead({
+        customerName: advisor.name, // In real app, get from user profile
+        mobile: advisor.phone, // In real app, get from user profile
+        productCategory: product.category,
+        bankName: product.providerName,
+        loanAmount: loanAmountDisplay,
+        propertyType: captureData?.propertyType,
+        preferredCallbackTime: callbackTimeDisplay,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Send to WhatsApp Business Group
+      await sendToWhatsAppBusinessGroup(newLead);
+    } catch (error) {
+      console.error('Error creating lead:', error);
+    }
+  }, [product, advisor, addLead]);
+
+  const sendToWhatsAppBusinessGroup = useCallback(async (lead: WhatsAppLead) => {
+    // Format lead message for business group
+    const businessMessage = formatLeadForWhatsApp(lead);
+    const encodedBusinessMessage = encodeURIComponent(businessMessage);
+
+    // Business WhatsApp Group Numbers
+    const businessNumbers = ['+919908234067', '+917416423434'];
+
+    // Note: In a production app, you would use WhatsApp Business API
+    // For now, we'll just log this (user needs to manually send to group)
+    console.log('Lead created and ready to send to business group:', businessMessage);
+
+    // Optionally, you could open WhatsApp with the formatted message
+    // but you cannot directly send to a group programmatically without WhatsApp Business API
+    // The admin will need to manually forward or you'll need to integrate WhatsApp Business API
+  }, []);
+
+  const handleConfirmationClose = useCallback(() => {
+    setShowConfirmationModal(false);
+    // Optionally navigate back
+    // router.back();
+  }, []);
 
   const handleShare = useCallback(async () => {
     if (!product) return;
@@ -453,6 +576,22 @@ export default function ShareCardScreen() {
           onClose={() => setShowTnCModal(false)}
           product={product}
           language={selectedLanguage}
+        />
+
+        {/* Lead Capture Modal */}
+        <LeadCaptureModal
+          visible={showLeadCaptureModal}
+          onClose={() => setShowLeadCaptureModal(false)}
+          onSubmit={handleLeadCaptureSubmit}
+          productCategory={product.category}
+        />
+
+        {/* Share Confirmation Modal */}
+        <ShareConfirmationModal
+          visible={showConfirmationModal}
+          onClose={handleConfirmationClose}
+          productName={product.productName}
+          bankName={product.providerName}
         />
       </SafeAreaView>
     </View>

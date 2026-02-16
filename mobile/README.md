@@ -26,6 +26,14 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - Executive dashboard with real-time metrics
 - Live leads management with filters
 - Pipeline/Stage tracker view
+- **WhatsApp Lead Capture System** ⭐ NEW
+  - Automatic lead capture when customers share via WhatsApp
+  - Pre-share micro-form: Loan amount, property type, callback time
+  - Anti-spam protection (10-minute rule)
+  - Lead status tracking: New -> Contacted -> Qualified -> Converted -> Closed
+  - Admin dashboard with filtering and assignment
+  - WhatsApp Business Group notifications
+  - Export leads to CSV
 - **Incentive Management Dashboard**
   - Total Incentives Earned/Paid/Pending
   - User Incentive Ledger with approval workflow
@@ -75,15 +83,16 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - Secure encryption notice
 
 ### Admin Dashboard Tabs
-1. **Overview** - Executive snapshot with KPIs, funnel, provider stats
+1. **Overview** - Executive snapshot with KPIs, funnel, provider stats, WhatsApp leads widget
 2. **Leads** - Master leads table with search, filters, quick actions
-3. **Pipeline** - Kanban-style stage tracker
-4. **Incentives** - Incentive calculation and approval dashboard
-5. **Payouts** - Payout request management
-6. **Tasks** - Follow-ups, stuck leads, overdue items
-7. **Analytics** - Approval rates, rejection analysis, provider performance
-8. **Settings** - User management, audit logs, config, exports
-9. **Products** - Product banner management, multilingual content editor
+3. **WhatsApp Leads** ⭐ NEW - WhatsApp share lead management with status tracking
+4. **Pipeline** - Kanban-style stage tracker
+5. **Incentives** - Incentive calculation and approval dashboard
+6. **Payouts** - Payout request management
+7. **Tasks** - Follow-ups, stuck leads, overdue items
+8. **Analytics** - Approval rates, rejection analysis, provider performance
+9. **Settings** - User management, audit logs, config, exports
+10. **Products** - Product banner management, multilingual content editor
 
 ### Incentive Management (Admin)
 - **Dashboard Widgets:**
@@ -211,3 +220,70 @@ When a partner taps on any product (e.g., Axis Bank Credit Card), the app opens 
 - Edit product content in all 3 languages
 - Upload banner URLs
 - Configure benefits and reasons
+
+## WhatsApp Lead Capture System ⭐ NEW
+
+### Customer Flow
+When a customer clicks "Share via WhatsApp" on supported products:
+1. **Lead Capture Modal** appears (optional, 10 seconds)
+   - Loan Amount Needed (dropdown with custom option)
+   - Property Type (for home loans)
+   - Preferred Callback Time
+2. **WhatsApp Share** opens with pre-filled message
+3. **Confirmation Modal** shows success message
+   - "Request shared successfully"
+   - "Our team will reach out within the next few hours"
+   - Business hours note displayed
+
+### Supported Product Categories
+Lead capture is enabled for:
+- Home Loans
+- Personal Loans
+- Vehicle Loans
+- Business Loans
+- Life Insurance
+- Health Insurance
+- Motor Insurance
+- Gold Loans
+
+**NOT enabled for:** Bank Accounts, Credit Cards, Cash on Credit Card
+
+### Anti-Spam Protection
+- 10-minute cooldown period per mobile + product + bank combination
+- Duplicate requests blocked with friendly message
+- User notified: "We already received your request"
+
+### Admin Features
+**WhatsApp Leads Dashboard:**
+- View all WhatsApp shared leads
+- Filter by status, product, date range
+- Quick actions: Call, WhatsApp, Change status
+- Assign leads to team members
+- Add notes and track updates
+- Export leads to CSV
+
+**Lead Details Screen:**
+- Customer information (name, mobile, WhatsApp)
+- Product & bank details
+- Requirement details (loan amount, property type, callback time)
+- Status management (New/Contacted/Qualified/Converted/Closed)
+- Assignment tracking
+- Notes system
+- Share lead via WhatsApp
+
+**WhatsApp Business Group Notifications:**
+- Automatic formatted message sent to business group
+- Includes all lead details
+- Business numbers: +919908234067, +917416423434
+- *(Note: Requires WhatsApp Business API integration for automatic sending)*
+
+### Data Captured
+- Lead ID (auto-generated: WL-XXXXX)
+- Customer Name & Mobile
+- Product Category & Bank Name
+- Loan Amount (if provided)
+- Property Type (if provided)
+- Preferred Callback Time (if provided)
+- Lead Source: "WhatsApp Share"
+- Status: New (default)
+- Timestamp & Created Date

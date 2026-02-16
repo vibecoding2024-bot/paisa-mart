@@ -16,8 +16,10 @@ import {
   Home,
   Heart,
   Landmark,
+  MessageCircle,
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
+import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
 
 interface MetricCardProps {
   title: string;
@@ -89,6 +91,8 @@ function FunnelBar({ label, count, total, color }: FunnelBarProps) {
 export default function DashboardScreen() {
   const router = useRouter();
   const leads = useAdminStore(s => s.leads);
+  const whatsappLeads = useWhatsAppLeadsStore(s => s.leads);
+  const newWhatsAppLeads = useWhatsAppLeadsStore(s => s.getLeadsByStatus('New'));
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -352,7 +356,7 @@ export default function DashboardScreen() {
           className="mt-4 mb-6"
         >
           <Text className="text-white font-semibold mb-3">Quick Actions</Text>
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-3 mb-3">
             <Pressable
               onPress={() => router.push('/admin/leads' as any)}
               className="flex-1 bg-blue-500/20 border border-blue-500/30 rounded-xl p-4 flex-row items-center justify-between"
@@ -374,6 +378,27 @@ export default function DashboardScreen() {
               <ArrowRight size={20} color="#FB923C" />
             </Pressable>
           </View>
+
+          {/* WhatsApp Leads Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/whatsapp-leads' as any)}
+            className="bg-green-500/20 border border-green-500/30 rounded-xl p-4"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-green-500/20 rounded-full items-center justify-center mr-3">
+                  <MessageCircle size={20} color="#22C55E" />
+                </View>
+                <View>
+                  <Text className="text-green-400 font-medium">WhatsApp Shared Leads</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {whatsappLeads.length} total • {newWhatsAppLeads.length} new
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#22C55E" />
+            </View>
+          </Pressable>
         </Animated.View>
       </View>
     </ScrollView>
