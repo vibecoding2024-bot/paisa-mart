@@ -71,7 +71,7 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 2. **Products** - Browse financial products by category
 3. **Learn** - Training modules and certification
 4. **Earnings** - Wallet, transactions, withdrawals with KYC check
-5. **Profile** - User settings + Admin Portal access
+5. **Profile** - User settings, Terms & Conditions, Admin Portal access
 
 ### KYC Verification Flow
 - Aadhaar Card upload (Front + Back)
@@ -566,3 +566,131 @@ All fields are required. Form validates on submit.
 - Form validation on all required fields
 - Haptic feedback for better UX
 - Smooth animations with React Native Reanimated
+
+## Terms & Conditions ⭐ NEW
+
+A comprehensive, scrollable Terms & Conditions page accessible from the Profile tab, displaying all payout terms and policies in an organized accordion format.
+
+### Navigation
+**Profile Tab → Terms & Conditions**
+
+### Content Sections
+
+The Terms & Conditions page includes 6 collapsible accordion sections:
+
+#### 1. Loan Payout Terms & Conditions
+Applies to: Personal Loan, Business Loan, Home Loan, Vehicle Loan
+
+**Key Points:**
+- **Payout Eligibility:** Loan approved, disbursed, KYC verified, documents valid, account active
+- **Payout Cycle:** 45 Days from loan disbursement date
+- **Payout Calculation:** Based on disbursed loan amount (final value)
+- **TDS & Charges:** 5% TDS deduction, PAN mandatory, 2% + GST wallet withdrawal charges
+- **Payment Mode:** NEFT, IMPS, RTGS, Wallet Load (to registered bank account only)
+- **Cancellation Policy:** Not allowed
+
+#### 2. Vehicle Insurance Payout Terms
+
+**Key Points:**
+- **Payout Eligibility:** Policy issued, premium realized, KYC approved, policy active
+- **Payout Cycle:** 45 Days
+- **Payout Calculation:** Net Premium (excluding GST)
+- **TDS & Charges:** 5% TDS, PAN mandatory, 2% + GST wallet charges
+- **Payment Mode:** NEFT / IMPS / RTGS / Wallet Load (to registered account)
+- **Cancellation Policy:** Not allowed
+
+#### 3. Health & Life Insurance Payout Terms
+
+**Key Points:**
+- **Eligibility:** Policy issued, premium realized, KYC approved, policy active
+- **Payout Cycle:** 45 Days from issuance/premium realization
+- **Payout Calculation:** Net Premium (excluding GST)
+- **TDS & Charges:** 5% TDS, PAN mandatory, 2% + GST wallet withdrawal
+- **Payment Mode:** NEFT / IMPS / RTGS / Wallet Load
+- **Cancellation:** Not allowed
+
+#### 4. Gold Loan Payout Terms
+
+**Key Points:**
+- **Eligibility:** Loan approved, disbursed, KYC verified, gold valuation completed, account active for minimum 3 months
+- **Payout Cycle:** 4 Months from loan disbursement date
+- **Payout Calculation:** Final disbursed loan amount
+- **TDS & Charges:** 5% TDS, PAN mandatory, 2% + GST wallet withdrawal
+- **Payment Mode:** NEFT / IMPS / RTGS / Wallet Load
+- **Cancellation:** Not allowed
+
+#### 5. Real Estate Payout Terms
+
+**Key Points:**
+- **Eligibility:** Sale deed initiated, deal confirmed by developer, sale deed active
+- **Payout Cycle:** 45 Days from sale deed confirmation/payment realization
+- **Payout Calculation:** Net Booking Amount / Net Sale Value (excluding GST), commission on received amount only
+- **TDS & Charges:** 5% TDS, PAN mandatory, 2% + GST wallet withdrawal
+- **Payment Mode:** NEFT / IMPS / RTGS / Wallet Load
+- **Cancellation:** Not allowed
+
+#### 6. Business Types (For Business Loan)
+
+Eligible business types displayed in checklist format:
+- Manufacturing Business
+- Trading Business
+- Service Business
+- Retail Business
+- Wholesale Business
+- Online / E-Commerce Business
+- Franchise Business
+- Construction / Real Estate Business
+- Agriculture & Allied Business
+- Import & Export Business
+- Logistics / Transport Business
+- Financial Services Business
+
+### Design & UX
+
+**Accordion Interaction:**
+- Each section is collapsible/expandable
+- Tap section header to expand/collapse
+- Chevron icon indicates expand/collapse state
+- Only expanded sections show full content
+- Smooth animations on expand/collapse
+
+**Visual Hierarchy:**
+- Section titles in bold, large text
+- Subsection numbering (1, 2, 3...)
+- Bullet points for list items
+- Clean spacing and padding
+- White cards with shadow on gray background
+
+**Footer Elements:**
+- Orange notice box: "Paisa Mart reserves the right to modify payout terms..."
+- Last Updated date display
+- Paisa Mart branding consistent throughout
+
+### Features
+✅ Scrollable full-page view
+✅ Collapsible accordion sections for clean readability
+✅ Clear visual hierarchy with bold headings
+✅ Bullet points for easy scanning
+✅ Professional, trustworthy design
+✅ No payment gateway logic (informational only)
+✅ Last updated date displayed
+✅ Policy modification disclaimer
+✅ Mobile-optimized layout
+
+### Business Rules
+- Informational display only (no forms or actions)
+- No payment processing on this page
+- Terms apply to all partners equally
+- PAN card mandatory for all payouts
+- TDS deduction applicable across all categories
+- Wallet withdrawal charges: 2% + GST uniformly
+- Cancellation not allowed for any payout
+
+### Technical Implementation
+- React Native collapsible accordion components
+- State management for expand/collapse
+- Reanimated for smooth animations
+- Clean component structure (AccordionSection, SectionItem)
+- Type-safe props with TypeScript
+- Easy to update content (centralized data structure)
+- Responsive layout for all screen sizes

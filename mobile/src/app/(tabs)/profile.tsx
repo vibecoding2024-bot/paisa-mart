@@ -10,7 +10,7 @@ const MENU_ITEMS = [
   { icon: Bell, label: 'Notifications', description: 'Manage alerts', route: null },
   { icon: Shield, label: 'KYC Verification', description: 'Complete your KYC', route: '/kyc' },
   { icon: Share2, label: 'Refer & Earn', description: 'Invite friends, earn ₹500', route: null },
-  { icon: FileText, label: 'Terms & Conditions', description: 'Read our policies', route: null },
+  { icon: FileText, label: 'Terms & Conditions', description: 'Payout terms & policies', route: '/terms-and-conditions' },
   { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance', route: null },
   { icon: Star, label: 'Rate Us', description: 'Share your feedback', route: null },
 ];
