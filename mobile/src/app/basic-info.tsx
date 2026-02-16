@@ -18,6 +18,7 @@ import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const OCCUPATIONS = [
   'Salaried Employee',
@@ -221,6 +222,7 @@ function PhoneInput({ value, onChangeText }: PhoneInputProps) {
 
 export default function BasicInfoScreen() {
   const router = useRouter();
+  const setProfile = useUserProfileStore((s) => s.setProfile);
 
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -247,6 +249,24 @@ export default function BasicInfoScreen() {
 
   const handleSubmit = () => {
     if (isFormValid) {
+      // Save user profile
+      setProfile({
+        name: name.trim(),
+        phoneNumber,
+        email: email.trim(),
+        occupation,
+        qualification,
+        annualIncome,
+        pincode,
+        cibilScore: cibilScoreRange,
+        dateOfBirth: dobDay && dobMonth && dobYear ? {
+          day: dobDay,
+          month: dobMonth,
+          year: dobYear,
+        } : undefined,
+        createdAt: new Date().toISOString(),
+      });
+
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     }

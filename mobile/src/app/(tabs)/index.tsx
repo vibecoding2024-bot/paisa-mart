@@ -4,6 +4,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
+import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
 
 const QUICK_ACTIONS = [
   { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
@@ -32,6 +33,8 @@ const PRODUCTS = [
 
 export default function HomeScreen() {
   const router = useRouter();
+  const getFirstName = useUserProfileStore((s) => s.getFirstName);
+  const hasProfile = useUserProfileStore((s) => s.hasProfile);
 
   const handleQuickAction = (categoryId: string, isScreen?: boolean) => {
     if (isScreen) {
@@ -40,6 +43,16 @@ export default function HomeScreen() {
       router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
     }
   };
+
+  // Get personalized greeting
+  const firstName = getFirstName();
+  const timeBasedGreeting = getTimeBasedGreeting();
+  const greetingText = hasProfile() && firstName
+    ? `${timeBasedGreeting}, ${firstName}`
+    : 'Welcome to Paisa Mart';
+
+  // Get user's first letter for avatar
+  const avatarLetter = firstName ? firstName.charAt(0).toUpperCase() : 'P';
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -53,11 +66,10 @@ export default function HomeScreen() {
             <View className="flex-row items-center justify-between">
               <View className="flex-row items-center">
                 <View className="w-10 h-10 bg-orange-500 rounded-full items-center justify-center mr-3">
-                  <Text className="text-white font-bold text-lg">P</Text>
+                  <Text className="text-white font-bold text-lg">{avatarLetter}</Text>
                 </View>
                 <View>
-                  <Text className="text-white/70 text-xs">Welcome back,</Text>
-                  <Text className="text-white font-semibold text-base">Partner!</Text>
+                  <Text className="text-white font-semibold text-lg">{greetingText}</Text>
                 </View>
               </View>
               <Pressable className="w-10 h-10 bg-white/10 rounded-full items-center justify-center">

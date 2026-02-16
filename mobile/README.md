@@ -7,6 +7,11 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 ### Partner App
 - Phone number based authentication with OTP verification
 - Basic information collection form with salary range selection
+- **Personalized Dashboard Greeting** ⭐ NEW
+  - Dynamic greeting with user's first name
+  - Time-based greetings: Good Morning/Afternoon/Evening
+  - User's initial displayed in avatar circle
+  - Fallback to "Welcome to Paisa Mart" if name not available
 - Partner dashboard with earnings overview
 - Products catalog with 12 categories
 - **Share Card Link Feature** (WhatsApp sharing)
@@ -183,6 +188,24 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - Incentive credited only after admin approval
 - Incentive flow: Pending -> Approved -> Paid
 - Multi-language support: English, Hindi, Telugu
+
+### Personalized Dashboard Greeting
+When users complete their profile during onboarding (Basic Info screen), their name is saved to local storage. The dashboard then displays a personalized greeting:
+
+**Greeting Logic:**
+- **With Name:** Displays time-based greeting + first name
+  - 5 AM - 12 PM: "Good Morning, {FirstName}"
+  - 12 PM - 5 PM: "Good Afternoon, {FirstName}"
+  - 5 PM - 10 PM: "Good Evening, {FirstName}"
+  - 10 PM - 5 AM: "Welcome, {FirstName}"
+- **Without Name:** Displays "Welcome to Paisa Mart"
+- **Avatar Circle:** Shows user's first initial or "P" as default
+
+**Technical Implementation:**
+- User profile stored in Zustand with AsyncStorage persistence
+- Data saved during Basic Info form submission
+- First name extracted from full name (first word)
+- Time-based greeting calculated using system time
 
 ## Share Card Link Feature
 
