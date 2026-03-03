@@ -6,6 +6,8 @@ import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcas
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProductStore } from '@/lib/product-store';
+import { useFeatureFlags } from '@/lib/feature-flags';
+import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
 
 const CATEGORIES = [
   { id: 'credit-cards', icon: CreditCard, label: 'Credit Cards', color: '#3B82F6' },
@@ -466,18 +468,52 @@ export default function ProductsScreen() {
   const [selectedCategory, setSelectedCategory] = useState('credit-cards');
   const categoryData = CATEGORY_DATA[selectedCategory];
   const products = useProductStore((s) => s.products);
+  const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
+  const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
+  const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
 
   // Set category from navigation params
   useEffect(() => {
     if (category && CATEGORIES.some(c => c.id === category)) {
+      // If navigating to a coming-soon category, show modal instead
+      if (category === 'gold-loans' && !goldLoanEnabled) {
+        setComingSoonModule('gold-loans');
+        return;
+      }
+      if (category === 'real-estate' && !realEstateEnabled) {
+        setComingSoonModule('real-estate');
+        return;
+      }
       setSelectedCategory(category);
     }
   }, [category]);
 
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
 
+  const handleCategoryPress = (catId: string) => {
+    if (catId === 'gold-loans' && !goldLoanEnabled) {
+      setComingSoonModule('gold-loans');
+      return;
+    }
+    if (catId === 'real-estate' && !realEstateEnabled) {
+      setComingSoonModule('real-estate');
+      return;
+    }
+    setSelectedCategory(catId);
+  };
+
   // Navigate to share card screen or Open Plots flow or Vehicle Insurance flow
   const handleProductPress = useCallback((partner: Partner, categoryId: string) => {
+    // Block access if category is coming soon
+    if (categoryId === 'gold-loans' && !goldLoanEnabled) {
+      setComingSoonModule('gold-loans');
+      return;
+    }
+    if (categoryId === 'real-estate' && !realEstateEnabled) {
+      setComingSoonModule('real-estate');
+      return;
+    }
+
     // Special handling for Open Plots in Real Estate
     if (categoryId === 'real-estate' && partner.name === 'Open Plots') {
       router.push('/open-plots');
@@ -512,7 +548,7 @@ export default function ProductsScreen() {
         }
       });
     }
-  }, [router, products]);
+  }, [router, products, goldLoanEnabled, realEstateEnabled]);
 
   return (
     <View className="flex-1 bg-gray-50">
@@ -548,7 +584,7 @@ export default function ProductsScreen() {
               return (
                 <Pressable
                   key={cat.id}
-                  onPress={() => setSelectedCategory(cat.id)}
+                  onPress={() => handleCategoryPress(cat.id)}
                   className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
                     isSelected ? 'bg-orange-500' : 'bg-gray-100'
                   }`}
@@ -639,6 +675,11 @@ export default function ProductsScreen() {
           <View className="h-6" />
         </ScrollView>
       </SafeAreaView>
+      <ComingSoonModal
+        visible={comingSoonModule !== null}
+        module={comingSoonModule}
+        onClose={() => setComingSoonModule(null)}
+      />
     </View>
   );
 }

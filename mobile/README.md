@@ -14,6 +14,12 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
   - Fallback to "Welcome to Paisa Mart" if name not available
 - Partner dashboard with earnings overview
 - Products catalog with 12 categories
+- **Coming Soon Modules** ⭐ NEW
+  - Gold Loans and Real Estate show a "Coming Soon" modal instead of opening
+  - Feature flags: `gold_loan_enabled` and `real_estate_enabled` (both false by default)
+  - "Notify Me" button captures user interest via `POST /api/notify-interest`
+  - Modal blocked at Home screen quick actions, Products tab category selection, and partner item press
+  - When feature flag is set to true, the module opens normally
 - **Share Card Link Feature** (WhatsApp sharing)
   - Branded product banners
   - Pre-written multilingual message preview (English, Hindi, Telugu)

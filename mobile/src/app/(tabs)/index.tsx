@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -5,6 +6,8 @@ import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wa
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
+import { useFeatureFlags } from '@/lib/feature-flags';
+import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
 
 const QUICK_ACTIONS = [
   { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
@@ -35,8 +38,21 @@ export default function HomeScreen() {
   const router = useRouter();
   const getFirstName = useUserProfileStore((s) => s.getFirstName);
   const hasProfile = useUserProfileStore((s) => s.hasProfile);
+  const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
+  const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
+
+  const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
 
   const handleQuickAction = (categoryId: string, isScreen?: boolean) => {
+    // Check feature flags for coming soon modules
+    if (categoryId === 'gold-loans' && !goldLoanEnabled) {
+      setComingSoonModule('gold-loans');
+      return;
+    }
+    if (categoryId === 'real-estate' && !realEstateEnabled) {
+      setComingSoonModule('real-estate');
+      return;
+    }
     if (isScreen) {
       router.push(`/${categoryId}`);
     } else {
@@ -224,6 +240,11 @@ export default function HomeScreen() {
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+      <ComingSoonModal
+        visible={comingSoonModule !== null}
+        module={comingSoonModule}
+        onClose={() => setComingSoonModule(null)}
+      />
     </View>
   );
 }
