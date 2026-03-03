@@ -63,6 +63,11 @@ export default function HomeScreen() {
       router.push('/personal-loans-details');
       return;
     }
+    // Health Insurance goes to the member selection screen first
+    if (categoryId === 'health-insurance') {
+      router.push('/health-insurance-members');
+      return;
+    }
     if (isScreen) {
       router.push(`/${categoryId}`);
     } else {

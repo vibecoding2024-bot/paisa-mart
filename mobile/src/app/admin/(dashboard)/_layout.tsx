@@ -16,6 +16,7 @@ import {
   CreditCard,
   Package,
   ShieldOff,
+  HeartPulse,
 } from 'lucide-react-native';
 import { useAdminStore } from '@/lib/admin-store';
 
@@ -47,6 +48,7 @@ export default function AdminTabsLayout() {
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
     { path: '/admin/utility-transactions', label: 'Utility Txns', icon: ShieldOff },
+    { path: '/admin/health-insurance', label: 'Health Ins.', icon: HeartPulse },
   ];
 
   const handleLogout = () => {

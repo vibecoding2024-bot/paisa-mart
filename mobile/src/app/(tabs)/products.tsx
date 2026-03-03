@@ -494,6 +494,11 @@ export default function ProductsScreen() {
         router.push('/personal-loans-details');
         return;
       }
+      // Health Insurance navigates to member selection screen first
+      if (category === 'health-insurance') {
+        router.push('/health-insurance-members');
+        return;
+      }
       setSelectedCategory(category);
     }
   }, [category]);
@@ -517,6 +522,11 @@ export default function ProductsScreen() {
     // Personal Loans requires eligibility capture first
     if (catId === 'personal-loans') {
       router.push('/personal-loans-details');
+      return;
+    }
+    // Health Insurance requires member selection first
+    if (catId === 'health-insurance') {
+      router.push('/health-insurance-members');
       return;
     }
     setSelectedCategory(catId);

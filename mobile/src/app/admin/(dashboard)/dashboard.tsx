@@ -19,12 +19,14 @@ import {
   MessageCircle,
   Car,
   ShieldOff,
+  HeartPulse,
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
 import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
 import { useOpenPlotsLeadsStore } from '@/lib/open-plots-leads-store';
 import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
 import { useUtilityTransactionStore } from '@/lib/utility-transaction-store';
+import { useHealthInsuranceStore } from '@/lib/health-insurance-store';
 
 interface MetricCardProps {
   title: string;
@@ -104,6 +106,8 @@ export default function DashboardScreen() {
   const vehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.leads);
   const newVehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.getLeadsByStatus('New'));
   const utilityTransactions = useUtilityTransactionStore(s => s.transactions);
+  const healthInsuranceApps = useHealthInsuranceStore(s => s.applications);
+  const newHealthInsuranceApps = healthInsuranceApps.filter(a => a.status === 'New');
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -471,6 +475,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#EF4444" />
+            </View>
+          </Pressable>
+
+          {/* Health Insurance Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/health-insurance' as any)}
+            className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mt-3"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-green-500/15 rounded-full items-center justify-center mr-3">
+                  <HeartPulse size={20} color="#22C55E" />
+                </View>
+                <View>
+                  <Text className="text-green-400 font-medium">Health Insurance</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {healthInsuranceApps.length} total · {newHealthInsuranceApps.length} new
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#22C55E" />
             </View>
           </Pressable>
         </Animated.View>
