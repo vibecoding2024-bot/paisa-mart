@@ -543,9 +543,18 @@ export default function ProductsScreen() {
       return;
     }
 
-    // Special handling for Vehicle Insurance Quote in Motor Insurance
+    // Special handling for Vehicle Insurance Quote button in Motor Insurance
     if (categoryId === 'motor-insurance' && partner.name === 'Get Vehicle Insurance Quote') {
       router.push('/vehicle-insurance');
+      return;
+    }
+
+    // All other Motor Insurance partner cards open the details form
+    if (categoryId === 'motor-insurance') {
+      router.push({
+        pathname: '/motor-insurance-details',
+        params: { insurer: partner.name },
+      });
       return;
     }
 

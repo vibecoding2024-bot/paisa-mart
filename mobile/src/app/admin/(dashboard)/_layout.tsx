@@ -17,6 +17,7 @@ import {
   Package,
   ShieldOff,
   HeartPulse,
+  Car,
 } from 'lucide-react-native';
 import { useAdminStore } from '@/lib/admin-store';
 
@@ -49,6 +50,7 @@ export default function AdminTabsLayout() {
     { path: '/admin/settings', label: 'Settings', icon: Settings },
     { path: '/admin/utility-transactions', label: 'Utility Txns', icon: ShieldOff },
     { path: '/admin/health-insurance', label: 'Health Ins.', icon: HeartPulse },
+    { path: '/admin/motor-insurance', label: 'Motor Ins.', icon: Car },
   ];
 
   const handleLogout = () => {

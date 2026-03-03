@@ -27,6 +27,7 @@ import { useOpenPlotsLeadsStore } from '@/lib/open-plots-leads-store';
 import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
 import { useUtilityTransactionStore } from '@/lib/utility-transaction-store';
 import { useHealthInsuranceStore } from '@/lib/health-insurance-store';
+import { useMotorInsuranceStore } from '@/lib/motor-insurance-store';
 
 interface MetricCardProps {
   title: string;
@@ -108,6 +109,8 @@ export default function DashboardScreen() {
   const utilityTransactions = useUtilityTransactionStore(s => s.transactions);
   const healthInsuranceApps = useHealthInsuranceStore(s => s.applications);
   const newHealthInsuranceApps = healthInsuranceApps.filter(a => a.status === 'New');
+  const motorInsuranceApps = useMotorInsuranceStore(s => s.applications);
+  const newMotorInsuranceApps = motorInsuranceApps.filter(a => a.status === 'New');
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -496,6 +499,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#22C55E" />
+            </View>
+          </Pressable>
+
+          {/* Motor Insurance Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/motor-insurance' as any)}
+            className="bg-sky-500/10 border border-sky-500/20 rounded-xl p-4 mt-3"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-sky-500/15 rounded-full items-center justify-center mr-3">
+                  <Car size={20} color="#38BDF8" />
+                </View>
+                <View>
+                  <Text className="text-sky-400 font-medium">Motor Insurance</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {motorInsuranceApps.length} total · {newMotorInsuranceApps.length} new
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#38BDF8" />
             </View>
           </Pressable>
         </Animated.View>
