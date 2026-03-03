@@ -15,6 +15,7 @@ import {
   Wallet,
   CreditCard,
   Package,
+  ShieldOff,
 } from 'lucide-react-native';
 import { useAdminStore } from '@/lib/admin-store';
 
@@ -45,6 +46,7 @@ export default function AdminTabsLayout() {
     { path: '/admin/tasks', label: 'Tasks', icon: ClipboardList },
     { path: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
     { path: '/admin/settings', label: 'Settings', icon: Settings },
+    { path: '/admin/utility-transactions', label: 'Utility Txns', icon: ShieldOff },
   ];
 
   const handleLogout = () => {

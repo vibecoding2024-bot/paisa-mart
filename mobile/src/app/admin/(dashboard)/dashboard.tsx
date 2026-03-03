@@ -18,11 +18,13 @@ import {
   Landmark,
   MessageCircle,
   Car,
+  ShieldOff,
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
 import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
 import { useOpenPlotsLeadsStore } from '@/lib/open-plots-leads-store';
 import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
+import { useUtilityTransactionStore } from '@/lib/utility-transaction-store';
 
 interface MetricCardProps {
   title: string;
@@ -101,6 +103,7 @@ export default function DashboardScreen() {
   const highPriorityOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getHighPriorityLeads());
   const vehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.leads);
   const newVehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.getLeadsByStatus('New'));
+  const utilityTransactions = useUtilityTransactionStore(s => s.transactions);
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -447,6 +450,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#06B6D4" />
+            </View>
+          </Pressable>
+
+          {/* Utility Transactions Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/utility-transactions' as any)}
+            className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 mt-3"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-red-500/15 rounded-full items-center justify-center mr-3">
+                  <ShieldOff size={20} color="#EF4444" />
+                </View>
+                <View>
+                  <Text className="text-red-400 font-medium">Utility Transactions</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {utilityTransactions.length} total · ₹0 payout · Zero commission
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#EF4444" />
             </View>
           </Pressable>
         </Animated.View>
