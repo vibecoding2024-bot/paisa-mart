@@ -51,6 +51,7 @@ export default function AdminTabsLayout() {
     { path: '/admin/utility-transactions', label: 'Utility Txns', icon: ShieldOff },
     { path: '/admin/health-insurance', label: 'Health Ins.', icon: HeartPulse },
     { path: '/admin/motor-insurance', label: 'Motor Ins.', icon: Car },
+    { path: '/admin/life-insurance', label: 'Life Ins.', icon: Shield },
   ];
 
   const handleLogout = () => {

@@ -372,6 +372,9 @@ const CATEGORY_DATA: CategoryData = {
           { name: 'SBI Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'sbi-life-insurance' },
           { name: 'Tata AIA Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'tata-aia-life-insurance' },
           { name: 'ICICI Prudential Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'icici-prudential-life-insurance' },
+          { name: 'Bajaj Allianz Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'bajaj-allianz-life-insurance' },
+          { name: 'Axis Max Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'axis-max-life-insurance' },
+          { name: 'Bandhan Life Insurance', tag: 'Insurance', commission: 'up to 20%', id: 'bandhan-life-insurance' },
         ],
       },
     ],
@@ -562,6 +565,15 @@ export default function ProductsScreen() {
     if (categoryId === 'health-insurance') {
       router.push({
         pathname: '/health-insurance-members',
+        params: { insurer: partner.name },
+      });
+      return;
+    }
+
+    // Life Insurance partners open the life insurance details form
+    if (categoryId === 'life-insurance') {
+      router.push({
+        pathname: '/life-insurance-details',
         params: { insurer: partner.name },
       });
       return;

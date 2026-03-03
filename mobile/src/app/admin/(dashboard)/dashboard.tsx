@@ -20,6 +20,7 @@ import {
   Car,
   ShieldOff,
   HeartPulse,
+  Shield,
 } from 'lucide-react-native';
 import { useAdminStore, STAGE_LABELS, STAGE_COLORS, PRODUCT_LABELS, LeadStage, ProductCategory } from '@/lib/admin-store';
 import { useWhatsAppLeadsStore } from '@/lib/whatsapp-leads-store';
@@ -28,6 +29,7 @@ import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-sto
 import { useUtilityTransactionStore } from '@/lib/utility-transaction-store';
 import { useHealthInsuranceStore } from '@/lib/health-insurance-store';
 import { useMotorInsuranceStore } from '@/lib/motor-insurance-store';
+import { useLifeInsuranceStore } from '@/lib/life-insurance-store';
 
 interface MetricCardProps {
   title: string;
@@ -111,6 +113,8 @@ export default function DashboardScreen() {
   const newHealthInsuranceApps = healthInsuranceApps.filter(a => a.status === 'New');
   const motorInsuranceApps = useMotorInsuranceStore(s => s.applications);
   const newMotorInsuranceApps = motorInsuranceApps.filter(a => a.status === 'New');
+  const lifeInsuranceApps = useLifeInsuranceStore(s => s.applications);
+  const newLifeInsuranceApps = lifeInsuranceApps.filter(a => a.status === 'New');
 
   const metrics = useMemo(() => {
     const now = new Date();
@@ -520,6 +524,27 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <ArrowRight size={20} color="#38BDF8" />
+            </View>
+          </Pressable>
+
+          {/* Life Insurance Quick Action */}
+          <Pressable
+            onPress={() => router.push('/admin/life-insurance' as any)}
+            className="bg-indigo-500/10 border border-indigo-500/20 rounded-xl p-4 mt-3"
+          >
+            <View className="flex-row items-center justify-between">
+              <View className="flex-row items-center flex-1">
+                <View className="w-10 h-10 bg-indigo-500/15 rounded-full items-center justify-center mr-3">
+                  <Shield size={20} color="#6366F1" />
+                </View>
+                <View>
+                  <Text className="text-indigo-400 font-medium">Life Insurance</Text>
+                  <Text className="text-slate-400 text-xs mt-1">
+                    {lifeInsuranceApps.length} total · {newLifeInsuranceApps.length} new
+                  </Text>
+                </View>
+              </View>
+              <ArrowRight size={20} color="#6366F1" />
             </View>
           </Pressable>
         </Animated.View>

@@ -42,6 +42,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="health-insurance-members" options={{ headerShown: false }} />
         <Stack.Screen name="health-insurance-details" options={{ headerShown: false }} />
         <Stack.Screen name="motor-insurance-details" options={{ headerShown: false }} />
+        <Stack.Screen name="life-insurance-details" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
