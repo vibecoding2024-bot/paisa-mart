@@ -15,7 +15,17 @@ export const COMMISSION_RATES: Record<string, { rate: string; rateValue: number 
   'real-estate': { rate: 'up to 20%', rateValue: 20 },
   'credit-cards': { rate: 'Fixed', rateValue: 0 },
   'bank-accounts': { rate: 'Fixed', rateValue: 0 },
+  // NO PAYOUT modules — Commission: 0%, Fixed Payout: ₹0
+  // Excluded from earnings reports and admin payout calculations
+  'cash-cards': { rate: '0%', rateValue: 0 },
+  'recharge-bills': { rate: '0%', rateValue: 0 },
+  'travel-tickets': { rate: '0%', rateValue: 0 },
 };
+
+// Modules that carry zero payout — excluded from earnings and admin payout reports
+export const NO_PAYOUT_MODULES = new Set(['cash-cards', 'recharge-bills', 'travel-tickets']);
+
+export const isNoPayout = (moduleId: string): boolean => NO_PAYOUT_MODULES.has(moduleId);
 
 // Helper function to calculate potential commission
 export const calculatePotentialCommission = (productCategory: string, amount?: number): string => {

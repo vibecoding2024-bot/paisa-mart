@@ -6,6 +6,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import NoPayout_TCGate from '@/components/NoPayout_TCGate';
 
 const OPERATORS = {
   mobile: ['Airtel', 'Jio', 'Vi (Vodafone Idea)', 'BSNL'],
@@ -28,6 +29,8 @@ const BILL_CATEGORIES = [
 
 export default function RechargeBillsScreen() {
   const router = useRouter();
+  const [tcVisible, setTcVisible] = useState(true);
+  const [tcAccepted, setTcAccepted] = useState(false);
   const [activeTab, setActiveTab] = useState<'recharge' | 'bills'>('recharge');
 
   // Recharge states
@@ -79,7 +82,14 @@ export default function RechargeBillsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
+    <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <NoPayout_TCGate
+        visible={tcVisible}
+        module="recharge-bills"
+        onAccept={() => { setTcAccepted(true); setTcVisible(false); }}
+        onDecline={() => router.back()}
+      />
+      {tcAccepted && (
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
         <LinearGradient
@@ -99,6 +109,27 @@ export default function RechargeBillsScreen() {
             <Animated.View entering={FadeInDown.delay(100).springify()}>
               <Text className="text-white text-2xl font-bold">Recharge & Pay Bills</Text>
               <Text className="text-white/70 text-sm mt-1">Quick recharges and bill payments</Text>
+            </Animated.View>
+
+            {/* No-Payout Strip */}
+            <Animated.View
+              entering={FadeInDown.delay(120).springify()}
+              style={{
+                backgroundColor: 'rgba(239,68,68,0.15)',
+                borderRadius: 12,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                marginTop: 10,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                borderWidth: 1,
+                borderColor: 'rgba(239,68,68,0.2)',
+              }}
+            >
+              <Text style={{ color: '#FCA5A5', fontSize: 11, fontWeight: '600', flex: 1 }}>
+                No Payout Module — 0% Commission · Not included in earnings
+              </Text>
             </Animated.View>
 
             {/* Tabs */}
@@ -363,6 +394,7 @@ export default function RechargeBillsScreen() {
           </Pressable>
         </Modal>
       </SafeAreaView>
+      )}
     </View>
   );
 }

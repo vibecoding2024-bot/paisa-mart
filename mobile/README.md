@@ -37,6 +37,13 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - KYC verification flow
 - Bank account management for payouts
 - Profile management
+- **No-Payout Modules T&C Gate** ⭐ NEW
+  - Cash on Credit Card, Recharge & Pay Bills, Travel & Tickets show a mandatory T&C bottom sheet on every open
+  - User must check "I Agree" before accessing the module; declining navigates back
+  - T&C clearly states 0% commission, no referral payout, convenience-only service
+  - All three modules configured with `commission: 0%, rateValue: 0` in `COMMISSION_RATES`
+  - `NO_PAYOUT_MODULES` set exported from `incentive-store.ts` for use in earnings/admin payout filtering
+  - Earn display banner and misleading earnings stats removed from these screens
 
 ### Admin Dashboard
 - Secure login with role-based access control
