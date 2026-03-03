@@ -135,6 +135,27 @@ function ApplicationCard({
               </Text>
             </View>
 
+            {/* Selected Insurer */}
+            {app.selected_health_insurer ? (
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={{ color: '#64748B', fontSize: 12 }}>Selected Insurer</Text>
+                <View
+                  style={{
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    borderRadius: 8,
+                    backgroundColor: '#1E3A5F',
+                    borderWidth: 1,
+                    borderColor: '#2563EB44',
+                  }}
+                >
+                  <Text style={{ color: '#60A5FA', fontSize: 12, fontWeight: '700' }}>
+                    {app.selected_health_insurer}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
+
             {/* Members */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
               <Text style={{ color: '#64748B', fontSize: 12 }}>Members Insured</Text>
@@ -272,6 +293,7 @@ function exportToCSV(apps: HealthInsuranceApplication[]) {
     'Application ID',
     'User Name',
     'Phone Number',
+    'Selected Insurer',
     'Members',
     'Elder Age',
     'Children Count',
@@ -284,6 +306,7 @@ function exportToCSV(apps: HealthInsuranceApplication[]) {
     a.application_id,
     a.user_name,
     a.phone_number,
+    a.selected_health_insurer || '—',
     a.selected_members.map((m) => MEMBER_LABELS[m]).join(' | '),
     a.elder_age || '—',
     a.selected_members.includes('children') ? String(a.children_count) : '—',

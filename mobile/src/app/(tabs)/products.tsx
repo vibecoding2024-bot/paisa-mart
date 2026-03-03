@@ -357,6 +357,7 @@ const CATEGORY_DATA: CategoryData = {
           { name: 'HDFC ERGO Health Insurance', tag: 'Insurance', commission: 'up to 15%', id: 'hdfc-ergo-health-insurance' },
           { name: 'ICICI Lombard General Insurance', tag: 'Insurance', commission: 'up to 15%', id: 'icici-lombard-health-insurance' },
           { name: 'Tata AIG Health Insurance', tag: 'Insurance', commission: 'up to 15%', id: 'tata-aig-health-insurance' },
+          { name: 'Care Health Insurance', tag: 'Insurance', commission: 'up to 15%', id: 'care-health-insurance' },
         ],
       },
     ],
@@ -494,11 +495,7 @@ export default function ProductsScreen() {
         router.push('/personal-loans-details');
         return;
       }
-      // Health Insurance navigates to member selection screen first
-      if (category === 'health-insurance') {
-        router.push('/health-insurance-members');
-        return;
-      }
+      // Health Insurance shows the partner list — partner card press starts the flow
       setSelectedCategory(category);
     }
   }, [category]);
@@ -524,11 +521,7 @@ export default function ProductsScreen() {
       router.push('/personal-loans-details');
       return;
     }
-    // Health Insurance requires member selection first
-    if (catId === 'health-insurance') {
-      router.push('/health-insurance-members');
-      return;
-    }
+    // Health Insurance shows the partner list — partner card press starts the flow
     setSelectedCategory(catId);
   };
 
@@ -553,6 +546,15 @@ export default function ProductsScreen() {
     // Special handling for Vehicle Insurance Quote in Motor Insurance
     if (categoryId === 'motor-insurance' && partner.name === 'Get Vehicle Insurance Quote') {
       router.push('/vehicle-insurance');
+      return;
+    }
+
+    // Health Insurance partners always open the 2-step flow with the chosen insurer
+    if (categoryId === 'health-insurance') {
+      router.push({
+        pathname: '/health-insurance-members',
+        params: { insurer: partner.name },
+      });
       return;
     }
 

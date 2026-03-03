@@ -9,6 +9,7 @@ export interface HealthInsuranceApplication {
   application_id: string;
   user_name: string;
   phone_number: string;
+  selected_health_insurer: string; // insurer chosen from partner list
   selected_members: InsuranceMember[];
   elder_age: string; // age of elder among self/spouse
   children_count: number;

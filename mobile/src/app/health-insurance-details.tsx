@@ -20,6 +20,7 @@ import {
   HeartPulse,
   Check,
   AlertTriangle,
+  Building2,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
@@ -45,7 +46,7 @@ function ErrorMsg({ msg }: { msg: string }) {
 
 export default function HealthInsuranceDetailsScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ members: string }>();
+  const params = useLocalSearchParams<{ members: string; insurer: string }>();
   const addApplication = useHealthInsuranceStore((s) => s.addApplication);
   const profile = useUserProfileStore((s) => s.profile);
 
@@ -93,6 +94,7 @@ export default function HealthInsuranceDetailsScreen() {
     addApplication({
       user_name: userName,
       phone_number: phoneNumber,
+      selected_health_insurer: params.insurer || '',
       selected_members: selectedMembers,
       elder_age: showAge ? elderAge : '',
       children_count: showChildren ? childrenCount : 0,
@@ -188,6 +190,30 @@ export default function HealthInsuranceDetailsScreen() {
               Enter details for a customised experience
             </Text>
           </Animated.View>
+
+          {/* Selected insurer badge */}
+          {params.insurer ? (
+            <Animated.View
+              entering={FadeInDown.delay(90).springify()}
+              style={{
+                backgroundColor: '#EFF6FF',
+                borderRadius: 12,
+                paddingVertical: 10,
+                paddingHorizontal: 16,
+                marginBottom: 10,
+                borderWidth: 1,
+                borderColor: '#BFDBFE',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+              }}
+            >
+              <Building2 size={15} color="#2563EB" />
+              <Text style={{ color: '#1D4ED8', fontSize: 13, fontWeight: '600', flex: 1 }}>
+                Selected Insurer: {params.insurer}
+              </Text>
+            </Animated.View>
+          ) : null}
 
           {/* Selected members recap */}
           <Animated.View

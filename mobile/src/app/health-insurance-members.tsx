@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { ChevronLeft, Check, Users, User, Heart, Baby, Home } from 'lucide-react-native';
+import { ChevronLeft, Check, Users, User, Heart, Baby, Home, Building2 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { InsuranceMember } from '@/lib/health-insurance-store';
@@ -54,6 +54,8 @@ const MEMBER_OPTIONS: MemberOption[] = [
 
 export default function HealthInsuranceMembersScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ insurer?: string }>();
+  const insurer = params.insurer || '';
   const [selected, setSelected] = useState<InsuranceMember[]>([]);
   const [error, setError] = useState('');
 
@@ -73,7 +75,7 @@ export default function HealthInsuranceMembersScreen() {
     }
     router.push({
       pathname: '/health-insurance-details',
-      params: { members: selected.join(',') },
+      params: { members: selected.join(','), insurer },
     });
   };
 
@@ -156,6 +158,27 @@ export default function HealthInsuranceMembersScreen() {
           <Text style={{ fontSize: 13, color: '#6B7280', textAlign: 'center', lineHeight: 18 }}>
             You can select one or more members below
           </Text>
+          {insurer ? (
+            <View
+              style={{
+                marginTop: 12,
+                paddingHorizontal: 14,
+                paddingVertical: 7,
+                backgroundColor: '#EFF6FF',
+                borderRadius: 20,
+                borderWidth: 1,
+                borderColor: '#BFDBFE',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              <Building2 size={13} color="#2563EB" />
+              <Text style={{ color: '#1D4ED8', fontSize: 12, fontWeight: '600' }}>
+                {insurer}
+              </Text>
+            </View>
+          ) : null}
         </Animated.View>
 
         {/* Member options */}
