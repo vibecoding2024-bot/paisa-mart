@@ -489,6 +489,11 @@ export default function ProductsScreen() {
         router.push('/business-loans-details');
         return;
       }
+      // Personal Loans navigates to eligibility screen first
+      if (category === 'personal-loans') {
+        router.push('/personal-loans-details');
+        return;
+      }
       setSelectedCategory(category);
     }
   }, [category]);
@@ -507,6 +512,11 @@ export default function ProductsScreen() {
     // Business Loans requires details capture first
     if (catId === 'business-loans') {
       router.push('/business-loans-details');
+      return;
+    }
+    // Personal Loans requires eligibility capture first
+    if (catId === 'personal-loans') {
+      router.push('/personal-loans-details');
       return;
     }
     setSelectedCategory(catId);

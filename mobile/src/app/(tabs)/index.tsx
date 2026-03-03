@@ -58,6 +58,11 @@ export default function HomeScreen() {
       router.push('/business-loans-details');
       return;
     }
+    // Personal Loans goes to the eligibility capture screen first
+    if (categoryId === 'personal-loans') {
+      router.push('/personal-loans-details');
+      return;
+    }
     if (isScreen) {
       router.push(`/${categoryId}`);
     } else {
