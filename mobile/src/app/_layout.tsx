@@ -37,6 +37,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="travel/hotels" options={{ headerShown: false }} />
         <Stack.Screen name="travel/bus" options={{ headerShown: false }} />
         <Stack.Screen name="travel/train" options={{ headerShown: false }} />
+        <Stack.Screen name="business-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>

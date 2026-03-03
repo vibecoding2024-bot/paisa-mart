@@ -53,6 +53,11 @@ export default function HomeScreen() {
       setComingSoonModule('real-estate');
       return;
     }
+    // Business Loans goes to the details capture screen first
+    if (categoryId === 'business-loans') {
+      router.push('/business-loans-details');
+      return;
+    }
     if (isScreen) {
       router.push(`/${categoryId}`);
     } else {

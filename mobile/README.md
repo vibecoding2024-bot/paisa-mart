@@ -20,6 +20,12 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
   - "Notify Me" button captures user interest via `POST /api/notify-interest`
   - Modal blocked at Home screen quick actions, Products tab category selection, and partner item press
   - When feature flag is set to true, the module opens normally
+- **Business Loans Details Screen** ⭐ NEW
+  - Tapping Business Loans opens a dedicated details capture screen before the partner list
+  - Fields: Business Type (dropdown), Loan Amount Required (numeric input), Purpose of Loan (dropdown + Other text)
+  - Full client-side validation; data persisted via `business-loan-store` (Zustand + AsyncStorage)
+  - On Continue, navigates to Business Loans partner list in Products tab
+  - Business Types section removed from Terms & Conditions (T&C now contains only payout legal content)
 - **Share Card Link Feature** (WhatsApp sharing)
   - Branded product banners
   - Pre-written multilingual message preview (English, Hindi, Telugu)

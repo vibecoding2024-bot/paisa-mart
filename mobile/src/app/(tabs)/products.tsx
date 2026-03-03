@@ -484,6 +484,11 @@ export default function ProductsScreen() {
         setComingSoonModule('real-estate');
         return;
       }
+      // Business Loans navigates to details screen first
+      if (category === 'business-loans') {
+        router.push('/business-loans-details');
+        return;
+      }
       setSelectedCategory(category);
     }
   }, [category]);
@@ -497,6 +502,11 @@ export default function ProductsScreen() {
     }
     if (catId === 'real-estate' && !realEstateEnabled) {
       setComingSoonModule('real-estate');
+      return;
+    }
+    // Business Loans requires details capture first
+    if (catId === 'business-loans') {
+      router.push('/business-loans-details');
       return;
     }
     setSelectedCategory(catId);

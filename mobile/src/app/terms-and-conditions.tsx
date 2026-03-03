@@ -328,34 +328,6 @@ export default function TermsAndConditionsScreen() {
             />
           </AccordionSection>
 
-          {/* SECTION 6: BUSINESS TYPES */}
-          <AccordionSection title="BUSINESS TYPES (For Business Loan)" index={5}>
-            <Text className="text-gray-600 mb-3">
-              Eligible business types for business loan applications:
-            </Text>
-            <View className="ml-2">
-              {[
-                'Manufacturing Business',
-                'Trading Business',
-                'Service Business',
-                'Retail Business',
-                'Wholesale Business',
-                'Online / E-Commerce Business',
-                'Franchise Business',
-                'Construction / Real Estate Business',
-                'Agriculture & Allied Business',
-                'Import & Export Business',
-                'Logistics / Transport Business',
-                'Financial Services Business'
-              ].map((businessType, idx) => (
-                <View key={idx} className="flex-row items-center mb-2">
-                  <View className="w-2 h-2 bg-blue-500 rounded-full mr-3" />
-                  <Text className="text-gray-700">{businessType}</Text>
-                </View>
-              ))}
-            </View>
-          </AccordionSection>
-
           {/* Footer Note */}
           <View className="bg-orange-50 border border-orange-200 rounded-xl p-4 mt-2 mb-4">
             <Text className="text-orange-800 text-xs leading-5">
