@@ -1,7 +1,7 @@
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronDown, ChevronUp } from 'lucide-react-native';
+import { ChevronLeft, ChevronDown, ChevronUp, ShieldOff } from 'lucide-react-native';
 import { useState } from 'react';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 
@@ -9,23 +9,29 @@ type AccordionSectionProps = {
   title: string;
   children: React.ReactNode;
   index: number;
+  noPayout?: boolean;
 };
 
-function AccordionSection({ title, children, index }: AccordionSectionProps) {
+function AccordionSection({ title, children, index, noPayout }: AccordionSectionProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 50).springify()}
       className="bg-white rounded-xl mb-3 overflow-hidden shadow-sm"
+      style={noPayout ? { borderLeftWidth: 3, borderLeftColor: '#EF4444' } : undefined}
     >
       <Pressable
         onPress={() => setIsExpanded(!isExpanded)}
         className="flex-row items-center justify-between p-4 border-b border-gray-100"
+        style={noPayout ? { backgroundColor: '#FFF5F5' } : undefined}
       >
-        <Text className="text-gray-800 font-semibold text-base flex-1 pr-2">
-          {title}
-        </Text>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 8 }}>
+          {noPayout && <ShieldOff size={15} color="#EF4444" />}
+          <Text className={`font-semibold text-base flex-1 ${noPayout ? 'text-red-700' : 'text-gray-800'}`}>
+            {title}
+          </Text>
+        </View>
         {isExpanded ? (
           <ChevronUp size={20} color="#6B7280" />
         ) : (
@@ -325,6 +331,125 @@ export default function TermsAndConditionsScreen() {
             <SectionItem
               title="6) Cancellation"
               content="Cancellation is not allowed."
+            />
+          </AccordionSection>
+
+          {/* UTILITY SERVICES SECTION HEADER */}
+          <View className="flex-row items-center gap-2 mt-2 mb-3 px-1">
+            <ShieldOff size={16} color="#EF4444" />
+            <Text className="text-red-600 font-bold text-sm uppercase tracking-wider">
+              Utility Services — No Payout Modules
+            </Text>
+          </View>
+
+          {/* SECTION 6: CASH ON CREDIT CARD */}
+          <AccordionSection title="CASH ON CREDIT CARD — TERMS & CONDITIONS" index={5} noPayout>
+            <Text className="text-red-500 text-xs mb-3 font-semibold bg-red-50 rounded-lg px-3 py-2">
+              Commission: 0% · Fixed Payout: ₹0 · Not eligible for earnings
+            </Text>
+
+            <SectionItem
+              title="1) Service Nature"
+              content="This service is provided for user convenience only. No commission or payout is applicable for transactions under this category."
+            />
+
+            <SectionItem
+              title="2) Cashback & Offers"
+              content="Cashback or offers, if any, are subject to partner terms and are not guaranteed by Paisa Mart."
+            />
+
+            <SectionItem
+              title="3) Platform Liability"
+              content="The platform is not responsible for third-party service delays, failures, or interruptions."
+            />
+
+            <SectionItem
+              title="4) Dispute Resolution"
+              content="Transaction disputes must be resolved directly with the service provider. Paisa Mart does not mediate financial disputes for utility services."
+            />
+
+            <SectionItem
+              title="5) Earnings Exclusion"
+              content={[
+                'This module does not contribute to earnings reports',
+                'Excluded from commission dashboard',
+                'Not included in referral bonus calculations',
+                'Not included in payout summary reports'
+              ]}
+            />
+          </AccordionSection>
+
+          {/* SECTION 7: RECHARGE & PAY BILLS */}
+          <AccordionSection title="RECHARGE & PAY BILLS — TERMS & CONDITIONS" index={6} noPayout>
+            <Text className="text-red-500 text-xs mb-3 font-semibold bg-red-50 rounded-lg px-3 py-2">
+              Commission: 0% · Fixed Payout: ₹0 · Not eligible for earnings
+            </Text>
+
+            <SectionItem
+              title="1) Service Nature"
+              content="This service is provided for user convenience only. No commission or payout is applicable for transactions under this category."
+            />
+
+            <SectionItem
+              title="2) Cashback & Offers"
+              content="Cashback or offers, if any, are subject to partner terms and are not guaranteed by Paisa Mart."
+            />
+
+            <SectionItem
+              title="3) Platform Liability"
+              content="The platform is not responsible for third-party service delays, failures, or interruptions related to recharge or bill payment services."
+            />
+
+            <SectionItem
+              title="4) Dispute Resolution"
+              content="Transaction disputes must be resolved directly with the service provider or operator. Paisa Mart does not mediate financial disputes for utility services."
+            />
+
+            <SectionItem
+              title="5) Earnings Exclusion"
+              content={[
+                'This module does not contribute to earnings reports',
+                'Excluded from commission dashboard',
+                'Not included in referral bonus calculations',
+                'Not included in payout summary reports'
+              ]}
+            />
+          </AccordionSection>
+
+          {/* SECTION 8: TRAVEL & TICKETS */}
+          <AccordionSection title="TRAVEL & TICKETS — TERMS & CONDITIONS" index={7} noPayout>
+            <Text className="text-red-500 text-xs mb-3 font-semibold bg-red-50 rounded-lg px-3 py-2">
+              Commission: 0% · Fixed Payout: ₹0 · Not eligible for earnings
+            </Text>
+
+            <SectionItem
+              title="1) Service Nature"
+              content="This service is provided for user convenience only. No commission or payout is applicable for transactions under this category."
+            />
+
+            <SectionItem
+              title="2) Cashback & Offers"
+              content="Cashback or offers, if any, are subject to partner terms and are not guaranteed by Paisa Mart."
+            />
+
+            <SectionItem
+              title="3) Platform Liability"
+              content="The platform is not responsible for third-party service delays, cancellations, or failures related to travel bookings."
+            />
+
+            <SectionItem
+              title="4) Dispute Resolution"
+              content="Transaction disputes must be resolved directly with the airline, hotel, bus, or train service provider. Paisa Mart does not mediate financial disputes for utility services."
+            />
+
+            <SectionItem
+              title="5) Earnings Exclusion"
+              content={[
+                'This module does not contribute to earnings reports',
+                'Excluded from commission dashboard',
+                'Not included in referral bonus calculations',
+                'Not included in payout summary reports'
+              ]}
             />
           </AccordionSection>
 
