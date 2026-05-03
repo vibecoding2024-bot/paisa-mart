@@ -6,6 +6,27 @@ import { sampleRouter } from "./routes/sample";
 import { notifyInterestRouter } from "./routes/notify-interest";
 import { logger } from "hono/logger";
 
+const PUBLIC_DIR = import.meta.dir + "/../public";
+
+const MIME: Record<string, string> = {
+  ".html": "text/html",
+  ".js": "application/javascript",
+  ".css": "text/css",
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".svg": "image/svg+xml",
+  ".ico": "image/x-icon",
+  ".json": "application/json",
+  ".woff": "font/woff",
+  ".woff2": "font/woff2",
+  ".ttf": "font/ttf",
+};
+
+function mimeFor(path: string): string {
+  const ext = path.match(/\.[^.]+$/)?.[0] ?? "";
+  return MIME[ext] ?? "application/octet-stream";
+}
+
 const app = new Hono();
 
 // CORS middleware - validates origin against allowlist
@@ -48,6 +69,19 @@ app.get("/download", async (c) => {
 // Routes
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
+
+// Serve static web app — must be last
+app.get("*", async (c) => {
+  const reqPath = new URL(c.req.url).pathname;
+  const filePath = PUBLIC_DIR + reqPath;
+  const file = Bun.file(filePath);
+  if (await file.exists()) {
+    return new Response(file, { headers: { "Content-Type": mimeFor(filePath) } });
+  }
+  // SPA fallback — serve index.html for all unmatched routes
+  const index = Bun.file(PUBLIC_DIR + "/index.html");
+  return new Response(index, { headers: { "Content-Type": "text/html" } });
+});
 
 const port = Number(process.env.PORT) || 3000;
 
