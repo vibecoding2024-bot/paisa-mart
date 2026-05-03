@@ -10,7 +10,7 @@ import {
 import Animated, { FadeInUp } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ShieldOff, CheckSquare, Square, ArrowLeft, FileText } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 
 export type NoPayout_Module = 'cash-cards' | 'recharge-bills' | 'travel-tickets';
 

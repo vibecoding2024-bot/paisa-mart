@@ -19,7 +19,7 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 
 const OTP_LENGTH = 6;
 

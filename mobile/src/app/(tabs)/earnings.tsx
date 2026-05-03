@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, XCircle, X, AlertTriangle, Shield } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore } from '@/lib/incentive-store';
 
 const TRANSACTIONS = [

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { View, Text, Modal, Pressable } from 'react-native';
 import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated';
 import { CheckCircle } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 
 interface ShareConfirmationModalProps {
   visible: boolean;

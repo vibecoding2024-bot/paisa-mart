@@ -17,7 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard, Calendar } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const OCCUPATIONS = [

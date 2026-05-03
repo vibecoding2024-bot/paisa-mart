@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native';
 import { useIncentiveStore, PayoutStatus, Payout } from '@/lib/incentive-store';
 import { useAdminStore } from '@/lib/admin-store';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 
 const STATUS_CONFIG: Record<PayoutStatus, { bg: string; text: string; icon: React.ReactNode; label: string }> = {
   initiated: { bg: '#FEF3C7', text: '#F59E0B', icon: <Clock size={14} color="#F59E0B" />, label: 'Initiated' },

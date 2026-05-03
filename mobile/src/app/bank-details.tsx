@@ -16,7 +16,7 @@ import {
   Shield,
   AlertTriangle,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore, BankAccount } from '@/lib/incentive-store';
 
 export default function BankDetailsScreen() {

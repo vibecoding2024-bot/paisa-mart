@@ -23,7 +23,7 @@ import {
   X,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useMotorInsuranceStore,
   VEHICLE_TYPES,

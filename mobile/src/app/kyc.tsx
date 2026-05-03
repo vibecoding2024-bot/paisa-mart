@@ -19,7 +19,7 @@ import {
   Clock,
 } from 'lucide-react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore, KYCDocument } from '@/lib/incentive-store';
 
 const KYC_STEPS = [

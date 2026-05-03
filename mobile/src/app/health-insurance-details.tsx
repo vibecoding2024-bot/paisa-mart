@@ -23,7 +23,7 @@ import {
   Building2,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useHealthInsuranceStore, InsuranceMember, MEMBER_LABELS } from '@/lib/health-insurance-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 

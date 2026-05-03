@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
 import { Clock, Rocket, X, Bell, ArrowLeft } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
 
 export type ComingSoonModule = 'gold-loans' | 'real-estate';

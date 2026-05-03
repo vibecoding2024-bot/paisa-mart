@@ -20,7 +20,7 @@ import {
   AlertTriangle,
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { usePersonalLoanStore } from '@/lib/personal-loan-store';
 
 const CREDIT_SCORE_OPTIONS = [

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react-native';
 import { useIncentiveStore, IncentiveStatus, UserIncentive } from '@/lib/incentive-store';
 import { useAdminStore } from '@/lib/admin-store';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 
 interface MetricCardProps {
   title: string;

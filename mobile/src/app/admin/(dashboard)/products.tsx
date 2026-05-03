@@ -24,7 +24,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useProductStore,
   type ProductDetails,

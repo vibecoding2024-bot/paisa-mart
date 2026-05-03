@@ -3,7 +3,7 @@ import { View, Text, ScrollView, Pressable, FlatList } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Clock, User, AlertTriangle, ChevronRight } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useAdminStore,
   Lead,

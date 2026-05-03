@@ -27,7 +27,7 @@ import {
   ShoppingBag,
   Tag,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useOpenPlotsLeadsStore,
   type OpenPlotsLead,

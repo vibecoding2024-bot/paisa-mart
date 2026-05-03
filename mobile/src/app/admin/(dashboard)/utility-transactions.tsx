@@ -23,7 +23,7 @@ import {
   ChevronDown,
   ChevronUp,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useUtilityTransactionStore,
   type UtilityTransaction,

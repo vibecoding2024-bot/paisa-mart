@@ -3,7 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ArrowLeft, Smartphone, Zap, Lightbulb, Flame, Droplet, Wifi, CreditCard as CreditCardIcon, Car, ChevronDown, X } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import NoPayout_TCGate from '@/components/NoPayout_TCGate';

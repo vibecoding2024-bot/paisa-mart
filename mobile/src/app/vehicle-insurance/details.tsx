@@ -12,7 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChevronLeft, User, Phone, Car, Calendar, Clock, MapPin } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
 
 export default function VehicleDetailsScreen() {

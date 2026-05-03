@@ -13,7 +13,7 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lucide-react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { useBusinessLoanStore } from '@/lib/business-loan-store';
 
 const BUSINESS_TYPES = [

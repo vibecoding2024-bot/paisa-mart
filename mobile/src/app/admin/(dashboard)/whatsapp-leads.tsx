@@ -27,7 +27,7 @@ import {
   CheckCircle,
   MoreVertical,
 } from 'lucide-react-native';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import {
   useWhatsAppLeadsStore,
   type WhatsAppLead,

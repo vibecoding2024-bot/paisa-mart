@@ -5,7 +5,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Check, Users, User, Heart, Baby, Home, Building2 } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp, ZoomIn } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import * as Haptics from '@/lib/haptics';
 import { InsuranceMember } from '@/lib/health-insurance-store';
 
 interface MemberOption {
