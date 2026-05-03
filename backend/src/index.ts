@@ -30,6 +30,21 @@ app.use("*", logger());
 // Health check endpoint
 app.get("/health", (c) => c.json({ status: "ok" }));
 
+// Project download
+app.get("/download", async (c) => {
+  const file = Bun.file("/home/user/workspace/backend/paisa-mart-mvp.zip");
+  const exists = await file.exists();
+  if (!exists) return c.text("File not found", 404);
+  const buffer = await file.arrayBuffer();
+  return new Response(buffer, {
+    headers: {
+      "Content-Type": "application/zip",
+      "Content-Disposition": 'attachment; filename="paisa-mart-mvp.zip"',
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+});
+
 // Routes
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
