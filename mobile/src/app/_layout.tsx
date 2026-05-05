@@ -7,14 +7,17 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect } from 'react';
+import { Platform } from 'react-native';
 
 export const unstable_settings = {
   // Ensure that reloading on `/modal` keeps a back button present.
   initialRouteName: 'index',
 };
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+// SplashScreen on web causes a persistent overlay — only use on native.
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync().catch(() => {});
+}
 
 const queryClient = new QueryClient();
 
@@ -56,16 +59,22 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
 
   useEffect(() => {
-    SplashScreen.hideAsync();
+    if (Platform.OS !== 'web') {
+      SplashScreen.hideAsync().catch(() => {});
+    }
   }, []);
+
+  const content = (
+    <>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <RootLayoutNav colorScheme={colorScheme} />
+    </>
+  );
 
   return (
     <QueryClientProvider client={queryClient}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <KeyboardProvider>
-          <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-          <RootLayoutNav colorScheme={colorScheme} />
-        </KeyboardProvider>
+        {Platform.OS === 'web' ? content : <KeyboardProvider>{content}</KeyboardProvider>}
       </GestureHandlerRootView>
     </QueryClientProvider>
   );

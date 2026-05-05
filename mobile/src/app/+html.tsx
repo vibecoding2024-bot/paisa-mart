@@ -99,9 +99,6 @@ html, body {
   margin: 0; padding: 0;
   background: #fff;
 }
-@media (prefers-color-scheme: dark) {
-  html, body { background: #000; }
-}
 #web-brand-header, #web-brand-footer { display: none; }
 
 /* ══════════════════════════════════════════
