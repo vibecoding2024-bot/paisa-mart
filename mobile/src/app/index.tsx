@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   Pressable,
   KeyboardAvoidingView,
   Platform,
-  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,13 +13,10 @@ import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
   FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withRepeat,
-  withTiming,
-  withSequence,
 } from 'react-native-reanimated';
 import { Phone, ArrowRight, Users, Wallet, Award, Star } from 'lucide-react-native';
+
+const isWeb = Platform.OS === 'web';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -55,7 +51,7 @@ export default function LoginScreen() {
             <View className="px-6 pt-4">
               {/* Logo */}
               <Animated.View
-                entering={FadeInDown.delay(100).springify()}
+                entering={isWeb ? undefined : FadeInDown.delay(100).springify()}
                 className="flex-row items-center"
               >
                 <View className="w-10 h-10 bg-orange-500 rounded-lg items-center justify-center mr-2">
@@ -66,7 +62,7 @@ export default function LoginScreen() {
 
               {/* Hero Text */}
               <Animated.View
-                entering={FadeInDown.delay(200).springify()}
+                entering={isWeb ? undefined : FadeInDown.delay(200).springify()}
                 className="mt-6"
               >
                 <Text className="text-white text-2xl font-bold leading-8">
@@ -76,7 +72,7 @@ export default function LoginScreen() {
 
               {/* Stats Row */}
               <Animated.View
-                entering={FadeInDown.delay(300).springify()}
+                entering={isWeb ? undefined : FadeInDown.delay(300).springify()}
                 className="flex-row mt-6 gap-6"
               >
                 <View className="flex-row items-center">
@@ -97,7 +93,7 @@ export default function LoginScreen() {
 
               {/* Rating */}
               <Animated.View
-                entering={FadeInDown.delay(400).springify()}
+                entering={isWeb ? undefined : FadeInDown.delay(400).springify()}
                 className="flex-row items-center mt-4 bg-white/10 self-start px-3 py-1.5 rounded-full"
               >
                 <Star size={14} color="#FFD700" fill="#FFD700" />
@@ -111,7 +107,7 @@ export default function LoginScreen() {
           <View className="flex-1 px-6 -mt-6">
             {/* Login Card */}
             <Animated.View
-              entering={FadeInUp.delay(300).springify()}
+              entering={isWeb ? undefined : FadeInUp.delay(300).springify()}
               className="bg-white rounded-2xl p-5 shadow-lg"
               style={{
                 shadowColor: '#000',
@@ -191,7 +187,7 @@ export default function LoginScreen() {
 
             {/* How it works */}
             <Animated.View
-              entering={FadeInUp.delay(500).springify()}
+              entering={isWeb ? undefined : FadeInUp.delay(500).springify()}
               className="mt-6"
             >
               <Text className="text-gray-800 font-semibold text-base mb-4">How it works</Text>
@@ -219,7 +215,7 @@ export default function LoginScreen() {
 
             {/* Partner Benefits */}
             <Animated.View
-              entering={FadeInUp.delay(600).springify()}
+              entering={isWeb ? undefined : FadeInUp.delay(600).springify()}
               className="mt-6 flex-row gap-3"
             >
               <View className="flex-1 bg-blue-50 rounded-xl p-3">
