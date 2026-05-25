@@ -4,6 +4,7 @@ import { cors } from "hono/cors";
 import "./env";
 import { sampleRouter } from "./routes/sample";
 import { notifyInterestRouter } from "./routes/notify-interest";
+import { paymentCallbackRouter } from "./routes/payment-callback";
 import { logger } from "hono/logger";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
@@ -160,6 +161,7 @@ app.get("/download", async (c) => {
 
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
+app.route("/api/payment-callback", paymentCallbackRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;
