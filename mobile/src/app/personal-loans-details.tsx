@@ -261,7 +261,7 @@ export default function PersonalLoansDetailsScreen() {
       timestamp: new Date().toISOString(),
     });
 
-    router.push({ pathname: '/(tabs)/products', params: { category: 'personal-loans' } });
+    router.replace('/(tabs)');
   };
 
   return (

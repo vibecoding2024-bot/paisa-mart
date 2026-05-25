@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella, Share2 } from 'lucide-react-native';
+import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProductStore } from '@/lib/product-store';
@@ -714,9 +714,6 @@ export default function ProductsScreen() {
                       <View className="items-end mr-2">
                         <Text className="text-green-600 font-bold text-sm">{partner.commission}</Text>
                         <Text className="text-gray-400 text-xs">commission</Text>
-                      </View>
-                      <View className="w-8 h-8 bg-green-50 rounded-full items-center justify-center">
-                        <Share2 size={16} color="#22C55E" />
                       </View>
                     </Pressable>
                   );

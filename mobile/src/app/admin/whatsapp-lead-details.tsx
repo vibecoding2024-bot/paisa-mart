@@ -24,7 +24,6 @@ import {
   Edit3,
   Save,
   X,
-  Share2,
 } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -141,12 +140,7 @@ export default function WhatsAppLeadDetailsScreen() {
             <ChevronLeft size={24} color="#fff" />
           </Pressable>
           <Text className="text-white font-semibold text-lg">Lead Details</Text>
-          <Pressable
-            onPress={handleShareLead}
-            className="w-10 h-10 items-center justify-center"
-          >
-            <Share2 size={20} color="#fff" />
-          </Pressable>
+          <View className="w-10 h-10" />
         </View>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>

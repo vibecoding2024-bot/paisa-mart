@@ -174,8 +174,7 @@ export default function BusinessLoansDetailsScreen() {
       timestamp: new Date().toISOString(),
     });
 
-    // Proceed to products listing for business-loans
-    router.push({ pathname: '/(tabs)/products', params: { category: 'business-loans' } });
+    router.replace('/(tabs)');
   };
 
   return (
