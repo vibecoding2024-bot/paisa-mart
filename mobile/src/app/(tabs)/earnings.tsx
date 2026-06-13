@@ -1,11 +1,13 @@
 import { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Modal, TextInput, Alert } from 'react-native';
+import { View, Text, ScrollView, Modal, TextInput, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, XCircle, X, AlertTriangle, Shield } from 'lucide-react-native';
+import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, X, AlertTriangle, Shield } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
+import { toast } from '@/lib/toast-store';
+import PressableScale from '@/components/PressableScale';
 import { useIncentiveStore } from '@/lib/incentive-store';
 
 const TRANSACTIONS = [
@@ -40,23 +42,11 @@ export default function EarningsScreen() {
   const handleWithdraw = () => {
     if (!canWithdraw) {
       if (userKYC?.status !== 'verified') {
-        Alert.alert(
-          'KYC Required',
-          'Please complete your KYC verification before making a withdrawal.',
-          [
-            { text: 'Later', style: 'cancel' },
-            { text: 'Complete KYC', onPress: () => router.push('/kyc') },
-          ]
-        );
+        toast.info('Complete your KYC to unlock withdrawals');
+        router.push('/kyc');
       } else {
-        Alert.alert(
-          'Bank Account Required',
-          'Please add a bank account before making a withdrawal.',
-          [
-            { text: 'Later', style: 'cancel' },
-            { text: 'Add Account', onPress: () => router.push('/bank-details') },
-          ]
-        );
+        toast.info('Add a bank account to receive payouts');
+        router.push('/bank-details');
       }
       return;
     }
@@ -68,22 +58,19 @@ export default function EarningsScreen() {
     const amount = parseInt(withdrawAmount, 10);
 
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Invalid Amount', 'Please enter a valid withdrawal amount.');
+      toast.error('Please enter a valid amount');
       return;
     }
-
     if (amount < minWithdrawalAmount) {
-      Alert.alert('Minimum Amount', `Minimum withdrawal amount is ₹${minWithdrawalAmount}`);
+      toast.error(`Minimum withdrawal is ₹${minWithdrawalAmount}`);
       return;
     }
-
     if (amount > availableBalance) {
-      Alert.alert('Insufficient Balance', 'You don\'t have enough balance for this withdrawal.');
+      toast.error("You don't have enough balance");
       return;
     }
-
     if (!selectedBankId) {
-      Alert.alert('Select Bank', 'Please select a bank account for withdrawal.');
+      toast.error('Please select a bank account');
       return;
     }
 
@@ -91,16 +78,12 @@ export default function EarningsScreen() {
 
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Withdrawal Initiated',
-        `₹${amount} withdrawal has been initiated. You'll receive it within 24-48 hours.`,
-        [{ text: 'OK' }]
-      );
       setShowWithdrawModal(false);
       setWithdrawAmount('');
+      toast.success(`₹${amount.toLocaleString()} withdrawal initiated — arrives in 24–48h`);
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      Alert.alert('Error', 'Failed to initiate withdrawal. Please try again.');
+      toast.error('Failed to initiate withdrawal. Try again.');
     }
   };
 
@@ -109,31 +92,42 @@ export default function EarningsScreen() {
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
         <LinearGradient
-          colors={['#002561', '#003380']}
-          style={{ paddingBottom: 20 }}
+          colors={['#002561', '#0A3D91']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
         >
           <View className="px-4 pt-2">
-            <Text className="text-white text-xl font-semibold">My Earnings</Text>
+            <Text className="text-white text-xl font-bold">My Earnings</Text>
 
             {/* Balance Card */}
-            <View className="bg-white/10 rounded-2xl p-4 mt-4">
-              <Text className="text-white/70 text-xs">Available Balance</Text>
-              <Text className="text-white font-bold text-3xl mt-1">₹{availableBalance.toLocaleString()}</Text>
+            <LinearGradient
+              colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
+              style={{ borderRadius: 22, padding: 18, marginTop: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}
+            >
+              <Text className="text-white/60 text-xs font-medium">Available Balance</Text>
+              <Text className="text-white font-extrabold text-4xl mt-1">₹{availableBalance.toLocaleString()}</Text>
 
               <View className="flex-row mt-4 gap-3">
-                <Pressable
-                  onPress={handleWithdraw}
-                  className="flex-1 bg-orange-500 rounded-xl py-3 flex-row items-center justify-center"
+                <PressableScale haptic="medium" onPress={handleWithdraw} className="flex-1">
+                  <LinearGradient
+                    colors={['#FF8C00', '#FF6B00']}
+                    style={{ borderRadius: 14, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
+                  >
+                    <ArrowUpRight size={18} color="#fff" />
+                    <Text className="text-white font-bold ml-2">Withdraw</Text>
+                  </LinearGradient>
+                </PressableScale>
+                <PressableScale
+                  haptic="light"
+                  onPress={() => toast.info('Your full transaction history is below')}
+                  className="flex-1 bg-white/15 rounded-2xl py-3 flex-row items-center justify-center"
                 >
-                  <ArrowUpRight size={18} color="#fff" />
-                  <Text className="text-white font-semibold ml-2">Withdraw</Text>
-                </Pressable>
-                <Pressable className="flex-1 bg-white/20 rounded-xl py-3 flex-row items-center justify-center">
                   <Clock size={18} color="#fff" />
-                  <Text className="text-white font-semibold ml-2">History</Text>
-                </Pressable>
+                  <Text className="text-white font-bold ml-2">History</Text>
+                </PressableScale>
               </View>
-            </View>
+            </LinearGradient>
           </View>
         </LinearGradient>
 
@@ -141,7 +135,9 @@ export default function EarningsScreen() {
           {/* KYC/Bank Warning */}
           {!canWithdraw && (
             <Animated.View entering={FadeInDown.delay(50).springify()} className="px-4 mt-4">
-              <Pressable
+              <PressableScale
+                haptic="light"
+                activeScale={0.98}
                 onPress={() => {
                   if (userKYC?.status !== 'verified') {
                     router.push('/kyc');
@@ -149,11 +145,13 @@ export default function EarningsScreen() {
                     router.push('/bank-details');
                   }
                 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-xl p-4 flex-row items-center"
+                className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex-row items-center"
               >
-                <AlertTriangle size={20} color="#F59E0B" />
+                <View className="w-10 h-10 bg-yellow-100 rounded-xl items-center justify-center">
+                  <AlertTriangle size={20} color="#F59E0B" />
+                </View>
                 <View className="flex-1 ml-3">
-                  <Text className="text-yellow-800 font-medium">
+                  <Text className="text-yellow-800 font-semibold">
                     {userKYC?.status !== 'verified' ? 'Complete KYC' : 'Add Bank Account'}
                   </Text>
                   <Text className="text-yellow-700 text-sm">
@@ -163,70 +161,62 @@ export default function EarningsScreen() {
                   </Text>
                 </View>
                 <ChevronRight size={20} color="#F59E0B" />
-              </Pressable>
+              </PressableScale>
             </Animated.View>
           )}
 
           {/* Stats */}
-          <Animated.View
-            entering={FadeInDown.delay(100).springify()}
-            className="flex-row px-4 mt-4 gap-3"
-          >
-            <View className="flex-1 bg-white rounded-xl p-4">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 bg-green-100 rounded-lg items-center justify-center">
-                  <TrendingUp size={16} color="#22C55E" />
-                </View>
+          <Animated.View entering={FadeInDown.delay(100).springify()} className="flex-row px-4 mt-4 gap-3">
+            <View className="flex-1 bg-white rounded-2xl p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+              <View className="w-9 h-9 bg-green-50 rounded-xl items-center justify-center">
+                <TrendingUp size={18} color="#22C55E" />
               </View>
-              <Text className="text-gray-800 font-bold text-xl mt-2">₹12,400</Text>
-              <Text className="text-gray-400 text-xs">This Month</Text>
+              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹12,400</Text>
+              <Text className="text-gray-400 text-xs mt-0.5">This Month</Text>
             </View>
-            <View className="flex-1 bg-white rounded-xl p-4">
-              <View className="flex-row items-center">
-                <View className="w-8 h-8 bg-blue-100 rounded-lg items-center justify-center">
-                  <Wallet size={16} color="#3B82F6" />
-                </View>
+            <View className="flex-1 bg-white rounded-2xl p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
+              <View className="w-9 h-9 bg-blue-50 rounded-xl items-center justify-center">
+                <Wallet size={18} color="#3B82F6" />
               </View>
-              <Text className="text-gray-800 font-bold text-xl mt-2">₹45,600</Text>
-              <Text className="text-gray-400 text-xs">Total Earned</Text>
+              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹45,600</Text>
+              <Text className="text-gray-400 text-xs mt-0.5">Total Earned</Text>
             </View>
           </Animated.View>
 
           {/* Pending */}
-          <Animated.View
-            entering={FadeInDown.delay(200).springify()}
-            className="px-4 mt-4"
-          >
-            <View className="bg-yellow-50 rounded-xl p-4 border border-yellow-200">
+          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-4">
+            <View className="bg-yellow-50 rounded-2xl p-4 border border-yellow-200">
               <View className="flex-row items-center justify-between">
                 <View>
                   <Text className="text-gray-600 text-xs">Pending Earnings</Text>
-                  <Text className="text-gray-800 font-bold text-lg">₹1,800</Text>
+                  <Text className="text-gray-900 font-bold text-lg">₹1,800</Text>
                 </View>
                 <View className="bg-yellow-400 px-3 py-1 rounded-full">
-                  <Text className="text-white text-xs font-medium">Processing</Text>
+                  <Text className="text-white text-xs font-bold">Processing</Text>
                 </View>
               </View>
             </View>
           </Animated.View>
 
           {/* Transactions */}
-          <Animated.View
-            entering={FadeInDown.delay(300).springify()}
-            className="px-4 mt-4"
-          >
+          <Animated.View entering={FadeInDown.delay(300).springify()} className="px-4 mt-5">
             <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-gray-800 font-semibold">Recent Transactions</Text>
-              <Pressable className="flex-row items-center">
-                <Text className="text-orange-500 text-sm font-medium">View All</Text>
+              <Text className="text-gray-900 font-bold text-base">Recent Transactions</Text>
+              <PressableScale
+                haptic="selection"
+                onPress={() => toast.info("You're all caught up")}
+                className="flex-row items-center"
+              >
+                <Text className="text-orange-500 text-sm font-semibold">View All</Text>
                 <ChevronRight size={16} color="#FF8C00" />
-              </Pressable>
+              </PressableScale>
             </View>
 
             {TRANSACTIONS.map((transaction, index) => (
               <View
                 key={index}
-                className="bg-white rounded-xl p-4 mb-3 flex-row items-center"
+                className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
               >
                 <View
                   className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
@@ -240,7 +230,7 @@ export default function EarningsScreen() {
                   )}
                 </View>
                 <View className="flex-1">
-                  <Text className="text-gray-800 font-medium">{transaction.title}</Text>
+                  <Text className="text-gray-900 font-semibold">{transaction.title}</Text>
                   <View className="flex-row items-center mt-0.5">
                     <Text className="text-gray-400 text-xs">{transaction.date}</Text>
                     {transaction.status === 'pending' && (
@@ -252,7 +242,7 @@ export default function EarningsScreen() {
                   </View>
                 </View>
                 <Text
-                  className={`font-bold ${
+                  className={`font-extrabold ${
                     transaction.type === 'credit' ? 'text-green-600' : 'text-red-500'
                   }`}
                 >
@@ -275,25 +265,25 @@ export default function EarningsScreen() {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View className="bg-white rounded-t-3xl p-6">
               <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-gray-800 text-xl font-bold">Withdraw Funds</Text>
-                <Pressable onPress={() => setShowWithdrawModal(false)} className="p-2">
-                  <X size={20} color="#6B7280" />
-                </Pressable>
+                <Text className="text-gray-900 text-xl font-bold">Withdraw Funds</Text>
+                <PressableScale haptic="light" onPress={() => setShowWithdrawModal(false)} className="w-9 h-9 bg-gray-100 rounded-full items-center justify-center">
+                  <X size={18} color="#6B7280" />
+                </PressableScale>
               </View>
 
               {/* Available Balance */}
-              <View className="bg-gray-100 rounded-xl p-4 mb-4">
+              <View className="bg-gray-100 rounded-2xl p-4 mb-4">
                 <Text className="text-gray-500 text-xs">Available Balance</Text>
-                <Text className="text-gray-800 text-2xl font-bold">₹{availableBalance.toLocaleString()}</Text>
+                <Text className="text-gray-900 text-2xl font-bold">₹{availableBalance.toLocaleString()}</Text>
               </View>
 
               {/* Amount Input */}
               <View className="mb-4">
                 <Text className="text-gray-600 text-sm mb-2">Enter Amount</Text>
-                <View className="flex-row items-center bg-gray-50 rounded-xl px-4 border-2 border-gray-200">
-                  <Text className="text-gray-800 text-xl font-bold">₹</Text>
+                <View className="flex-row items-center bg-gray-50 rounded-2xl px-4 border-2 border-gray-200">
+                  <Text className="text-gray-900 text-xl font-bold">₹</Text>
                   <TextInput
-                    className="flex-1 ml-2 text-gray-800 text-xl font-bold py-3"
+                    className="flex-1 ml-2 text-gray-900 text-xl font-bold py-3"
                     placeholder="0"
                     placeholderTextColor="#9CA3AF"
                     value={withdrawAmount}
@@ -309,21 +299,23 @@ export default function EarningsScreen() {
               {/* Quick Amounts */}
               <View className="flex-row gap-2 mb-4">
                 {[500, 1000, 2000, 5000].map((amount) => (
-                  <Pressable
+                  <PressableScale
                     key={amount}
+                    haptic="selection"
+                    activeScale={0.94}
                     onPress={() => setWithdrawAmount(String(amount))}
-                    className={`flex-1 py-2 rounded-lg items-center ${
+                    className={`flex-1 py-2.5 rounded-xl items-center ${
                       withdrawAmount === String(amount) ? 'bg-orange-500' : 'bg-gray-100'
                     }`}
                   >
                     <Text
-                      className={`font-medium ${
+                      className={`font-bold ${
                         withdrawAmount === String(amount) ? 'text-white' : 'text-gray-600'
                       }`}
                     >
                       ₹{amount}
                     </Text>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
 
@@ -332,10 +324,12 @@ export default function EarningsScreen() {
                 <View className="mb-4">
                   <Text className="text-gray-600 text-sm mb-2">Withdraw to</Text>
                   {bankAccounts.map((account) => (
-                    <Pressable
+                    <PressableScale
                       key={account.id}
+                      haptic="selection"
+                      activeScale={0.98}
                       onPress={() => setSelectedBankId(account.id)}
-                      className={`flex-row items-center p-3 rounded-xl mb-2 border-2 ${
+                      className={`flex-row items-center p-3 rounded-2xl mb-2 border-2 ${
                         selectedBankId === account.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-gray-50'
                       }`}
                     >
@@ -343,26 +337,28 @@ export default function EarningsScreen() {
                         <Shield size={20} color="#6B7280" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-gray-800 font-medium">{account.bankName}</Text>
+                        <Text className="text-gray-900 font-semibold">{account.bankName}</Text>
                         <Text className="text-gray-500 text-xs">•••• {account.accountNumber.slice(-4)}</Text>
                       </View>
                       {selectedBankId === account.id && (
                         <CheckCircle size={20} color="#F97316" />
                       )}
-                    </Pressable>
+                    </PressableScale>
                   ))}
                 </View>
               )}
 
               {/* Confirm Button */}
-              <Pressable
-                onPress={handleConfirmWithdraw}
-                className="bg-orange-500 py-4 rounded-xl items-center"
-              >
-                <Text className="text-white font-bold text-base">
-                  Withdraw ₹{withdrawAmount || '0'}
-                </Text>
-              </Pressable>
+              <PressableScale haptic="medium" onPress={handleConfirmWithdraw}>
+                <LinearGradient
+                  colors={['#FF8C00', '#FF6B00']}
+                  style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
+                >
+                  <Text className="text-white font-bold text-base">
+                    Withdraw ₹{withdrawAmount || '0'}
+                  </Text>
+                </LinearGradient>
+              </PressableScale>
 
               <Text className="text-gray-500 text-center text-xs mt-3">
                 Funds will be transferred within 24-48 hours

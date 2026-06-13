@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella } from 'lucide-react-native';
+import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella, X, SearchX } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useProductStore } from '@/lib/product-store';
 import { useFeatureFlags } from '@/lib/feature-flags';
+import PressableScale from '@/components/PressableScale';
 import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
 
 const CATEGORIES = [
@@ -470,6 +471,7 @@ export default function ProductsScreen() {
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category?: string }>();
   const [selectedCategory, setSelectedCategory] = useState('credit-cards');
+  const [searchQuery, setSearchQuery] = useState('');
   const categoryData = CATEGORY_DATA[selectedCategory];
   const products = useProductStore((s) => s.products);
   const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
@@ -504,6 +506,25 @@ export default function ProductsScreen() {
   }, [category]);
 
   const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
+
+  // Filter the current category's partners by the search query
+  const filteredSections = useMemo(() => {
+    if (!categoryData) return [];
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return categoryData.sections;
+    return categoryData.sections
+      .map((section) => ({
+        ...section,
+        partners: section.partners.filter(
+          (p) =>
+            p.name.toLowerCase().includes(q) ||
+            (p.tag ? p.tag.toLowerCase().includes(q) : false)
+        ),
+      }))
+      .filter((section) => section.partners.length > 0);
+  }, [categoryData, searchQuery]);
+
+  const hasResults = filteredSections.length > 0;
 
   const handleCategoryPress = (catId: string) => {
     if (catId === 'gold-loans' && !goldLoanEnabled) {
@@ -608,18 +629,32 @@ export default function ProductsScreen() {
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
         <LinearGradient
-          colors={['#002561', '#003380']}
-          style={{ paddingBottom: 16 }}
+          colors={['#002561', '#0A3D91']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={{ paddingBottom: 16, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
         >
           <View className="px-4 pt-2">
-            <Text className="text-white text-xl font-semibold">Products</Text>
-            <Text className="text-white/70 text-sm mt-1">Browse financial products to sell</Text>
+            <Text className="text-white text-xl font-bold">Products</Text>
+            <Text className="text-white/60 text-sm mt-1">Browse financial products to sell</Text>
 
             {/* Search Bar */}
-            <Pressable className="bg-white/10 rounded-xl px-4 py-3 mt-4 flex-row items-center">
+            <View className="bg-white/10 rounded-2xl px-4 py-1 mt-4 flex-row items-center border border-white/10">
               <Search size={20} color="#fff" />
-              <Text className="text-white/50 ml-3">Search products...</Text>
-            </Pressable>
+              <TextInput
+                className="flex-1 ml-3 text-white py-2.5"
+                placeholder="Search banks, NBFCs, insurers..."
+                placeholderTextColor="rgba(255,255,255,0.5)"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                returnKeyType="search"
+              />
+              {searchQuery.length > 0 && (
+                <PressableScale haptic="light" onPress={() => setSearchQuery('')} className="w-7 h-7 bg-white/15 rounded-full items-center justify-center">
+                  <X size={15} color="#fff" />
+                </PressableScale>
+              )}
+            </View>
           </View>
         </LinearGradient>
 
@@ -635,8 +670,10 @@ export default function ProductsScreen() {
             {CATEGORIES.map((cat) => {
               const isSelected = selectedCategory === cat.id;
               return (
-                <Pressable
+                <PressableScale
                   key={cat.id}
+                  haptic="selection"
+                  activeScale={0.94}
                   onPress={() => handleCategoryPress(cat.id)}
                   className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
                     isSelected ? 'bg-orange-500' : 'bg-gray-100'
@@ -650,7 +687,7 @@ export default function ProductsScreen() {
                   >
                     {cat.label}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </ScrollView>
@@ -662,7 +699,18 @@ export default function ProductsScreen() {
             entering={FadeInDown.delay(100).springify()}
             className="px-4 mt-4"
           >
-            {categoryData?.sections.map((section, sectionIndex) => (
+            {!hasResults && (
+              <View className="items-center justify-center mt-16">
+                <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
+                  <SearchX size={32} color="#9CA3AF" />
+                </View>
+                <Text className="text-gray-800 font-semibold text-base">No matches found</Text>
+                <Text className="text-gray-400 text-sm mt-1 text-center px-8">
+                  Try a different search or pick another category above.
+                </Text>
+              </View>
+            )}
+            {filteredSections.map((section, sectionIndex) => (
               <View key={sectionIndex} className="mb-6">
                 <View className="flex-row items-center mb-3">
                   <View
@@ -678,10 +726,12 @@ export default function ProductsScreen() {
                 {section.partners.map((partner, partnerIndex) => {
                   const tagColors = getTagColor(partner.tag || '');
                   return (
-                    <Pressable
+                    <PressableScale
                       key={partnerIndex}
+                      haptic="light"
+                      activeScale={0.98}
                       onPress={() => handleProductPress(partner, selectedCategory)}
-                      className="bg-white rounded-xl p-4 mb-2 flex-row items-center active:bg-gray-50"
+                      className="bg-white rounded-2xl p-4 mb-2 flex-row items-center"
                       style={{
                         shadowColor: '#000',
                         shadowOffset: { width: 0, height: 1 },
@@ -715,7 +765,7 @@ export default function ProductsScreen() {
                         <Text className="text-green-600 font-bold text-sm">{partner.commission}</Text>
                         <Text className="text-gray-400 text-xs">commission</Text>
                       </View>
-                    </Pressable>
+                    </PressableScale>
                   );
                 })}
               </View>

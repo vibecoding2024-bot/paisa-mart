@@ -8,6 +8,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { useEffect, Component, ReactNode } from 'react';
 import { Platform, View, Text } from 'react-native';
+import ToastHost from '@/components/ToastHost';
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
   constructor(props: { children: ReactNode }) {
@@ -67,6 +68,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="health-insurance-details" options={{ headerShown: false }} />
         <Stack.Screen name="motor-insurance-details" options={{ headerShown: false }} />
         <Stack.Screen name="life-insurance-details" options={{ headerShown: false }} />
+        <Stack.Screen name="notifications" options={{ headerShown: false, presentation: 'modal' }} />
         <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
       </Stack>
     </ThemeProvider>
@@ -88,6 +90,7 @@ export default function RootLayout() {
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <RootLayoutNav colorScheme={colorScheme} />
+      <ToastHost />
     </>
   );
 
