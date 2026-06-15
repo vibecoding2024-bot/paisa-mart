@@ -260,7 +260,7 @@ export default function VehicleInsuranceLeadsScreen() {
         </View>
 
         {/* Quick Filters */}
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           className="mt-3"
@@ -340,7 +340,7 @@ export default function VehicleInsuranceLeadsScreen() {
                 </Pressable>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {/* Date Range */}
                 <View className="mb-6">
                   <Text className="text-slate-400 text-sm mb-3">Date Range</Text>

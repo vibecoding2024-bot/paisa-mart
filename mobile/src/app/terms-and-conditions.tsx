@@ -93,7 +93,7 @@ export default function TermsAndConditionsScreen() {
           </View>
         </View>
 
-        <ScrollView className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 px-4 py-4" showsVerticalScrollIndicator={false}>
           {/* SECTION 1: LOAN PAYOUT TERMS */}
           <AccordionSection title="LOAN PAYOUT TERMS & CONDITIONS" index={0}>
             <Text className="text-gray-500 text-xs mb-3 italic">

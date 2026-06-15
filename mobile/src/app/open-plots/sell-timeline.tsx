@@ -62,7 +62,7 @@ export default function SellTimelineScreen() {
           </View>
         </View>
 
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           contentContainerStyle={{ paddingHorizontal: 24, paddingTop: 48 }}
           showsVerticalScrollIndicator={false}

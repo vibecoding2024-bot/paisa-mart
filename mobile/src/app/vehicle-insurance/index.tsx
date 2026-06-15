@@ -71,7 +71,7 @@ export default function VehicleInsuranceCategoryScreen() {
           <View className="w-10" />
         </View>
 
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20 }}

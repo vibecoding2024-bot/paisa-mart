@@ -372,7 +372,7 @@ export default function AdminHealthInsuranceScreen() {
   };
 
   return (
-    <ScrollView
+    <ScrollView keyboardShouldPersistTaps="handled"
       style={{ flex: 1, backgroundColor: '#0F172A' }}
       contentContainerStyle={{ paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
@@ -402,7 +402,7 @@ export default function AdminHealthInsuranceScreen() {
       </View>
 
       {/* Stats row */}
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}

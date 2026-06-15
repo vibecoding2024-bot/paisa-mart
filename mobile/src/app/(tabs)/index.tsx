@@ -159,7 +159,7 @@ export default function HomeScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Quick Actions */}
           <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-4">
             <View

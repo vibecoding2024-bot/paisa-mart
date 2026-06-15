@@ -660,7 +660,7 @@ export default function ProductsScreen() {
 
         {/* Category Tabs */}
         <View className="bg-white border-b border-gray-100">
-          <ScrollView
+          <ScrollView keyboardShouldPersistTaps="handled"
             horizontal
             showsHorizontalScrollIndicator={false}
             className="py-3"
@@ -694,7 +694,7 @@ export default function ProductsScreen() {
         </View>
 
         {/* Products List */}
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
           <Animated.View
             entering={FadeInDown.delay(100).springify()}
             className="px-4 mt-4"

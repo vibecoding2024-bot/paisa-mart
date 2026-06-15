@@ -119,7 +119,7 @@ export default function HealthInsuranceMembersScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 28, paddingBottom: 120 }}
         showsVerticalScrollIndicator={false}

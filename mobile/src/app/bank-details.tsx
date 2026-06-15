@@ -142,7 +142,7 @@ export default function BankDetailsScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}

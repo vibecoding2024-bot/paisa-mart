@@ -254,7 +254,7 @@ export default function UtilityTransactionsScreen() {
   }), [transactions]);
 
   return (
-    <ScrollView
+    <ScrollView keyboardShouldPersistTaps="handled"
       className="flex-1 bg-slate-900"
       showsVerticalScrollIndicator={false}
       stickyHeaderIndices={[0]}
@@ -303,7 +303,7 @@ export default function UtilityTransactionsScreen() {
           </View>
 
           {/* Module filter chips */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
             {ALL_MODULES.map((m) => (
               <Pressable
                 key={m.value}

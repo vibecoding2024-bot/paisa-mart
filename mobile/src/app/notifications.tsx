@@ -88,7 +88,7 @@ export default function NotificationsScreen() {
         </SafeAreaView>
       </LinearGradient>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16 }}>
         {notifications.length === 0 ? (
           <View className="items-center justify-center mt-24">
             <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">

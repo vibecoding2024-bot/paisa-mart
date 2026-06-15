@@ -336,7 +336,7 @@ export default function ShareCardScreen() {
           </Pressable>
         </View>
 
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 180 }}
@@ -645,7 +645,7 @@ function TnCModal({
           </View>
 
           {/* Content */}
-          <ScrollView className="p-4">
+          <ScrollView keyboardShouldPersistTaps="handled" className="p-4">
             <Text className="text-gray-800 font-semibold text-base">
               {tnc.eligibilityTitle[language]}
             </Text>

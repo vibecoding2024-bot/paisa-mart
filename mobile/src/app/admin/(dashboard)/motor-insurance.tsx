@@ -280,7 +280,7 @@ export default function AdminMotorInsuranceScreen() {
   };
 
   return (
-    <ScrollView
+    <ScrollView keyboardShouldPersistTaps="handled"
       style={{ flex: 1, backgroundColor: '#0F172A' }}
       contentContainerStyle={{ paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
@@ -310,7 +310,7 @@ export default function AdminMotorInsuranceScreen() {
       </View>
 
       {/* Stats row */}
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}
@@ -480,7 +480,7 @@ export default function AdminMotorInsuranceScreen() {
               <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>
                 VEHICLE TYPE
               </Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                 {['All', ...VEHICLE_TYPES].map((v) => {
                   const isActive = vehicleFilter === v;
                   return (

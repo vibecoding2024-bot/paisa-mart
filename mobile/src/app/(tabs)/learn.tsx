@@ -94,7 +94,7 @@ export default function LearnScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Certification Banner */}
           <Animated.View entering={FadeInDown.delay(100).springify()} className="px-4 mt-4">
             <LinearGradient

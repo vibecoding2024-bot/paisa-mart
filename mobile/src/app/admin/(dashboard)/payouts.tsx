@@ -102,7 +102,7 @@ export default function PayoutsScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
+    <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>

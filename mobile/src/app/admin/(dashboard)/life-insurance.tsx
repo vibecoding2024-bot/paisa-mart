@@ -258,7 +258,7 @@ export default function AdminLifeInsuranceScreen() {
   };
 
   return (
-    <ScrollView
+    <ScrollView keyboardShouldPersistTaps="handled"
       style={{ flex: 1, backgroundColor: '#0F172A' }}
       contentContainerStyle={{ paddingBottom: 32 }}
       showsVerticalScrollIndicator={false}
@@ -279,7 +279,7 @@ export default function AdminLifeInsuranceScreen() {
       </View>
 
       {/* Stats row */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}>
+      <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 16, gap: 10 }}>
         {[
           { label: 'Total', value: stats.total, color: '#3B82F6' },
           { label: 'New', value: stats.newCount, color: '#3B82F6' },
@@ -374,7 +374,7 @@ export default function AdminLifeInsuranceScreen() {
             {/* Premium slab */}
             <View>
               <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginBottom: 8 }}>PREMIUM SLAB</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+              <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                 {(['All', ...PREMIUM_SLABS] as const).map((pr) => {
                   const isActive = premiumFilter === pr;
                   return (

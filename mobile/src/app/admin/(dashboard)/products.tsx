@@ -276,7 +276,7 @@ export default function ProductsAdminScreen() {
 
       {/* Category Filter */}
       <View className="border-b border-slate-800">
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ padding: 12 }}
@@ -313,7 +313,7 @@ export default function ProductsAdminScreen() {
       </View>
 
       {/* Products List */}
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-4">
           <Text className="text-slate-400 text-sm mb-4">
             {filteredProducts.length} products found
@@ -429,7 +429,7 @@ export default function ProductsAdminScreen() {
             </View>
 
             {editingProduct && (
-              <ScrollView className="flex-1 p-4" showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 p-4" showsVerticalScrollIndicator={false}>
                 {/* Basic Info */}
                 <View className="bg-slate-800 rounded-xl p-4 mb-4">
                   <Text className="text-white font-semibold mb-4">Basic Information</Text>

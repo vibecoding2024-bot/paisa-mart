@@ -131,7 +131,7 @@ export default function SettingsScreen() {
 
       {/* Tabs */}
       <View className="border-b border-slate-800">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 12 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 12 }}>
           {tabs.map((tab) => (
             <Pressable
               key={tab.key}
@@ -149,7 +149,7 @@ export default function SettingsScreen() {
         </ScrollView>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
         {activeTab === 'users' && (
           <View className="p-4">
             {/* Add User Button */}

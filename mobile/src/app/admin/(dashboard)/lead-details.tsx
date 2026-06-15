@@ -198,7 +198,7 @@ export default function LeadDetailsScreen() {
         ))}
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
         {activeTab === 'overview' && (
           <View className="p-4">
             {/* Contact Info */}
@@ -410,7 +410,7 @@ export default function LeadDetailsScreen() {
                 </Pressable>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {Object.entries(STAGE_LABELS).map(([stage, label]) => (
                   <Pressable
                     key={stage}

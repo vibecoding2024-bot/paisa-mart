@@ -131,7 +131,7 @@ export default function IncentivesScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
+    <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>
@@ -150,7 +150,7 @@ export default function IncentivesScreen() {
 
         {/* Dashboard Widgets */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <ScrollView
+          <ScrollView keyboardShouldPersistTaps="handled"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingBottom: 4 }}

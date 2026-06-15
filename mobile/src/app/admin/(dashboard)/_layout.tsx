@@ -100,7 +100,7 @@ export default function AdminTabsLayout() {
 
         {/* Navigation Tabs */}
         <View className="border-b border-slate-800">
-          <ScrollView
+          <ScrollView keyboardShouldPersistTaps="handled"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8 }}

@@ -144,7 +144,7 @@ export default function OpenPlotsLeadDetailsScreen() {
           <View className="w-10 h-10" />
         </View>
 
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Lead ID, Status & Priority */}
           <Animated.View entering={FadeInDown.delay(100)} className="p-4">
             <View className="bg-slate-800 rounded-xl p-4">

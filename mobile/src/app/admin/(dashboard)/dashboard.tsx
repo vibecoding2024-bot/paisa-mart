@@ -205,7 +205,7 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScrollView className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
+    <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
         {/* Page Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>
@@ -215,7 +215,7 @@ export default function DashboardScreen() {
 
         {/* Key Metrics Row */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
-          <ScrollView
+          <ScrollView keyboardShouldPersistTaps="handled"
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={{ gap: 12, paddingBottom: 4 }}
@@ -321,7 +321,7 @@ export default function DashboardScreen() {
               <Text className="text-orange-500 text-sm">View All</Text>
             </Pressable>
           </View>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false}>
             <View className="flex-row gap-3">
               {Object.entries(metrics.productCounts).map(([product, count]) => (
                 <View

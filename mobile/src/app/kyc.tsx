@@ -165,7 +165,7 @@ export default function KYCScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1 -mt-4"
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: 40 }}

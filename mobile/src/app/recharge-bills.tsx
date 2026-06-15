@@ -154,7 +154,7 @@ export default function RechargeBillsScreen() {
           </View>
         </LinearGradient>
 
-        <ScrollView className="flex-1 -mt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 -mt-4" showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
           {activeTab === 'recharge' ? (
             <Animated.View entering={FadeInUp.delay(200).springify()} className="mx-6 bg-white rounded-2xl p-5 shadow-sm" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
               {/* Recharge Type Selector */}

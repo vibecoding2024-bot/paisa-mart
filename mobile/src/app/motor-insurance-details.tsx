@@ -104,7 +104,7 @@ function DropdownModal<T extends string>({
               <X size={20} color="#6B7280" />
             </Pressable>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {options.map((opt) => {
               const isSelected = selected === opt;
               return (
@@ -195,7 +195,7 @@ function YearDropdownModal({
               <X size={20} color="#6B7280" />
             </Pressable>
           </View>
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {years.map((y) => {
               const isSelected = selected === y;
               return (

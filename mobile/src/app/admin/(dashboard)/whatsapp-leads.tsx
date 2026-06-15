@@ -281,7 +281,7 @@ export default function WhatsAppLeadsScreen() {
         </View>
 
         {/* Quick Filters */}
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           className="mt-3"
@@ -361,7 +361,7 @@ export default function WhatsAppLeadsScreen() {
                 </Pressable>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {/* Date Range */}
                 <View className="mb-6">
                   <Text className="text-slate-400 text-sm mb-3">Date Range</Text>
@@ -495,7 +495,7 @@ export default function WhatsAppLeadsScreen() {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View className="bg-slate-800 rounded-t-3xl p-6 max-h-[70%]">
               <Text className="text-white text-lg font-semibold mb-4">Select New Status</Text>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {(['New', 'Contacted', 'Qualified', 'Converted', 'Closed'] as WhatsAppLeadStatus[]).map(
                   (status) => (
                     <Pressable

@@ -99,7 +99,7 @@ export default function TasksScreen() {
       </View>
 
       {/* Summary Cards */}
-      <ScrollView
+      <ScrollView keyboardShouldPersistTaps="handled"
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={{ padding: 16, gap: 12 }}
@@ -139,7 +139,7 @@ export default function TasksScreen() {
 
       {/* Filter Tabs */}
       <View className="px-4 pb-4">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <ScrollView keyboardShouldPersistTaps="handled" horizontal showsHorizontalScrollIndicator={false}>
           <View className="flex-row gap-2">
             {[
               { key: 'all', label: 'All Tasks' },

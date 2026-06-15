@@ -294,7 +294,7 @@ export default function OpenPlotsLeadsScreen() {
         </View>
 
         {/* Quick Filters */}
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           className="mt-3"
@@ -392,7 +392,7 @@ export default function OpenPlotsLeadsScreen() {
                 </Pressable>
               </View>
 
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
                 {/* Priority */}
                 <View className="mb-6">
                   <Text className="text-slate-400 text-sm mb-3">Priority</Text>

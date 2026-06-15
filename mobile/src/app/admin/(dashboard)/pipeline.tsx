@@ -172,7 +172,7 @@ export default function PipelineScreen() {
 
       {/* Pipeline Columns */}
       <View className="border-b border-slate-800">
-        <ScrollView
+        <ScrollView keyboardShouldPersistTaps="handled"
           horizontal
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ padding: 16 }}
