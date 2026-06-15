@@ -4,7 +4,8 @@ import { cors } from "hono/cors";
 import "./env";
 import { sampleRouter } from "./routes/sample";
 import { notifyInterestRouter } from "./routes/notify-interest";
-import { paymentCallbackRouter } from "./routes/payment-callback";
+import { paymentRouter } from "./routes/payment";
+import { applyCallback } from "./lib/txn-store";
 import { logger } from "hono/logger";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
@@ -143,6 +144,23 @@ app.use(
 
 app.use("*", logger());
 
+// VimoPay callback resilience: the gateway-registered callback path/host has
+// varied (caused 404s), so accept the status callback on ANY path containing
+// "callback", with any method, persist it, and reply with the required ack.
+app.all("*", async (c, next) => {
+  const pathname = new URL(c.req.url).pathname;
+  if (!pathname.toLowerCase().includes("callback")) return next();
+  let body: any = {};
+  try {
+    body = await c.req.json();
+  } catch {
+    try { body = Object.fromEntries(new URL(c.req.url).searchParams); } catch {}
+  }
+  console.log("[VIMOPAY CALLBACK]", pathname, JSON.stringify(body));
+  try { applyCallback(body); } catch (e) { console.error("[VIMOPAY CALLBACK] persist failed", e); }
+  return c.json({ successStatus: true, message: "Success", responseCode: "000" });
+});
+
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 app.get("/download", async (c) => {
@@ -161,7 +179,7 @@ app.get("/download", async (c) => {
 
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
-app.route("/api/payment-callback", paymentCallbackRouter);
+app.route("/api/payment", paymentRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;
