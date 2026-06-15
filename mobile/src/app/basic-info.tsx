@@ -9,8 +9,6 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
-  Keyboard,
-  TouchableWithoutFeedback,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -518,13 +516,13 @@ export default function BasicInfoScreen() {
             </View>
           </LinearGradient>
 
-          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-            <ScrollView
-              style={{ flex: 1, marginTop: -16 }}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-              contentContainerStyle={{ paddingBottom: 40 }}
-            >
+          <ScrollView
+            style={{ flex: 1, marginTop: -16 }}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
+            contentContainerStyle={{ paddingBottom: 40 }}
+          >
               <Animated.View
                 entering={FadeInUp.delay(200).springify()}
                 style={{
@@ -669,8 +667,7 @@ export default function BasicInfoScreen() {
                   </Text>
                 </Pressable>
               </Animated.View>
-            </ScrollView>
-          </TouchableWithoutFeedback>
+          </ScrollView>
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
