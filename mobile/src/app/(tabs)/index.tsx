@@ -2,10 +2,11 @@ import { useState } from 'react';
 import { View, Text, ScrollView, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight, Plus, ArrowRightLeft, Receipt } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
+import { useWalletStore, formatINR } from '@/lib/wallet-store';
 import { useFeatureFlags } from '@/lib/feature-flags';
 import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/lib/toast-store';
@@ -30,12 +31,11 @@ const QUICK_ACTIONS = [
   { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
 ];
 
-const PRODUCTS = [
-  { name: 'HDFC Credit Card', commission: '₹2,100', type: 'Credit Card', logo: '🏦', categoryId: 'credit-cards' },
-  { name: 'ICICI Personal Loan', commission: '₹3,000', type: 'Loan', logo: '🏛️', categoryId: 'personal-loans' },
-  { name: 'Axis Savings Account', commission: '₹500', type: 'Savings', logo: '💳', categoryId: 'bank-accounts' },
-  { name: 'LIC Term Insurance', commission: '₹1,500', type: 'Insurance', logo: '🛡️', categoryId: 'life-insurance' },
-];
+const WALLET_ACTIONS = [
+  { key: 'add', label: 'Add Money', sub: 'To wallet', icon: Plus, color: '#16A34A', bg: '#F0FDF4', route: '/wallet-add-money' },
+  { key: 'transfer', label: 'To Bank', sub: 'Transfer', icon: ArrowRightLeft, color: '#2563EB', bg: '#EFF6FF', route: '/wallet-transfer' },
+  { key: 'statement', label: 'Statement', sub: 'Recent activity', icon: Receipt, color: '#FF8C00', bg: '#FFF7ED', route: '/wallet-statement' },
+] as const;
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -44,6 +44,7 @@ export default function HomeScreen() {
   const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
   const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const walletBalance = useWalletStore((s) => s.balance);
 
   const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
 
@@ -254,38 +255,58 @@ export default function HomeScreen() {
             </LinearGradient>
           </Animated.View>
 
-          {/* Top Products */}
+          {/* My Wallet */}
           <Animated.View entering={FadeInDown.delay(500).springify()} className="px-4 mt-5">
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-gray-900 font-bold text-base">Top Products to Sell</Text>
-              <PressableScale haptic="selection" onPress={() => router.push('/(tabs)/products')} className="flex-row items-center">
-                <Text className="text-orange-500 text-sm font-semibold">View All</Text>
-                <ChevronRight size={16} color="#FF8C00" />
-              </PressableScale>
-            </View>
+            <Text className="text-gray-900 font-bold text-base mb-3">My Wallet</Text>
 
-            {PRODUCTS.map((product, index) => (
-              <PressableScale
-                key={index}
-                haptic="light"
-                activeScale={0.98}
-                onPress={() => router.push({ pathname: '/(tabs)/products', params: { category: product.categoryId } })}
-                className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
-              >
-                <View className="w-12 h-12 bg-gray-50 rounded-2xl items-center justify-center mr-3">
-                  <Text className="text-2xl">{product.logo}</Text>
+            {/* Wallet balance + Add Money */}
+            <LinearGradient
+              colors={['#002561', '#0A3D91']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ borderRadius: 22, padding: 18, shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.18, shadowRadius: 14, elevation: 4 }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-row items-center">
+                  <View className="w-11 h-11 bg-white/15 rounded-2xl items-center justify-center mr-3">
+                    <Wallet size={22} color="#FFB870" />
+                  </View>
+                  <View>
+                    <Text className="text-white/60 text-xs font-medium">Wallet Balance</Text>
+                    <Text className="text-white font-extrabold text-2xl mt-0.5">{formatINR(walletBalance)}</Text>
+                  </View>
                 </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold">{product.name}</Text>
-                  <Text className="text-gray-400 text-xs mt-0.5">{product.type}</Text>
-                </View>
-                <View className="items-end">
-                  <Text className="text-green-600 font-extrabold">{product.commission}</Text>
-                  <Text className="text-gray-400 text-xs">per sale</Text>
-                </View>
-              </PressableScale>
-            ))}
+                <PressableScale haptic="medium" onPress={() => router.push('/wallet-add-money')}>
+                  <LinearGradient
+                    colors={['#FF8C00', '#FF6B00']}
+                    style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 22, flexDirection: 'row', alignItems: 'center' }}
+                  >
+                    <Plus size={16} color="#fff" />
+                    <Text className="text-white font-bold text-sm ml-1">Add Money</Text>
+                  </LinearGradient>
+                </PressableScale>
+              </View>
+            </LinearGradient>
+
+            {/* 3 wallet action icons */}
+            <View className="flex-row gap-3 mt-3">
+              {WALLET_ACTIONS.map((action) => (
+                <PressableScale
+                  key={action.key}
+                  haptic="light"
+                  activeScale={0.95}
+                  onPress={() => router.push(action.route)}
+                  className="flex-1 bg-white rounded-2xl p-3 items-center"
+                  style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+                >
+                  <View className="w-12 h-12 rounded-2xl items-center justify-center mb-2" style={{ backgroundColor: action.bg }}>
+                    <action.icon size={22} color={action.color} />
+                  </View>
+                  <Text className="text-gray-900 font-semibold text-xs text-center">{action.label}</Text>
+                  <Text className="text-gray-400 text-[10px] text-center mt-0.5">{action.sub}</Text>
+                </PressableScale>
+              ))}
+            </View>
           </Animated.View>
 
           {/* Training Section */}
