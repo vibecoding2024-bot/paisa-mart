@@ -55,6 +55,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="wallet-add-money" options={{ headerShown: false }} />
         <Stack.Screen name="wallet-transfer" options={{ headerShown: false }} />
         <Stack.Screen name="wallet-statement" options={{ headerShown: false }} />
+        <Stack.Screen name="support" options={{ headerShown: false }} />
         <Stack.Screen name="admin/index" options={{ headerShown: false }} />
         <Stack.Screen name="admin/(dashboard)" options={{ headerShown: false }} />
         <Stack.Screen name="share-card" options={{ headerShown: false }} />

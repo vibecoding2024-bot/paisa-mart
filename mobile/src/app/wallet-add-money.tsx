@@ -12,8 +12,8 @@ import { toast } from '@/lib/toast-store';
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000];
 
 const PAYMENT_METHODS = [
+  { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay' },
   { id: 'upi', label: 'UPI', sub: 'Google Pay, PhonePe, Paytm' },
-  { id: 'card', label: 'Debit / Credit Card', sub: 'Visa, Mastercard, RuPay' },
   { id: 'netbanking', label: 'Net Banking', sub: 'All major banks' },
 ];
 
@@ -23,7 +23,7 @@ export default function WalletAddMoneyScreen() {
   const addMoney = useWalletStore((s) => s.addMoney);
 
   const [amount, setAmount] = useState('');
-  const [method, setMethod] = useState('upi');
+  const [method, setMethod] = useState('card');
 
   const numericAmount = parseInt(amount || '0', 10);
   const isValid = numericAmount >= 1;

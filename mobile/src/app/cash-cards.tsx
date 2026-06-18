@@ -1,275 +1,235 @@
-import { useState } from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { CreditCard, Wallet, ArrowUpRight, Plus, History, ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Wallet, Plus, ArrowRightLeft, Receipt, ArrowDownLeft, ArrowUpRight, Headphones, ChevronRight, ShieldCheck, CreditCard } from 'lucide-react-native';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import * as Haptics from '@/lib/haptics';
 import { useRouter } from 'expo-router';
-import NoPayout_TCGate from '@/components/NoPayout_TCGate';
+import * as Haptics from '@/lib/haptics';
+import { useWalletStore, formatINR, type WalletTransaction } from '@/lib/wallet-store';
 
-const CARD_TYPES = [
-  { id: '1', name: 'Credit Cards', icon: CreditCard, color: '#3B82F6', bg: '#EFF6FF', count: 0 },
-  { id: '2', name: 'Debit Cards', icon: Wallet, color: '#10B981', bg: '#ECFDF5', count: 0 },
+const WALLET_ACTIONS = [
+  { key: 'add', label: 'Add Money', sub: 'Via card', icon: Plus, color: '#16A34A', bg: '#F0FDF4', route: '/wallet-add-money' as const },
+  { key: 'withdraw', label: 'Withdraw', sub: 'To bank', icon: ArrowRightLeft, color: '#2563EB', bg: '#EFF6FF', route: '/wallet-transfer' as const },
+  { key: 'statement', label: 'Statement', sub: 'History', icon: Receipt, color: '#FF8C00', bg: '#FFF7ED', route: '/wallet-statement' as const },
 ];
 
-const RECENT_TRANSACTIONS = [
-  { id: '1', title: 'Card Application - HDFC', amount: '₹0 payout', date: 'Pending', status: 'pending' },
-  { id: '2', title: 'Card Application - Axis', amount: '₹0 payout', date: 'Approved', status: 'success' },
-];
+const formatDate = (iso: string): string => {
+  const d = new Date(iso);
+  const day = d.getDate();
+  const month = d.toLocaleString('en-US', { month: 'short' });
+  let hours = d.getHours();
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12 || 12;
+  return `${day} ${month}, ${hours}:${minutes} ${ampm}`;
+};
 
 export default function CashCardsScreen() {
   const router = useRouter();
-  const [tcVisible, setTcVisible] = useState(true);
-  const [tcAccepted, setTcAccepted] = useState(false);
+  const balance = useWalletStore((s) => s.balance);
+  const transactions = useWalletStore((s) => s.transactions);
 
-  const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-  };
+  const recent = transactions.slice(0, 4);
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.back();
   };
 
+  const go = (route: string) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    router.push(route as any);
+  };
+
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      <NoPayout_TCGate
-        visible={tcVisible}
-        module="cash-cards"
-        onAccept={() => { setTcAccepted(true); setTcVisible(false); }}
-        onDecline={() => router.back()}
-      />
-      {tcAccepted && (
-        <SafeAreaView className="flex-1" edges={['top']}>
-          {/* Header */}
-          <LinearGradient
-            colors={['#002561', '#003380']}
-            style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
-          >
-            <View className="px-6 pt-4">
-              {/* Back Button */}
-              <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-4">
-                <Pressable
-                  onPress={handleBack}
-                  className="flex-row items-center active:opacity-70"
-                >
-                  <View className="w-9 h-9 bg-white/10 rounded-xl items-center justify-center mr-2">
-                    <ArrowLeft size={20} color="#fff" />
-                  </View>
-                  <Text className="text-white/90 text-sm font-medium">Back to Home</Text>
-                </Pressable>
-              </Animated.View>
-
-              <Animated.View entering={FadeInDown.delay(100).springify()}>
-                <Text className="text-white text-2xl font-bold">Cash on Credit Card</Text>
-                <Text className="text-white/70 text-sm mt-1">Manage and track all your card applications</Text>
-              </Animated.View>
-
-              {/* No-Payout Badge */}
-              <Animated.View
-                entering={FadeInDown.delay(200).springify()}
-                style={{
-                  backgroundColor: 'rgba(239,68,68,0.15)',
-                  borderRadius: 14,
-                  padding: 14,
-                  marginTop: 16,
-                  borderWidth: 1,
-                  borderColor: 'rgba(239,68,68,0.25)',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 10,
-                }}
-              >
-                <CreditCard size={18} color="#FCA5A5" />
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: '#FCA5A5', fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.8 }}>
-                    No Payout — 0% Commission
-                  </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.65)', fontSize: 12, marginTop: 2, lineHeight: 17 }}>
-                    Transactions here do not generate earnings or referral payouts.
-                  </Text>
+      <SafeAreaView className="flex-1" edges={['top']}>
+        {/* Header */}
+        <LinearGradient
+          colors={['#002561', '#003380']}
+          style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+        >
+          <View className="px-6 pt-4">
+            <Animated.View entering={FadeInDown.delay(50).springify()} className="mb-4">
+              <Pressable onPress={handleBack} className="flex-row items-center active:opacity-70">
+                <View className="w-9 h-9 bg-white/10 rounded-xl items-center justify-center mr-2">
+                  <ArrowLeft size={20} color="#fff" />
                 </View>
-              </Animated.View>
-            </View>
-          </LinearGradient>
+                <Text className="text-white/90 text-sm font-medium">Back to Home</Text>
+              </Pressable>
+            </Animated.View>
 
-          <ScrollView keyboardShouldPersistTaps="handled"
-            className="flex-1 -mt-4"
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 40 }}
-          >
-            {/* Card Types Section */}
-            <View className="px-6 mt-6">
-              <Text className="text-gray-900 font-semibold text-lg mb-4">Card Categories</Text>
-              <View className="flex-row gap-3">
-                {CARD_TYPES.map((card, index) => (
-                  <Animated.View
-                    key={card.id}
-                    entering={FadeInUp.delay(300 + index * 100).springify()}
-                    className="flex-1"
-                  >
-                    <Pressable
-                      onPress={handlePress}
-                      className="bg-white rounded-2xl p-4 shadow-sm active:scale-95"
-                      style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 8,
-                        elevation: 2,
-                      }}
-                    >
-                      <View className={`w-12 h-12 rounded-xl items-center justify-center mb-3`} style={{ backgroundColor: card.bg }}>
-                        <card.icon size={24} color={card.color} />
-                      </View>
-                      <Text className="text-gray-900 font-semibold text-base">{card.name}</Text>
-                      <Text className="text-gray-500 text-sm mt-1">{card.count} active</Text>
-                    </Pressable>
-                  </Animated.View>
-                ))}
-              </View>
-            </View>
+            <Animated.View entering={FadeInDown.delay(100).springify()}>
+              <Text className="text-white text-2xl font-bold">Cash on Credit Card</Text>
+              <Text className="text-white/70 text-sm mt-1">Your wallet — add money with a card & withdraw to bank</Text>
+            </Animated.View>
 
-            {/* Quick Actions */}
-            <View className="px-6 mt-6">
-              <Text className="text-gray-900 font-semibold text-lg mb-4">Quick Actions</Text>
-              <View className="gap-3">
-                <Animated.View entering={FadeInUp.delay(500).springify()}>
-                  <Pressable
-                    onPress={handlePress}
-                    className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-5 flex-row items-center justify-between active:scale-98"
-                  >
+            {/* Wallet Balance Card */}
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
+                style={{ borderRadius: 22, padding: 18, marginTop: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <View className="flex-row items-center">
+                    <View className="w-11 h-11 bg-white/15 rounded-2xl items-center justify-center mr-3">
+                      <Wallet size={22} color="#FFB870" />
+                    </View>
+                    <View>
+                      <Text className="text-white/60 text-xs font-medium">Wallet Balance</Text>
+                      <Text className="text-white font-extrabold text-3xl mt-0.5">{formatINR(balance)}</Text>
+                    </View>
+                  </View>
+                  <View className="flex-row items-center bg-white/10 px-2.5 py-1.5 rounded-full">
+                    <ShieldCheck size={12} color="#4ADE80" />
+                    <Text className="text-white/80 text-[10px] ml-1 font-medium">Secured</Text>
+                  </View>
+                </View>
+
+                {/* Add Money + Withdraw buttons */}
+                <View className="flex-row gap-3 mt-4">
+                  <Pressable onPress={() => go('/wallet-add-money')} className="flex-1 active:opacity-90">
                     <LinearGradient
                       colors={['#FF8C00', '#FF6B00']}
                       start={{ x: 0, y: 0 }}
                       end={{ x: 1, y: 0 }}
-                      className="absolute inset-0 rounded-2xl"
-                    />
-                    <View className="flex-row items-center">
-                      <View className="w-12 h-12 bg-white/20 rounded-xl items-center justify-center mr-4">
-                        <Plus size={24} color="#fff" />
-                      </View>
-                      <View>
-                        <Text className="text-white font-bold text-base">New Application</Text>
-                        <Text className="text-white/80 text-sm">Apply for a new card</Text>
-                      </View>
-                    </View>
-                    <ArrowUpRight size={20} color="#fff" />
-                  </Pressable>
-                </Animated.View>
-
-                <Animated.View entering={FadeInUp.delay(600).springify()}>
-                  <Pressable
-                    onPress={handlePress}
-                    className="bg-white rounded-2xl p-5 flex-row items-center justify-between shadow-sm active:scale-98"
-                    style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.05,
-                      shadowRadius: 8,
-                      elevation: 2,
-                    }}
-                  >
-                    <View className="flex-row items-center">
-                      <View className="w-12 h-12 bg-blue-50 rounded-xl items-center justify-center mr-4">
-                        <History size={24} color="#3B82F6" />
-                      </View>
-                      <View>
-                        <Text className="text-gray-900 font-semibold text-base">Application History</Text>
-                        <Text className="text-gray-500 text-sm">View all your applications</Text>
-                      </View>
-                    </View>
-                    <ArrowUpRight size={20} color="#9CA3AF" />
-                  </Pressable>
-                </Animated.View>
-              </View>
-            </View>
-
-            {/* Recent Transactions */}
-            <View className="px-6 mt-6">
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-gray-900 font-semibold text-lg">Recent Activity</Text>
-                <Pressable onPress={handlePress}>
-                  <Text className="text-orange-500 font-medium text-sm">View All</Text>
-                </Pressable>
-              </View>
-
-              {RECENT_TRANSACTIONS.length === 0 ? (
-                <Animated.View
-                  entering={FadeInUp.delay(700).springify()}
-                  className="bg-white rounded-2xl p-8 items-center justify-center shadow-sm"
-                  style={{
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 8,
-                    elevation: 2,
-                  }}
-                >
-                  <View className="w-16 h-16 bg-gray-100 rounded-full items-center justify-center mb-3">
-                    <History size={28} color="#9CA3AF" />
-                  </View>
-                  <Text className="text-gray-900 font-semibold text-base">No Recent Activity</Text>
-                  <Text className="text-gray-500 text-sm text-center mt-2">
-                    Start applying for cards to see your activity here
-                  </Text>
-                </Animated.View>
-              ) : (
-                <View className="gap-3">
-                  {RECENT_TRANSACTIONS.map((transaction, index) => (
-                    <Animated.View
-                      key={transaction.id}
-                      entering={FadeInUp.delay(700 + index * 100).springify()}
+                      style={{ borderRadius: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
                     >
-                      <Pressable
-                        onPress={handlePress}
-                        className="bg-white rounded-2xl p-4 flex-row items-center justify-between shadow-sm active:scale-98"
-                        style={{
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.05,
-                          shadowRadius: 8,
-                          elevation: 2,
-                        }}
-                      >
-                        <View className="flex-row items-center flex-1">
-                          <View className={`w-10 h-10 rounded-xl items-center justify-center mr-3 ${
-                            transaction.status === 'success' ? 'bg-green-50' : 'bg-orange-50'
-                          }`}>
-                            <CreditCard size={20} color={transaction.status === 'success' ? '#10B981' : '#FF8C00'} />
-                          </View>
-                          <View className="flex-1">
-                            <Text className="text-gray-900 font-semibold text-sm">{transaction.title}</Text>
-                            <Text className="text-gray-500 text-xs mt-0.5">{transaction.date}</Text>
-                          </View>
-                        </View>
-                        <Text className="font-bold text-base text-gray-400">
-                          {transaction.amount}
-                        </Text>
-                      </Pressable>
-                    </Animated.View>
-                  ))}
+                      <Plus size={18} color="#fff" />
+                      <Text className="text-white font-bold text-sm ml-1.5">Add Money</Text>
+                    </LinearGradient>
+                  </Pressable>
+                  <Pressable onPress={() => go('/wallet-transfer')} className="flex-1 active:opacity-90">
+                    <View className="bg-white/15 border border-white/20 rounded-2xl flex-row items-center justify-center" style={{ borderRadius: 14, paddingVertical: 12 }}>
+                      <ArrowUpRight size={18} color="#fff" />
+                      <Text className="text-white font-bold text-sm ml-1.5">Withdraw</Text>
+                    </View>
+                  </Pressable>
                 </View>
+              </LinearGradient>
+            </Animated.View>
+          </View>
+        </LinearGradient>
+
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          className="flex-1 -mt-4"
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 40 }}
+        >
+          {/* Quick wallet actions */}
+          <Animated.View entering={FadeInUp.delay(300).springify()} className="px-6 mt-6">
+            <Text className="text-gray-900 font-semibold text-base mb-3">Wallet Actions</Text>
+            <View className="flex-row gap-3">
+              {WALLET_ACTIONS.map((action) => (
+                <Pressable
+                  key={action.key}
+                  onPress={() => go(action.route)}
+                  className="flex-1 bg-white rounded-2xl p-3 items-center active:scale-95"
+                  style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+                >
+                  <View className="w-12 h-12 rounded-2xl items-center justify-center mb-2" style={{ backgroundColor: action.bg }}>
+                    <action.icon size={22} color={action.color} />
+                  </View>
+                  <Text className="text-gray-900 font-semibold text-xs text-center">{action.label}</Text>
+                  <Text className="text-gray-400 text-[10px] text-center mt-0.5">{action.sub}</Text>
+                </Pressable>
+              ))}
+            </View>
+          </Animated.View>
+
+          {/* Recent Activity */}
+          <Animated.View entering={FadeInUp.delay(400).springify()} className="px-6 mt-7">
+            <View className="flex-row items-center justify-between mb-3">
+              <Text className="text-gray-900 font-semibold text-base">Recent Activity</Text>
+              {transactions.length > 0 && (
+                <Pressable onPress={() => go('/wallet-statement')} className="flex-row items-center">
+                  <Text className="text-orange-500 text-sm font-semibold">View All</Text>
+                  <ChevronRight size={16} color="#FF8C00" />
+                </Pressable>
               )}
             </View>
 
-            {/* No Payout Info Card */}
-            <Animated.View
-              entering={FadeInUp.delay(900).springify()}
-              className="mx-6 mt-6 rounded-2xl p-5"
-              style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA' }}
-            >
-              <Text style={{ color: '#991B1B', fontWeight: '600', fontSize: 13, marginBottom: 4 }}>
-                No Payout — Convenience Service
-              </Text>
-              <Text style={{ color: '#B91C1C', fontSize: 12, lineHeight: 18 }}>
-                This module is provided for user convenience only. No commission or referral payout is applicable. Transactions here do not appear in your earnings report.
-              </Text>
-            </Animated.View>
-          </ScrollView>
-        </SafeAreaView>
-      )}
+            {recent.length === 0 ? (
+              <View
+                className="bg-white rounded-2xl p-8 items-center justify-center"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              >
+                <View className="w-16 h-16 bg-gray-100 rounded-full items-center justify-center mb-3">
+                  <CreditCard size={28} color="#9CA3AF" />
+                </View>
+                <Text className="text-gray-900 font-semibold text-base">No Transactions Yet</Text>
+                <Text className="text-gray-500 text-sm text-center mt-2">
+                  Add money using your credit card to get started.
+                </Text>
+              </View>
+            ) : (
+              <View className="gap-3">
+                {recent.map((tx: WalletTransaction) => {
+                  const isCredit = tx.type === 'credit';
+                  return (
+                    <View
+                      key={tx.id}
+                      className="bg-white rounded-2xl p-4 flex-row items-center"
+                      style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                    >
+                      <View className={`w-11 h-11 rounded-xl items-center justify-center mr-3 ${isCredit ? 'bg-green-50' : 'bg-red-50'}`}>
+                        {isCredit ? <ArrowDownLeft size={20} color="#16A34A" /> : <ArrowUpRight size={20} color="#DC2626" />}
+                      </View>
+                      <View className="flex-1">
+                        <Text className="text-gray-900 font-semibold text-sm">{tx.title}</Text>
+                        <Text className="text-gray-400 text-xs mt-0.5">{formatDate(tx.timestamp)}</Text>
+                      </View>
+                      <Text className={`font-extrabold text-sm ${isCredit ? 'text-green-600' : 'text-red-600'}`}>
+                        {isCredit ? '+' : '-'}{formatINR(tx.amount)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </Animated.View>
+
+          {/* Support */}
+          <Animated.View entering={FadeInUp.delay(500).springify()} className="px-6 mt-7">
+            <Text className="text-gray-900 font-semibold text-base mb-3">Need Help?</Text>
+            <Pressable onPress={() => go('/support')} className="active:scale-98">
+              <LinearGradient
+                colors={['#EFF6FF', '#F5F3FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 18, padding: 16, flexDirection: 'row', alignItems: 'center' }}
+              >
+                <LinearGradient
+                  colors={['#2563EB', '#1D4ED8']}
+                  style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
+                >
+                  <Headphones size={24} color="#fff" />
+                </LinearGradient>
+                <View className="flex-1">
+                  <Text className="text-gray-900 font-bold">Contact Support</Text>
+                  <Text className="text-gray-500 text-xs mt-0.5">Call, WhatsApp or email us for any wallet issue</Text>
+                </View>
+                <ChevronRight size={20} color="#3B82F6" />
+              </LinearGradient>
+            </Pressable>
+          </Animated.View>
+
+          {/* Info note */}
+          <Animated.View
+            entering={FadeInUp.delay(600).springify()}
+            className="mx-6 mt-7 rounded-2xl p-5"
+            style={{ backgroundColor: '#F0FDF4', borderWidth: 1, borderColor: '#BBF7D0' }}
+          >
+            <Text style={{ color: '#166534', fontWeight: '600', fontSize: 13, marginBottom: 4 }}>
+              Safe & Secure Wallet
+            </Text>
+            <Text style={{ color: '#15803D', fontSize: 12, lineHeight: 18 }}>
+              Add money to your wallet using a credit or debit card and withdraw to your bank anytime. All transactions are encrypted and protected.
+            </Text>
+          </Animated.View>
+        </ScrollView>
+      </SafeAreaView>
     </View>
   );
 }
