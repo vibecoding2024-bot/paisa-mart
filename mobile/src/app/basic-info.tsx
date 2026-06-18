@@ -482,7 +482,6 @@ export default function BasicInfoScreen() {
   );
 
   const handleSubmit = () => {
-    if (!isFormValid) return;
     setProfile({
       name: name.trim(),
       phoneNumber,
@@ -650,20 +649,19 @@ export default function BasicInfoScreen() {
                 {/* Submit Button */}
                 <Pressable
                   onPress={handleSubmit}
-                  disabled={!isFormValid}
                   style={({ pressed }) => ({
                     borderRadius: 14,
                     paddingVertical: 15,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: isFormValid ? '#FF8C00' : '#E5E7EB',
+                    backgroundColor: '#FF8C00',
                     opacity: pressed ? 0.88 : 1,
                     transform: [{ scale: pressed ? 0.98 : 1 }],
-                    ...(Platform.OS === 'web' ? { transition: 'all 0.15s ease', cursor: isFormValid ? 'pointer' : 'not-allowed' } as any : {}),
+                    ...(Platform.OS === 'web' ? { transition: 'all 0.15s ease', cursor: 'pointer' } as any : {}),
                   })}
                 >
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: isFormValid ? 'white' : '#9CA3AF' }}>
-                    {isFormValid ? 'Submit Profile →' : 'Fill all required fields'}
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>
+                    Submit Profile →
                   </Text>
                 </Pressable>
               </Animated.View>
