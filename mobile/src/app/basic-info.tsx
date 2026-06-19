@@ -18,6 +18,8 @@ import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin,
 import * as Haptics from '@/lib/haptics';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 
+const isWeb = Platform.OS === 'web';
+
 const OCCUPATIONS = [
   'Salaried Employee', 'Self Employed', 'Business Owner',
   'Student', 'Homemaker', 'Retired', 'Freelancer', 'Other',
@@ -531,7 +533,7 @@ export default function BasicInfoScreen() {
             style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
           >
             <View style={{ paddingHorizontal: 24, paddingTop: 16 }}>
-              <Animated.View entering={FadeInDown.delay(100).springify()}>
+              <Animated.View entering={isWeb ? undefined : FadeInDown.delay(100).springify()}>
                 <Text style={{ color: 'white', fontSize: 20, fontWeight: '600' }}>Complete Your Profile</Text>
                 <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 }}>Fill in your details to get started</Text>
               </Animated.View>
@@ -540,7 +542,7 @@ export default function BasicInfoScreen() {
 
           <FormScroll>
               <Animated.View
-                entering={FadeInUp.delay(200).springify()}
+                entering={isWeb ? undefined : FadeInUp.delay(200).springify()}
                 style={{
                   marginHorizontal: 20,
                   backgroundColor: 'white',
