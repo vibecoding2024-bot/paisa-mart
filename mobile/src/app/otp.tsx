@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams, useNavigationContainerRef } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -32,19 +32,6 @@ export default function OTPScreen() {
   const [resendTimer, setResendTimer] = useState(30);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const router = useRouter();
-  const rootNavigation = useNavigationContainerRef();
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
-
-  useEffect(() => {
-    const checkNavigation = () => {
-      if (rootNavigation?.isReady()) {
-        setIsNavigationReady(true);
-      } else {
-        setTimeout(checkNavigation, 100);
-      }
-    };
-    checkNavigation();
-  }, [rootNavigation]);
 
   const shakeValue = useSharedValue(0);
 
@@ -129,9 +116,7 @@ export default function OTPScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setTimeout(() => {
-        if (isNavigationReady) {
-          router.replace('/basic-info');
-        }
+        router.replace('/basic-info');
       }, 1000);
     } else {
       triggerShake();
@@ -169,11 +154,7 @@ export default function OTPScreen() {
                 className="flex-row items-center"
               >
                 <Pressable
-                  onPress={() => {
-                    if (isNavigationReady) {
-                      router.back();
-                    }
-                  }}
+                  onPress={() => router.back()}
                   className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mr-4"
                 >
                   <ArrowLeft size={20} color="#fff" />

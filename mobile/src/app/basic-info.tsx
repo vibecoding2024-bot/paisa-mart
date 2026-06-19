@@ -7,11 +7,11 @@ import {
   ScrollView,
   Modal,
   FlatList,
-  KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard, Calendar } from 'lucide-react-native';
@@ -451,6 +451,30 @@ function PhoneInput({ value, onChangeText }: { value: string; onChangeText: (t: 
 }
 
 // ─────────────────────────────────────────────
+// FormScroll — keyboard-aware scroll on native, plain ScrollView on web
+// (KeyboardProvider is only mounted on native in the root layout)
+// ─────────────────────────────────────────────
+function FormScroll({ children }: { children: React.ReactNode }) {
+  const commonProps = {
+    style: { flex: 1, marginTop: -16 },
+    showsVerticalScrollIndicator: false,
+    keyboardShouldPersistTaps: 'handled' as const,
+    keyboardDismissMode: 'on-drag' as const,
+    contentContainerStyle: { paddingBottom: 40 },
+  };
+
+  if (Platform.OS === 'web') {
+    return <ScrollView {...commonProps}>{children}</ScrollView>;
+  }
+
+  return (
+    <KeyboardAwareScrollView {...commonProps} bottomOffset={24}>
+      {children}
+    </KeyboardAwareScrollView>
+  );
+}
+
+// ─────────────────────────────────────────────
 // Main Screen
 // ─────────────────────────────────────────────
 export default function BasicInfoScreen() {
@@ -501,7 +525,6 @@ export default function BasicInfoScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: 'white' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
           {/* Header */}
           <LinearGradient
             colors={['#002561', '#003380']}
@@ -515,13 +538,7 @@ export default function BasicInfoScreen() {
             </View>
           </LinearGradient>
 
-          <ScrollView
-            style={{ flex: 1, marginTop: -16 }}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            contentContainerStyle={{ paddingBottom: 40 }}
-          >
+          <FormScroll>
               <Animated.View
                 entering={FadeInUp.delay(200).springify()}
                 style={{
@@ -665,8 +682,7 @@ export default function BasicInfoScreen() {
                   </Text>
                 </Pressable>
               </Animated.View>
-          </ScrollView>
-        </KeyboardAvoidingView>
+          </FormScroll>
       </SafeAreaView>
     </View>
   );
