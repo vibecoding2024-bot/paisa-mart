@@ -12,11 +12,13 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard, Calendar } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { saveUserProfile } from '@/lib/user-profile-api';
+import { toast } from '@/lib/toast-store';
 
 const isWeb = Platform.OS === 'web';
 
@@ -178,7 +180,7 @@ function SmartSelect({ label, value, placeholder, icon, options, onSelect, optio
             setShowModal(true);
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
           }}
-          style={({ pressed }) => ({
+          style={{
             flexDirection: 'row',
             alignItems: 'center',
             backgroundColor: '#F9FAFB',
@@ -188,8 +190,7 @@ function SmartSelect({ label, value, placeholder, icon, options, onSelect, optio
             borderWidth: 2,
             borderColor: value ? '#FF8C00' : '#E5E7EB',
             minHeight: 52,
-            opacity: pressed ? 0.85 : 1,
-          })}
+          }}
         >
           {icon}
           <Text style={{ flex: 1, marginLeft: 12, fontSize: 15, color: value ? '#1F2937' : '#9CA3AF' }}>
@@ -481,10 +482,11 @@ function FormScroll({ children }: { children: React.ReactNode }) {
 // ─────────────────────────────────────────────
 export default function BasicInfoScreen() {
   const router = useRouter();
+  const { phone } = useLocalSearchParams<{ phone?: string }>();
   const setProfile = useUserProfileStore((s) => s.setProfile);
 
   const [name, setName] = useState('');
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState(phone || '');
   const [email, setEmail] = useState('');
   const [occupation, setOccupation] = useState('');
   const [qualification, setQualification] = useState('');
@@ -495,6 +497,7 @@ export default function BasicInfoScreen() {
   const [dobMonth, setDobMonth] = useState('');
   const [dobYear, setDobYear] = useState('');
   const [referralCode, setReferralCode] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   // Native-only modal states (SmartSelect manages its own for most)
   const [showDayModal, setShowDayModal] = useState(false);
@@ -507,8 +510,10 @@ export default function BasicInfoScreen() {
     pincode.length === 6 && dobDay && dobMonth && dobYear
   );
 
-  const handleSubmit = () => {
-    setProfile({
+  const handleSubmit = async () => {
+    if (isSaving) return;
+
+    const profile = {
       name: name.trim(),
       phoneNumber,
       email: email.trim(),
@@ -519,9 +524,25 @@ export default function BasicInfoScreen() {
       cibilScore: cibilScoreRange,
       dateOfBirth: dobDay && dobMonth && dobYear ? { day: dobDay, month: dobMonth, year: dobYear } : undefined,
       createdAt: new Date().toISOString(),
-    });
+    };
+
+    setIsSaving(true);
+    try {
+      const savedProfile = await saveUserProfile(profile);
+      setProfile(savedProfile);
+      toast.success('Profile saved successfully');
+    } catch (error) {
+      console.warn('Profile database save failed', error);
+      toast.error('Could not save profile. Please check your connection and try again.');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      setIsSaving(false);
+      return;
+    } finally {
+      setIsSaving(false);
+    }
+
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace('/(tabs)');
+    router.replace({ pathname: '/mpin-setup', params: { next: '/(tabs)/profile' } });
   };
 
   return (
@@ -668,19 +689,20 @@ export default function BasicInfoScreen() {
                 {/* Submit Button */}
                 <Pressable
                   onPress={handleSubmit}
+                  disabled={!isFormValid || isSaving}
                   style={({ pressed }) => ({
                     borderRadius: 14,
                     paddingVertical: 15,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    backgroundColor: '#FF8C00',
-                    opacity: pressed ? 0.88 : 1,
+                    backgroundColor: isFormValid ? '#FF8C00' : '#D1D5DB',
+                    opacity: pressed || isSaving ? 0.88 : 1,
                     transform: [{ scale: pressed ? 0.98 : 1 }],
                     ...(Platform.OS === 'web' ? { transition: 'all 0.15s ease', cursor: 'pointer' } as any : {}),
                   })}
                 >
                   <Text style={{ fontSize: 16, fontWeight: '700', color: 'white' }}>
-                    Submit Profile →
+                    {isSaving ? 'Saving...' : 'Submit Profile →'}
                   </Text>
                 </Pressable>
               </Animated.View>

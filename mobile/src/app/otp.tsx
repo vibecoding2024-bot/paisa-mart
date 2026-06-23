@@ -20,6 +20,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
+import type { KYCStatus } from '@/lib/incentive-store';
+import { useIncentiveStore } from '@/lib/incentive-store';
+import { useUserProfileStore } from '@/lib/user-profile-store';
+import { getAuthSecurityConfig } from '@/lib/auth-security';
+import { fetchUserProfile } from '@/lib/user-profile-api';
 
 const OTP_LENGTH = 6;
 
@@ -32,6 +37,11 @@ export default function OTPScreen() {
   const [resendTimer, setResendTimer] = useState(30);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const router = useRouter();
+  const profile = useUserProfileStore((s) => s.profile);
+  const setProfile = useUserProfileStore((s) => s.setProfile);
+  const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
+  const userKYC = useIncentiveStore((s) => s.userKYC);
+  const kycHasHydrated = useIncentiveStore((s) => s.hasHydrated);
 
   const shakeValue = useSharedValue(0);
 
@@ -76,6 +86,10 @@ export default function OTPScreen() {
       const nextIndex = Math.min(index + pastedOtp.length, OTP_LENGTH - 1);
       setActiveIndex(nextIndex);
       inputRefs.current[nextIndex]?.focus();
+      const fullOtp = newOtp.join('');
+      if (fullOtp.length === OTP_LENGTH) {
+        verifyOtp(fullOtp);
+      }
     } else {
       const newOtp = [...otp];
       newOtp[index] = value;
@@ -115,8 +129,41 @@ export default function OTPScreen() {
       setIsVerified(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
-      setTimeout(() => {
-        router.replace('/basic-info');
+      setTimeout(async () => {
+        const existingUser = profile?.phoneNumber === phone;
+        let hasExistingUser = existingUser;
+        let kycStatus: KYCStatus | undefined = userKYC?.status;
+
+        try {
+          const serverProfile = await fetchUserProfile(phone);
+          if (serverProfile) {
+            hasExistingUser = true;
+            if (
+              serverProfile.kycStatus === 'not_started' ||
+              serverProfile.kycStatus === 'submitted' ||
+              serverProfile.kycStatus === 'verified' ||
+              serverProfile.kycStatus === 'rejected'
+            ) {
+              kycStatus = serverProfile.kycStatus;
+            }
+            setProfile(serverProfile);
+          }
+        } catch (error) {
+          console.warn('Profile lookup failed, falling back to local profile', error);
+        }
+
+        if (profileHasHydrated && kycHasHydrated && hasExistingUser) {
+          const targetRoute = kycStatus === 'verified' ? '/(tabs)' : '/(tabs)/profile';
+          getAuthSecurityConfig().then((config) => {
+            router.replace({
+              pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+              params: { next: targetRoute },
+            });
+          });
+          return;
+        }
+
+        router.replace({ pathname: '/basic-info', params: { phone } });
       }, 1000);
     } else {
       triggerShake();
