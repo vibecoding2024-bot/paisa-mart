@@ -7,6 +7,7 @@ import { notifyInterestRouter } from "./routes/notify-interest";
 import { paymentRouter } from "./routes/payment";
 import { applyCallback } from "./lib/txn-store";
 import { logger } from "hono/logger";
+import { authRouter } from "./routes/auth";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
 
@@ -132,6 +133,7 @@ const allowed = [
   /^http:\/\/127\.0\.0\.1(:\d+)?$/,
   /^https:\/\/[a-z0-9-]+\.dev\.vibecode\.run$/,
   /^https:\/\/[a-z0-9-]+\.vibecode\.run$/,
+  /^https:\/\/(www\.)?paisa-mart\.com$/,
 ];
 
 app.use(
@@ -143,6 +145,20 @@ app.use(
 );
 
 app.use("*", logger());
+
+app.use("*", async (c, next) => {
+  const forwardedProto = c.req.header("x-forwarded-proto");
+  const host = c.req.header("host");
+  if (process.env.NODE_ENV === "production" && forwardedProto === "http" && host) {
+    return c.redirect(`https://${host}${new URL(c.req.url).pathname}${new URL(c.req.url).search}`, 308);
+  }
+  await next();
+  c.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+  c.header("X-Content-Type-Options", "nosniff");
+  c.header("X-Frame-Options", "DENY");
+  c.header("Referrer-Policy", "strict-origin-when-cross-origin");
+  c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+});
 
 // VimoPay callback resilience: the gateway-registered callback path/host has
 // varied (caused 404s), so accept the status callback on ANY path containing
@@ -180,6 +196,7 @@ app.get("/download", async (c) => {
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
 app.route("/api/payment", paymentRouter);
+app.route("/api/auth", authRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;
