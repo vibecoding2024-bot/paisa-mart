@@ -6,13 +6,24 @@ set -euo pipefail
 BUN="$HOME/.bun/bin/bun"          # bun is NOT on PATH — use full path
 REPO="$HOME/paisa-mart-new"
 APP_DIR="$REPO/backend"
+MOBILE_DIR="$REPO/mobile"
+PUBLIC_DIR="$APP_DIR/public"
 PM2_NAME="paisa-mart"
 BRANCH="main"
 
 echo "==> Pulling latest ($BRANCH)"
 git -C "$REPO" pull origin "$BRANCH"
 
-echo "==> Installing dependencies"
+echo "==> Building web app"
+cd "$MOBILE_DIR"
+"$BUN" install --frozen-lockfile
+EXPO_PUBLIC_API_URL="https://paisa-mart.com" "$BUN" run build:web
+
+echo "==> Publishing web app"
+rm -rf "$PUBLIC_DIR"
+cp -R "$MOBILE_DIR/dist" "$PUBLIC_DIR"
+
+echo "==> Installing backend dependencies"
 cd "$APP_DIR"
 "$BUN" install
 

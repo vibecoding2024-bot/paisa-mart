@@ -20,6 +20,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
+import { saveAuthToken, sendOtp, verifyOtp as verifyOtpRequest } from '@/lib/auth-api';
 
 const OTP_LENGTH = 6;
 
@@ -30,6 +31,7 @@ export default function OTPScreen() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [resendTimer, setResendTimer] = useState(30);
+  const [error, setError] = useState('');
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const router = useRouter();
 
@@ -109,28 +111,38 @@ export default function OTPScreen() {
 
   const verifyOtp = async (otpValue: string) => {
     setIsVerifying(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    if (otpValue.length === OTP_LENGTH) {
+    setError('');
+    try {
+      if (!phone) throw new Error('Mobile number is missing');
+      const result = await verifyOtpRequest(phone, otpValue);
+      await saveAuthToken(result.token);
       setIsVerified(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setTimeout(() => {
         router.replace('/basic-info');
       }, 1000);
-    } else {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'OTP verification failed');
       triggerShake();
       setIsVerifying(false);
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     if (resendTimer === 0) {
-      setResendTimer(30);
-      setOtp(Array(OTP_LENGTH).fill(''));
-      setActiveIndex(0);
-      inputRefs.current[0]?.focus();
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setError('');
+      try {
+        if (!phone) throw new Error('Mobile number is missing');
+        await sendOtp(phone);
+        setResendTimer(30);
+        setOtp(Array(OTP_LENGTH).fill(''));
+        setActiveIndex(0);
+        inputRefs.current[0]?.focus();
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to resend OTP');
+      }
     }
   };
 
@@ -244,6 +256,8 @@ export default function OTPScreen() {
                   </Animated.View>
                 )}
               </View>
+
+              {!!error && <Text className="text-red-500 text-sm text-center mt-3">{error}</Text>}
 
               {/* Resend */}
               <View className="mt-6 items-center">

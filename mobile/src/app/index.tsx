@@ -15,19 +15,31 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { Phone, ArrowRight, Users, Wallet, Award, Star } from 'lucide-react-native';
+import { sendOtp } from '@/lib/auth-api';
 
 const isWeb = Platform.OS === 'web';
 
 export default function LoginScreen() {
   const [phoneNumber, setPhoneNumber] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [isSending, setIsSending] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (isValidPhone) {
-      router.push({ pathname: '/otp', params: { phone: phoneNumber } });
+      setError('');
+      setIsSending(true);
+      try {
+        await sendOtp(phoneNumber);
+        router.push({ pathname: '/otp', params: { phone: phoneNumber } });
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Unable to send OTP');
+      } finally {
+        setIsSending(false);
+      }
     }
   };
 
@@ -152,16 +164,18 @@ export default function LoginScreen() {
                 />
               </View>
 
+              {!!error && <Text className="text-red-500 text-sm mt-2">{error}</Text>}
+
               {/* Continue Button */}
               <Pressable
                 onPress={handleContinue}
-                disabled={!isValidPhone}
+                disabled={!isValidPhone || isSending}
                 className="mt-4"
               >
                 {({ pressed }) => (
                   <View
                     className={`rounded-xl py-4 flex-row items-center justify-center ${
-                      isValidPhone ? 'bg-orange-500' : 'bg-gray-300'
+                      isValidPhone && !isSending ? 'bg-orange-500' : 'bg-gray-300'
                     }`}
                     style={{
                       opacity: pressed ? 0.9 : 1,
@@ -169,7 +183,7 @@ export default function LoginScreen() {
                     }}
                   >
                     <Text className={`text-base font-bold mr-2 ${isValidPhone ? 'text-white' : 'text-gray-500'}`}>
-                      Continue
+                      {isSending ? 'Sending OTP...' : 'Continue'}
                     </Text>
                     <ArrowRight size={20} color={isValidPhone ? '#fff' : '#9CA3AF'} />
                   </View>
