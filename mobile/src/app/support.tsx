@@ -9,9 +9,16 @@ import * as Haptics from '@/lib/haptics';
 import { toast } from '@/lib/toast-store';
 
 // Support contact details
-const SUPPORT_PHONE = '18001234567';
-const SUPPORT_WHATSAPP = '919876543210';
-const SUPPORT_EMAIL = 'support@paisamart.in';
+const SUPPORT_PHONE = '9908234067';
+const SUPPORT_WHATSAPP = '919908234067';
+const SUPPORT_EMAIL = 'paisamartpvtltd@gmail.com';
+
+const COMPANY_INFO = [
+  { label: 'Company', value: 'Paisa Mart Pvt Ltd' },
+  { label: 'Industry', value: 'Financial Services / Fintech' },
+  { label: 'Business Model', value: 'Financial Product Distribution & Digital Financial Services' },
+  { label: 'Coverage', value: 'Pan India' },
+];
 
 const FAQS = [
   {
@@ -64,7 +71,7 @@ export default function SupportScreen() {
     {
       key: 'call',
       label: 'Call Support',
-      sub: '1800 123 4567 · Toll free',
+      sub: '+91 9908234067',
       icon: Phone,
       color: '#16A34A',
       bg: '#F0FDF4',
@@ -86,7 +93,7 @@ export default function SupportScreen() {
       icon: Mail,
       color: '#2563EB',
       bg: '#EFF6FF',
-      onPress: () => openUrl(`mailto:${SUPPORT_EMAIL}?subject=Wallet%20Support%20Request`, `Email us at ${SUPPORT_EMAIL}`),
+      onPress: () => openUrl(`mailto:${SUPPORT_EMAIL}?subject=Support%20Request%20-%20Paisa%20Mart`, `Email us at ${SUPPORT_EMAIL}`),
     },
   ];
 
@@ -198,12 +205,31 @@ export default function SupportScreen() {
             </View>
           </View>
 
+          {/* Company Info */}
+          <Animated.View entering={FadeInUp.delay(750).springify()} className="px-6 mt-7">
+            <Text className="text-gray-900 font-semibold text-base mb-3">About Us</Text>
+            <View
+              className="bg-white rounded-2xl p-4"
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+            >
+              {COMPANY_INFO.map((item, index) => (
+                <View
+                  key={item.label}
+                  className={`flex-row py-2.5 ${index < COMPANY_INFO.length - 1 ? 'border-b border-gray-100' : ''}`}
+                >
+                  <Text className="text-gray-400 text-xs w-28">{item.label}</Text>
+                  <Text className="text-gray-800 text-xs font-medium flex-1">{item.value}</Text>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+
           {/* Footer note */}
-          <Animated.View entering={FadeInUp.delay(800).springify()} className="px-6 mt-7">
+          <Animated.View entering={FadeInUp.delay(850).springify()} className="px-6 mt-7">
             <View className="bg-blue-50 rounded-2xl p-5">
-              <Text className="text-[#002561] font-semibold text-sm mb-1">Still need help?</Text>
+              <Text className="text-[#002561] font-semibold text-sm mb-1">Paisa Mart Pvt Ltd – Financial Solutions</Text>
               <Text className="text-gray-600 text-xs leading-5">
-                Our support team is available every day from 9 AM to 9 PM. For wallet or payment issues, please keep your transaction details ready for faster resolution.
+                Our support team is available every day from 9 AM to 9 PM. For any queries, please have your transaction details ready for faster resolution.
               </Text>
             </View>
           </Animated.View>

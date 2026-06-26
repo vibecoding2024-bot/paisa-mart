@@ -3,9 +3,10 @@ import { View, Text, ScrollView, Modal, Share, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronRight, Settings, HelpCircle, FileText, Share2, Star, LogOut, Award, Bell, Shield, CreditCard, Lock, X } from 'lucide-react-native';
+import { ChevronRight, Settings, HelpCircle, FileText, Share2, Star, LogOut, Award, Bell, Shield, CreditCard, Lock, X, Info } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { useIncentiveStore } from '@/lib/incentive-store';
 import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/lib/toast-store';
 import PressableScale from '@/components/PressableScale';
@@ -23,6 +24,7 @@ const MENU_ITEMS: MenuItem[] = [
   { icon: Shield, label: 'KYC Verification', description: 'Complete your KYC', action: 'route:/kyc' },
   { icon: Share2, label: 'Refer & Earn', description: 'Invite friends, earn ₹500', action: 'share' },
   { icon: FileText, label: 'Terms & Conditions', description: 'Payout terms & policies', action: 'route:/terms-and-conditions' },
+  { icon: Info, label: 'About Us', description: 'Paisa Mart Pvt Ltd', action: 'route:/about-us' },
   { icon: HelpCircle, label: 'Help & Support', description: 'Get assistance', action: 'help' },
   { icon: Star, label: 'Rate Us', description: 'Share your feedback', action: 'rate' },
 ];
@@ -31,12 +33,16 @@ export default function ProfileScreen() {
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
   const clearProfile = useUserProfileStore((s) => s.clearProfile);
+  const userKYC = useIncentiveStore((s) => s.userKYC);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const displayName = profile?.name?.trim() || 'Partner Name';
   const displayPhone = profile?.phoneNumber || '+91 98765 43210';
   const avatarLetter = displayName.charAt(0).toUpperCase();
+  const isKYCVerified = userKYC?.status === 'verified';
+  const kycLabel = isKYCVerified ? 'Verified' : userKYC?.status === 'submitted' ? 'Under Review' : 'KYC Pending';
+  const kycBadgeClassName = isKYCVerified ? 'bg-green-500' : userKYC?.status === 'submitted' ? 'bg-amber-500' : 'bg-orange-500';
 
   const handleShare = async () => {
     try {
@@ -55,7 +61,7 @@ export default function ProfileScreen() {
     } else if (action === 'share') {
       handleShare();
     } else if (action === 'help') {
-      toast.info('Support: support@paisamart.in · +91 1800-123-456');
+      toast.info('Support: paisamartpvtltd@gmail.com · +91 9908234067');
     } else if (action === 'rate') {
       toast.success('Thanks! Redirecting you to the store…');
     }
@@ -106,8 +112,8 @@ export default function ProfileScreen() {
                 <Text className="text-white font-bold text-lg">{displayName}</Text>
                 <Text className="text-white/70 text-sm">{displayPhone}</Text>
                 <View className="flex-row items-center mt-1.5">
-                  <View className="bg-green-500 px-2 py-0.5 rounded-full">
-                    <Text className="text-white text-xs font-bold">Verified</Text>
+                  <View className={`${kycBadgeClassName} px-2 py-0.5 rounded-full`}>
+                    <Text className="text-white text-xs font-bold">{kycLabel}</Text>
                   </View>
                 </View>
               </View>
@@ -123,8 +129,29 @@ export default function ProfileScreen() {
         </LinearGradient>
 
         <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
+          {!isKYCVerified && (
+            <Animated.View entering={FadeInDown.delay(80).springify()} className="px-4 -mt-5 mb-4">
+              <PressableScale
+                haptic="light"
+                activeScale={0.98}
+                onPress={() => router.push('/kyc')}
+                className="bg-orange-500 rounded-2xl p-4 flex-row items-center"
+                style={{ shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.12, shadowRadius: 16, elevation: 4 }}
+              >
+                <View className="w-10 h-10 bg-white/20 rounded-xl items-center justify-center mr-3">
+                  <Shield size={20} color="#fff" />
+                </View>
+                <View className="flex-1">
+                  <Text className="text-white font-bold">Complete KYC</Text>
+                  <Text className="text-white/80 text-xs mt-0.5">Verify your documents to open the dashboard</Text>
+                </View>
+                <ChevronRight size={20} color="#fff" />
+              </PressableScale>
+            </Animated.View>
+          )}
+
           {/* Stats Card */}
-          <Animated.View entering={FadeInDown.delay(100).springify()} className="px-4 -mt-5">
+          <Animated.View entering={FadeInDown.delay(100).springify()} className={`px-4 ${isKYCVerified ? '-mt-5' : ''}`}>
             <View
               className="bg-white rounded-3xl p-4 flex-row"
               style={{ shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.1, shadowRadius: 16, elevation: 4 }}
