@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -14,8 +14,11 @@ import Animated, {
   FadeInDown,
   FadeInUp,
 } from 'react-native-reanimated';
-import { Phone, ArrowRight, Users, Wallet, Award, Star } from 'lucide-react-native';
+import { Phone, ArrowRight, Users, Wallet, Award, Star, Info, Headphones } from 'lucide-react-native';
 import { sendOtp } from '@/lib/auth-api';
+import { useIncentiveStore } from '@/lib/incentive-store';
+import { useUserProfileStore } from '@/lib/user-profile-store';
+import { getAuthSecurityConfig } from '@/lib/auth-security';
 
 const isWeb = Platform.OS === 'web';
 
@@ -25,6 +28,24 @@ export default function LoginScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const profile = useUserProfileStore((s) => s.profile);
+  const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
+  const userKYC = useIncentiveStore((s) => s.userKYC);
+  const kycHasHydrated = useIncentiveStore((s) => s.hasHydrated);
+
+  useEffect(() => {
+    if (!profileHasHydrated || !kycHasHydrated) return;
+    if (!profile) return;
+
+    const targetRoute = userKYC?.status === 'verified' ? '/(tabs)' : '/(tabs)/profile';
+
+    getAuthSecurityConfig().then((config) => {
+      router.replace({
+        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+        params: { next: targetRoute },
+      });
+    });
+  }, [kycHasHydrated, profile, profileHasHydrated, router, userKYC?.status]);
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
@@ -190,10 +211,27 @@ export default function LoginScreen() {
                 )}
               </Pressable>
 
+              {/* Footer Links */}
+              <View className="mt-6 flex-row flex-wrap justify-center gap-3 mb-4">
+                <Pressable onPress={() => router.push('/about-us')} className="flex-row items-center bg-blue-50 px-4 py-2 rounded-full">
+                  <Info size={14} color="#0A3D91" />
+                  <Text className="text-blue-700 text-xs font-semibold ml-1">About Us</Text>
+                </Pressable>
+                <Pressable onPress={() => router.push('/support')} className="flex-row items-center bg-green-50 px-4 py-2 rounded-full">
+                  <Headphones size={14} color="#16A34A" />
+                  <Text className="text-green-700 text-xs font-semibold ml-1">Contact Us</Text>
+                </Pressable>
+                <Pressable onPress={() => router.push('/terms-and-conditions')} className="flex-row items-center bg-orange-50 px-4 py-2 rounded-full">
+                  <Text className="text-orange-600 text-xs font-semibold">T&C</Text>
+                </Pressable>
+              </View>
+
               {/* Terms */}
-              <Text className="text-gray-400 text-xs text-center mt-4 leading-5">
+              <Text className="text-gray-400 text-xs text-center leading-5">
                 By continuing, you agree to our{' '}
-                <Text className="text-orange-500">Terms of Service</Text>
+                <Pressable onPress={() => router.push('/terms-and-conditions')}>
+                  <Text className="text-orange-500 font-semibold">Terms of Service</Text>
+                </Pressable>
                 {' '}and{' '}
                 <Text className="text-orange-500">Privacy Policy</Text>
               </Text>
