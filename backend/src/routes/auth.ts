@@ -8,6 +8,9 @@ const verifySchema = z.object({ phone: phoneSchema, otp: z.string().regex(/^\d{6
 type RateEntry = { count: number; resetAt: number };
 const rates = new Map<string, RateEntry>();
 
+// Dev OTP store - in production, use MSG91
+const devOtpStore = new Map<string, { otp: string; expiresAt: number }>();
+
 function allow(key: string, limit: number, windowMs: number) {
   const now = Date.now();
   const current = rates.get(key);
@@ -28,6 +31,10 @@ function providerConfig() {
   const authKey = process.env.MSG91_AUTH_KEY;
   const templateId = process.env.MSG91_OTP_TEMPLATE_ID;
   return authKey && templateId ? { authKey, templateId } : null;
+}
+
+function generateOtp(): string {
+  return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 async function msg91(path: string, authKey: string) {
@@ -62,8 +69,9 @@ export const authRouter = new Hono();
 authRouter.post("/send-otp", async (c) => {
   const parsed = sendSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: parsed.error.issues[0]?.message || "Invalid request" }, 400);
+  
   const config = providerConfig();
-  if (!config) return c.json({ error: "Mobile OTP is not configured on the server" }, 503);
+  const isDev = !config;
 
   const ip = clientIp(c);
   if (!allow(`send-ip:${ip}`, 8, 15 * 60_000) || !allow(`send-phone:${parsed.data.phone}`, 3, 15 * 60_000)) {
@@ -71,9 +79,19 @@ authRouter.post("/send-otp", async (c) => {
   }
 
   try {
+    const otp = generateOtp();
     const mobile = `91${parsed.data.phone}`;
-    await msg91(`/api/v5/otp?template_id=${encodeURIComponent(config.templateId)}&mobile=${mobile}&otp_length=6`, config.authKey);
-    return c.json({ success: true });
+    
+    if (isDev) {
+      // Development mode: store OTP in memory
+      devOtpStore.set(mobile, { otp, expiresAt: Date.now() + 10 * 60_000 }); // 10 min expiry
+      console.log(`📱 DEV OTP for ${mobile}: ${otp}`);
+      return c.json({ success: true, message: "OTP sent (dev mode)", devOtp: otp });
+    } else {
+      // Production: use MSG91
+      await msg91(`/api/v5/otp?template_id=${encodeURIComponent(config.templateId)}&mobile=${mobile}&otp_length=6`, config.authKey);
+      return c.json({ success: true });
+    }
   } catch (error) {
     console.error("OTP send failed", error instanceof Error ? error.message : "unknown error");
     return c.json({ error: "Unable to send OTP right now. Please try again." }, 502);
@@ -83,8 +101,9 @@ authRouter.post("/send-otp", async (c) => {
 authRouter.post("/verify-otp", async (c) => {
   const parsed = verifySchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ error: "Enter the valid 6-digit OTP" }, 400);
+  
   const config = providerConfig();
-  if (!config) return c.json({ error: "Mobile OTP is not configured on the server" }, 503);
+  const isDev = !config;
 
   const ip = clientIp(c);
   if (!allow(`verify-ip:${ip}`, 20, 15 * 60_000) || !allow(`verify-phone:${parsed.data.phone}`, 8, 15 * 60_000)) {
@@ -93,9 +112,27 @@ authRouter.post("/verify-otp", async (c) => {
 
   try {
     const mobile = `91${parsed.data.phone}`;
-    await msg91(`/api/v5/otp/verify?otp=${parsed.data.otp}&mobile=${mobile}`, config.authKey);
-    return c.json({ success: true, token: await issueToken(parsed.data.phone) });
-  } catch {
+    
+    if (isDev) {
+      // Development mode: verify from stored OTP
+      const stored = devOtpStore.get(mobile);
+      if (!stored || Date.now() > stored.expiresAt) {
+        return c.json({ error: "The OTP is incorrect or has expired" }, 401);
+      }
+      if (stored.otp !== parsed.data.otp) {
+        return c.json({ error: "The OTP is incorrect or has expired" }, 401);
+      }
+      devOtpStore.delete(mobile); // Clear used OTP
+      const token = await issueToken(parsed.data.phone);
+      return c.json({ success: true, token });
+    } else {
+      // Production: use MSG91
+      await msg91(`/api/v5/otp/verify?otp=${parsed.data.otp}&mobile=${mobile}`, config.authKey);
+      const token = await issueToken(parsed.data.phone);
+      return c.json({ success: true, token });
+    }
+  } catch (error) {
+    console.error("OTP verify failed", error instanceof Error ? error.message : "unknown error");
     return c.json({ error: "The OTP is incorrect or has expired" }, 401);
   }
 });
