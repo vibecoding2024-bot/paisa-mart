@@ -2,10 +2,17 @@
   "name": "paisa-mart",
   "version": "1.0.0",
   "main": "index.ts",
+  "expo": {
+    "autolinking": {
+      "exclude": [
+        "@expo/dom-webview"
+      ]
+    }
+  },
   "scripts": {
     "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "web": "DARK_MODE=class expo start --web",
     "build:web": "DARK_MODE=class expo export --platform web",
     "lint": "expo lint",
@@ -83,6 +90,7 @@
     "expo-linear-gradient": "15.0.7",
     "expo-linking": "8.0.8",
     "expo-live-photo": "1.0.7",
+    "expo-local-authentication": "~17.0.8",
     "expo-location": "19.0.7",
     "expo-mail-composer": "15.0.7",
     "expo-manifests": "1.0.8",

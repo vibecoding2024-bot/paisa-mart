@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Commission rates per product category
@@ -249,6 +250,7 @@ interface IncentiveStore {
 
   // KYC data
   userKYC: UserKYC | null;
+  hasHydrated: boolean;
 
   // Audit logs
   auditLogs: AuditLogEntry[];
@@ -281,10 +283,13 @@ interface IncentiveStore {
   updatePayoutSettings: (minAmount: number, dailyLimit: number) => void;
 
   // Audit
+  setHasHydrated: (hasHydrated: boolean) => void;
   logAuditAction: (action: string, entityType: AuditLogEntry['entityType'], entityId: string, performedBy: string, details?: string) => void;
 }
 
-export const useIncentiveStore = create<IncentiveStore>((set, get) => ({
+export const useIncentiveStore = create<IncentiveStore>()(
+  persist(
+    (set, get) => ({
   incentives: generateMockIncentives(),
   incomingOutgoing: generateMockIncomingOutgoing(),
   payouts: generateMockPayouts(),
@@ -292,6 +297,7 @@ export const useIncentiveStore = create<IncentiveStore>((set, get) => ({
   minWithdrawalAmount: 500,
   dailyPayoutLimit: 50000,
   userKYC: null,
+  hasHydrated: false,
   auditLogs: [],
 
   getTotalIncentivesEarned: () => {
@@ -546,6 +552,10 @@ export const useIncentiveStore = create<IncentiveStore>((set, get) => ({
     });
   },
 
+  setHasHydrated: (hasHydrated: boolean) => {
+    set({ hasHydrated });
+  },
+
   logAuditAction: (action, entityType, entityId, performedBy, details) => {
     const log: AuditLogEntry = {
       id: `LOG-${Date.now()}`,
@@ -561,4 +571,19 @@ export const useIncentiveStore = create<IncentiveStore>((set, get) => ({
       auditLogs: [log, ...state.auditLogs].slice(0, 500),
     }));
   },
-}));
+    }),
+    {
+      name: 'incentive-storage',
+      storage: createJSONStorage(() => AsyncStorage),
+      partialize: (state) => ({
+        userKYC: state.userKYC,
+        bankAccounts: state.bankAccounts,
+        payouts: state.payouts,
+        auditLogs: state.auditLogs,
+      }),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
+    }
+  )
+);

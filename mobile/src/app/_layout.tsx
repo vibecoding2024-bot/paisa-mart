@@ -48,6 +48,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="otp" options={{ headerShown: false }} />
+        <Stack.Screen name="unlock" options={{ headerShown: false }} />
+        <Stack.Screen name="mpin-setup" options={{ headerShown: false }} />
         <Stack.Screen name="basic-info" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="kyc" options={{ headerShown: false }} />

@@ -1,13 +1,34 @@
-diff --git a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-index 0cd90f4741508a95a63198574228c244ad41afd8..4731e1a1528a2de495cc2ae3156c813b64ec6832 100644
---- a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-+++ b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
-@@ -206,7 +206,7 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
- 
-   @ReactProp(name = ViewProps.OVERFLOW)
-   fun setOverflow(view: ReactViewGroup, overflow: String?) {
--    view.overflow = overflow
-+    view.setOverflow(overflow)
+diff --git a/android/src/main/java/com/reactnativemenu/MenuView.kt b/android/src/main/java/com/reactnativemenu/MenuView.kt
+index 6f1d6d3..b3bbf8a 100644
+--- a/android/src/main/java/com/reactnativemenu/MenuView.kt
++++ b/android/src/main/java/com/reactnativemenu/MenuView.kt
+@@ -47,8 +47,7 @@ class MenuView(private val mContext: ReactContext) : ReactViewGroup(mContext) {
+     prepareMenu()
    }
  
-   @ReactProp(name = "backfaceVisibility")
+-  override fun setHitSlopRect(rect: Rect?) {
+-    super.setHitSlopRect(rect)
++  fun setMenuHitSlopRect(rect: Rect?) {
+     mHitSlopRect = rect
+     updateTouchDelegate()
+   }
+diff --git a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+index 0cd90f4..be84c1a 100644
+--- a/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
++++ b/android/src/main/java/com/reactnativemenu/MenuViewManagerBase.kt
+@@ -120,12 +120,12 @@ abstract class MenuViewManagerBase : ReactClippingViewManager<MenuView>() {
+   }
+ 
+   @ReactProp(name = "hitSlop")
+-  fun setHitSlop(view: ReactViewGroup, @Nullable hitSlop: ReadableMap?) {
++  fun setHitSlop(view: MenuView, @Nullable hitSlop: ReadableMap?) {
+     if (hitSlop == null) {
+       // We should keep using setters as `Val cannot be reassigned`
+-      view.setHitSlopRect(null)
++      view.setMenuHitSlopRect(null)
+     } else {
+-      view.setHitSlopRect(
++      view.setMenuHitSlopRect(
+               Rect(
+                       if (hitSlop.hasKey("left"))
+                               PixelUtil.toPixelFromDIP(hitSlop.getDouble("left")).toInt()

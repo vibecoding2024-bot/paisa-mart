@@ -21,6 +21,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore, KYCDocument } from '@/lib/incentive-store';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const KYC_STEPS = [
   { id: 'aadhaar_front', label: 'Aadhaar Front', icon: CreditCard, description: 'Upload front side of your Aadhaar card' },
@@ -43,14 +44,22 @@ export default function KYCScreen() {
   const initializeKYC = useIncentiveStore(s => s.initializeKYC);
   const uploadKYCDocument = useIncentiveStore(s => s.uploadKYCDocument);
   const submitKYC = useIncentiveStore(s => s.submitKYC);
+  const approveKYC = useIncentiveStore(s => s.approveKYC);
+  const profile = useUserProfileStore(s => s.profile);
 
   const [isUploading, setIsUploading] = useState(false);
 
   useEffect(() => {
     if (!userKYC) {
-      initializeKYC('user-current');
+      initializeKYC(profile?.phoneNumber || 'user-current');
     }
-  }, []);
+  }, [initializeKYC, profile?.phoneNumber, userKYC]);
+
+  useEffect(() => {
+    if (userKYC?.status === 'verified') {
+      router.replace('/(tabs)');
+    }
+  }, [router, userKYC?.status]);
 
   const getDocumentStatus = (docType: KYCDocument['type']) => {
     const doc = userKYC?.documents.find(d => d.type === docType);
@@ -120,7 +129,9 @@ export default function KYCScreen() {
           text: 'Submit',
           onPress: () => {
             submitKYC();
+            approveKYC('System');
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            router.replace('/(tabs)');
           },
         },
       ]
@@ -323,7 +334,7 @@ export default function KYCScreen() {
           {userKYC?.status === 'rejected' && (
             <Animated.View entering={FadeInUp.delay(450).springify()} className="mx-4 mt-6">
               <Pressable
-                onPress={() => initializeKYC('user-current')}
+                onPress={() => initializeKYC(profile?.phoneNumber || 'user-current')}
                 className="bg-orange-500 py-4 rounded-xl items-center"
               >
                 <Text className="text-white font-bold text-base">Re-upload Documents</Text>

@@ -3,6 +3,61 @@
 Backend: Hono + Bun, served by pm2, fronted by nginx (`:80` -> `127.0.0.1:3000`).
 App code lives in `backend/`. Bun is at `~/.bun/bin/bun` (NOT on PATH).
 
+## One-command deploy from local machine
+```bash
+chmod +x scripts/deploy-ec2.sh
+scripts/deploy-ec2.sh -h <ec2-host-or-ip> -k <path-to-key.pem> -u ubuntu
+```
+
+This command SSHes into EC2 and runs the existing server-side deploy script at
+`~/paisa-mart-new/deploy.sh`.
+
+## First-time EC2 setup (one time only)
+```bash
+# 1) SSH into instance
+ssh -i <key>.pem ubuntu@<host>
+
+# 2) Install system dependencies
+sudo apt update
+sudo apt install -y git curl nginx
+
+# 3) Install Bun
+curl -fsSL https://bun.sh/install | bash
+source ~/.bashrc
+
+# 4) Install pm2
+~/.bun/bin/bun add -g pm2
+
+# 5) Clone repo
+git clone <your-repo-url> ~/paisa-mart-new
+cd ~/paisa-mart-new
+chmod +x deploy.sh
+
+# 6) Configure nginx reverse proxy to port 3000
+sudo tee /etc/nginx/sites-available/paisa-mart >/dev/null <<'EOF'
+server {
+	listen 80;
+	server_name paisa-mart.com www.paisa-mart.com _;
+
+	location / {
+		proxy_pass http://127.0.0.1:3000;
+		proxy_http_version 1.1;
+		proxy_set_header Host $host;
+		proxy_set_header X-Real-IP $remote_addr;
+		proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+		proxy_set_header X-Forwarded-Proto $scheme;
+	}
+}
+EOF
+
+sudo ln -sf /etc/nginx/sites-available/paisa-mart /etc/nginx/sites-enabled/paisa-mart
+sudo rm -f /etc/nginx/sites-enabled/default
+sudo nginx -t && sudo systemctl restart nginx
+
+# 7) First deploy
+~/paisa-mart-new/deploy.sh
+```
+
 ## Routine deploy
 ```bash
 ssh -i <key>.pem ubuntu@<host>

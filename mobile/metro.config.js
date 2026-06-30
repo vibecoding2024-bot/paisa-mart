@@ -13,6 +13,8 @@ const config = getDefaultConfig(__dirname);
 // Only configure shared folder if it exists (may not exist during Docker build)
 const sharedFolder = path.resolve(__dirname, "../shared");
 const sharedFolderExists = fs.existsSync(sharedFolder);
+const mobileNodeModules = path.resolve(__dirname, "node_modules");
+const rootNodeModules = path.resolve(__dirname, "../node_modules");
 
 // DEBUG: Log metro.config.js version and shared folder status at startup
 console.log("[Metro Config] Version: 2025-02-03-v3-fix-dynamic-imports (source: workspace-mobile)");
@@ -46,6 +48,29 @@ config.resolver = {
   assetExts: assetExts.filter((ext) => ext !== "svg"),
   sourceExts: [...sourceExts, "svg"],
   useWatchman: false,
+  disableHierarchicalLookup: true,
+  extraNodeModules: {
+    ...config.resolver.extraNodeModules,
+    react: path.join(mobileNodeModules, "react"),
+    "react-native": path.join(mobileNodeModules, "react-native"),
+    "expo": path.join(mobileNodeModules, "expo"),
+    "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
+    "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
+    "invariant": path.join(rootNodeModules, "invariant"),
+    "nullthrows": path.join(rootNodeModules, "nullthrows"),
+    "memoize-one": path.join(rootNodeModules, "memoize-one"),
+    "promise": path.join(rootNodeModules, "promise"),
+    "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
+    "base64-js": path.join(rootNodeModules, "base64-js"),
+    "abort-controller": path.join(rootNodeModules, "abort-controller"),
+    "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
+    "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
+  },
+  nodeModulesPaths: [
+    mobileNodeModules,
+    path.resolve(__dirname, "../backend/node_modules"),
+    rootNodeModules,
+  ],
   // Only add shared folder resolution if it exists
   // NOTE: unstable_enablePackageExports moved inside conditional - it breaks dynamic imports
   // like `await import("expo-image")` when enabled globally
@@ -53,11 +78,26 @@ config.resolver = {
     unstable_enablePackageExports: true,
     extraNodeModules: {
       ...config.resolver.extraNodeModules,
+      react: path.join(mobileNodeModules, "react"),
+      "react-native": path.join(mobileNodeModules, "react-native"),
+      "expo": path.join(mobileNodeModules, "expo"),
+      "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
+      "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
+      "invariant": path.join(rootNodeModules, "invariant"),
+      "nullthrows": path.join(rootNodeModules, "nullthrows"),
+      "memoize-one": path.join(rootNodeModules, "memoize-one"),
+      "promise": path.join(rootNodeModules, "promise"),
+      "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
+      "base64-js": path.join(rootNodeModules, "base64-js"),
+      "abort-controller": path.join(rootNodeModules, "abort-controller"),
+      "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
+      "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
       "@/shared": sharedFolder,
     },
     nodeModulesPaths: [
-      path.resolve(__dirname, "node_modules"),
+      mobileNodeModules,
       path.resolve(__dirname, "../backend/node_modules"),
+      rootNodeModules,
     ],
   }),
   resolveRequest: (context, moduleName, platform) => {

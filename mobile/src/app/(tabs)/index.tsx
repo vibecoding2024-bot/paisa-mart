@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, ScrollView, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight, Info, Headphones } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
@@ -248,7 +248,40 @@ export default function HomeScreen() {
           </Animated.View>
 
           {/* Training Section */}
-          <Animated.View entering={FadeInDown.delay(600).springify()} className="px-4 mt-2 mb-8">
+          <Animated.View entering={FadeInDown.delay(500).springify()} className="px-4 mt-4 mb-2">
+            <Text className="text-gray-600 font-semibold text-sm mb-3">About & Support</Text>
+            <View className="flex-row gap-3">
+              <PressableScale
+                haptic="light"
+                activeScale={0.95}
+                onPress={() => router.push('/about-us')}
+                className="flex-1 bg-white rounded-xl p-4"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              >
+                <View className="w-10 h-10 bg-blue-50 rounded-lg items-center justify-center mb-2">
+                  <Info size={20} color="#0A3D91" />
+                </View>
+                <Text className="text-gray-900 font-bold text-sm">About Us</Text>
+                <Text className="text-gray-400 text-xs mt-1">Company info</Text>
+              </PressableScale>
+              <PressableScale
+                haptic="light"
+                activeScale={0.95}
+                onPress={() => router.push('/support')}
+                className="flex-1 bg-white rounded-xl p-4"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              >
+                <View className="w-10 h-10 bg-green-50 rounded-lg items-center justify-center mb-2">
+                  <Headphones size={20} color="#16A34A" />
+                </View>
+                <Text className="text-gray-900 font-bold text-sm">Contact Us</Text>
+                <Text className="text-gray-400 text-xs mt-1">Get support</Text>
+              </PressableScale>
+            </View>
+          </Animated.View>
+
+          {/* Training Section */}
+          <Animated.View entering={FadeInDown.delay(700).springify()} className="px-4 mt-4 mb-8">
             <PressableScale
               haptic="light"
               activeScale={0.98}

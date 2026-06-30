@@ -2,3 +2,4 @@
 .env.production
 backend/.env
 backend/.env.production
+node_modules

@@ -5,6 +5,7 @@ import "./env";
 import { sampleRouter } from "./routes/sample";
 import { notifyInterestRouter } from "./routes/notify-interest";
 import { paymentRouter } from "./routes/payment";
+import { usersRouter } from "./routes/users";
 import { applyCallback } from "./lib/txn-store";
 import { logger } from "hono/logger";
 import { authRouter } from "./routes/auth";
@@ -23,6 +24,7 @@ const MIME: Record<string, string> = {
   ".woff": "font/woff",
   ".woff2": "font/woff2",
   ".ttf": "font/ttf",
+  ".apk": "application/vnd.android.package-archive",
 };
 
 function mimeFor(path: string): string {
@@ -58,8 +60,11 @@ html,body{height:100%;margin:0;padding:0;background:#fff}
   @keyframes orb1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-2%,3%) scale(1.08)}}
   @keyframes orb2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(2%,-3%) scale(1.06)}}
   /* Brand header */
-  #web-brand-header{display:block;z-index:2;animation:fadeSlideDown .65s cubic-bezier(.16,1,.3,1) both;margin-bottom:24px;text-align:center}
+  #web-brand-header{display:block;z-index:2;animation:fadeSlideDown .65s cubic-bezier(.16,1,.3,1) both;margin-bottom:24px;text-align:center;max-width:min(980px,calc(100vw - 40px))}
   @keyframes fadeSlideDown{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+  #web-top-nav{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+  .web-nav-link{display:inline-flex;align-items:center;justify-content:center;min-height:34px;padding:7px 12px;border:1px solid rgba(255,255,255,.12);border-radius:999px;background:rgba(255,255,255,.06);color:rgba(255,255,255,.76);font-size:12px;font-weight:700;line-height:1;text-decoration:none;font-family:'Plus Jakarta Sans',system-ui,sans-serif;backdrop-filter:blur(10px);white-space:nowrap;transition:background .18s ease,border-color .18s ease,color .18s ease,transform .15s ease}
+  .web-nav-link:hover{background:rgba(255,140,0,.16);border-color:rgba(255,140,0,.38);color:#fff;transform:translateY(-1px)}
   #web-logo-row{display:flex;align-items:center;gap:10px;justify-content:center}
   #web-logo-dot{width:28px;height:28px;border-radius:8px;background:linear-gradient(135deg,#FF8C00,#FFB800);box-shadow:0 4px 16px rgba(255,140,0,.5)}
   #web-logo-text{font-size:22px;font-weight:800;letter-spacing:-.3px;background:linear-gradient(90deg,#FF8C00,#FFD700);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
@@ -69,6 +74,11 @@ html,body{height:100%;margin:0;padding:0;background:#fff}
   .web-stat-value{color:#fff;font-size:15px;font-weight:700;line-height:1.2}
   .web-stat-label{color:rgba(255,255,255,.4);font-size:10px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
   .web-stat-div{width:1px;height:28px;background:rgba(255,255,255,.12)}
+  #web-info-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+  .web-info-card{padding:12px;border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(255,255,255,.05);backdrop-filter:blur(10px);text-align:left}
+  .web-info-card h3{margin:0 0 6px;color:#fff;font-size:12px;font-weight:700;letter-spacing:.2px}
+  .web-info-card p{margin:0;color:rgba(255,255,255,.72);font-size:11px;line-height:1.45}
+  .web-info-card p + p{margin-top:6px}
   /* Phone frame */
   #root{width:393px!important;height:852px!important;min-height:852px!important;max-height:852px!important;border-radius:50px!important;overflow:hidden!important;flex:none!important;position:relative!important;z-index:2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14),0 0 0 10px #1c1c1e,0 0 0 11px rgba(255,255,255,.07),0 0 0 12px #141414,0 70px 140px rgba(0,0,0,.85),0 30px 80px rgba(255,140,0,.12);animation:phoneIn .75s cubic-bezier(.16,1,.3,1) .1s both}
   #root::after{content:'';position:absolute;top:0;left:0;right:0;height:45%;background:linear-gradient(180deg,rgba(255,255,255,.04) 0%,transparent 100%);pointer-events:none;z-index:9999;border-radius:50px 50px 0 0}
@@ -80,6 +90,7 @@ html,body{height:100%;margin:0;padding:0;background:#fff}
   #web-store-badges{display:flex;gap:10px;justify-content:center}
   .web-badge{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:600;font-family:'Plus Jakarta Sans',system-ui,sans-serif;cursor:pointer;transition:background .2s ease,transform .15s ease;backdrop-filter:blur(10px)}
   .web-badge:hover{background:rgba(255,255,255,.14);transform:translateY(-1px)}
+  @media(max-width:960px){#web-info-grid{grid-template-columns:1fr}}
 }
 /* ── Large desktop: wider phone ── */
 @media(min-width:1200px){
@@ -89,6 +100,14 @@ html,body{height:100%;margin:0;padding:0;background:#fff}
 
 const BRAND_HEADER = `
 <div id="web-brand-header">
+  <nav id="web-top-nav" aria-label="Paisa Mart website navigation">
+    <a class="web-nav-link" href="/">Home</a>
+    <a class="web-nav-link" href="/#company">Company</a>
+    <a class="web-nav-link" href="/#products-services">Products &amp; Services</a>
+    <a class="web-nav-link" href="/#solutions">Solutions</a>
+    <a class="web-nav-link" href="/#contact">Contact Us</a>
+    <a class="web-nav-link" href="/terms-and-conditions">Terms &amp; Conditions</a>
+  </nav>
   <div id="web-logo-row">
     <div id="web-logo-dot"></div>
     <span id="web-logo-text">Paisa Mart</span>
@@ -100,6 +119,23 @@ const BRAND_HEADER = `
     <div class="web-stat"><span class="web-stat-value">&#8377;100Cr+</span><span class="web-stat-label">Earned</span></div>
     <div class="web-stat-div"></div>
     <div class="web-stat"><span class="web-stat-value">4.5&#9733;</span><span class="web-stat-label">Rating</span></div>
+  </div>
+  <div id="web-info-grid" aria-label="Website information">
+    <section class="web-info-card" id="home">
+      <h3>Home</h3>
+      <p>Paisa Mart helps individuals and businesses discover and apply for trusted financial products in one place.</p>
+      <p>Start from the app to compare options, submit details quickly, and track progress with guided support.</p>
+    </section>
+    <section class="web-info-card" id="products-services">
+      <h3>Products &amp; Services</h3>
+      <p>Credit cards, savings accounts, loans, and insurance from leading banks and NBFC partners.</p>
+      <p>Agent onboarding, assisted sales workflows, payout visibility, and multilingual support tools for faster conversions.</p>
+    </section>
+    <section class="web-info-card" id="contact">
+      <h3>Contact Us</h3>
+      <p>Need help with onboarding, partner support, or enterprise solutions? Reach our team through the app help section.</p>
+      <p>For business inquiries, use the Contact Us option in the app and our team will connect with you.</p>
+    </section>
   </div>
 </div>`;
 
@@ -193,10 +229,24 @@ app.get("/download", async (c) => {
   });
 });
 
+app.get("/download-apk", async (c) => {
+  const filePath = PUBLIC_DIR + "/paisa-mart.apk";
+  const file = Bun.file(filePath);
+  if (!(await file.exists())) return c.text("APK not found", 404);
+  return new Response(file, {
+    headers: {
+      "Content-Type": "application/vnd.android.package-archive",
+      "Content-Disposition": 'attachment; filename="paisa-mart.apk"',
+      "Access-Control-Allow-Origin": "*",
+    },
+  });
+});
+
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
 app.route("/api/payment", paymentRouter);
 app.route("/api/auth", authRouter);
+app.route("/api/users", usersRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;

@@ -23,11 +23,13 @@ export interface UserProfile {
 
 interface UserProfileStore {
   profile: UserProfile | null;
+  hasHydrated: boolean;
 
   // Actions
   setProfile: (profile: UserProfile) => void;
   updateProfile: (updates: Partial<UserProfile>) => void;
   clearProfile: () => void;
+  setHasHydrated: (hasHydrated: boolean) => void;
   getFirstName: () => string;
   hasProfile: () => boolean;
 }
@@ -36,6 +38,7 @@ export const useUserProfileStore = create<UserProfileStore>()(
   persist(
     (set, get) => ({
       profile: null,
+      hasHydrated: false,
 
       setProfile: (profile) => {
         set({
@@ -64,6 +67,10 @@ export const useUserProfileStore = create<UserProfileStore>()(
         set({ profile: null });
       },
 
+      setHasHydrated: (hasHydrated) => {
+        set({ hasHydrated });
+      },
+
       getFirstName: () => {
         const profile = get().profile;
         if (!profile || !profile.name) return '';
@@ -81,6 +88,9 @@ export const useUserProfileStore = create<UserProfileStore>()(
     {
       name: 'user-profile-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      onRehydrateStorage: () => (state) => {
+        state?.setHasHydrated(true);
+      },
     }
   )
 );

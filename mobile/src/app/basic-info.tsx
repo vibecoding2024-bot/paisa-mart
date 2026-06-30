@@ -70,6 +70,7 @@ function DropdownModal({ visible, onClose, options, onSelect, title }: DropdownM
             <FlatList
               data={options}
               keyExtractor={(item) => item}
+              contentContainerStyle={{ paddingVertical: 4 }}
               renderItem={({ item }) => (
                 <Pressable
                   onPress={() => {
@@ -77,12 +78,14 @@ function DropdownModal({ visible, onClose, options, onSelect, title }: DropdownM
                     onClose();
                     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                   }}
-                  style={({ pressed }) => ({
+                  style={{
                     padding: 16,
+                    minHeight: 52,
+                    justifyContent: 'center',
                     borderBottomWidth: 1,
                     borderBottomColor: '#F9FAFB',
-                    backgroundColor: pressed ? '#FFF7ED' : 'white',
-                  })}
+                    backgroundColor: 'white',
+                  }}
                 >
                   <Text style={{ color: '#374151', fontSize: 16 }}>{item}</Text>
                 </Pressable>
@@ -308,6 +311,26 @@ function SmartDobPicker({
   }
 
   // Native: original pressable UI
+  const nativeDobBoxStyle = (value: string) => ({
+    flexDirection: 'row' as const,
+    alignItems: 'center' as const,
+    justifyContent: 'space-between' as const,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    borderWidth: 2,
+    borderColor: value ? '#FF8C00' : '#E5E7EB',
+    minHeight: 52,
+    overflow: 'hidden' as const,
+  });
+
+  const nativeDobTextStyle = (value: string) => ({
+    flex: 1,
+    fontSize: 14,
+    color: value ? '#1F2937' : '#9CA3AF',
+    marginRight: 6,
+  });
+
   return (
     <>
       <View style={{ marginBottom: 16 }}>
@@ -315,23 +338,23 @@ function SmartDobPicker({
         <View style={{ flexDirection: 'row', gap: 8 }}>
           <Pressable
             onPress={() => { setShowDayModal(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-            style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9FAFB', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 2, borderColor: dobDay ? '#FF8C00' : '#E5E7EB', minHeight: 52 }}
+            style={{ ...nativeDobBoxStyle(dobDay), flex: 1 }}
           >
-            <Text style={{ fontSize: 14, color: dobDay ? '#1F2937' : '#9CA3AF' }}>{dobDay || 'Day'}</Text>
+            <Text style={nativeDobTextStyle(dobDay)} numberOfLines={1}>{dobDay || 'Day'}</Text>
             <ChevronDown size={14} color={dobDay ? '#FF8C00' : '#9CA3AF'} />
           </Pressable>
           <Pressable
             onPress={() => { setShowMonthModal(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-            style={{ flex: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9FAFB', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 2, borderColor: dobMonth ? '#FF8C00' : '#E5E7EB', minHeight: 52 }}
+            style={{ ...nativeDobBoxStyle(dobMonth), flex: 1.65 }}
           >
-            <Text style={{ fontSize: 14, color: dobMonth ? '#1F2937' : '#9CA3AF' }}>{dobMonth || 'Month'}</Text>
+            <Text style={nativeDobTextStyle(dobMonth)} numberOfLines={1}>{dobMonth || 'Month'}</Text>
             <ChevronDown size={14} color={dobMonth ? '#FF8C00' : '#9CA3AF'} />
           </Pressable>
           <Pressable
             onPress={() => { setShowYearModal(true); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); }}
-            style={{ flex: 1.4, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F9FAFB', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 12, borderWidth: 2, borderColor: dobYear ? '#FF8C00' : '#E5E7EB', minHeight: 52 }}
+            style={{ ...nativeDobBoxStyle(dobYear), flex: 1.25 }}
           >
-            <Text style={{ fontSize: 14, color: dobYear ? '#1F2937' : '#9CA3AF' }}>{dobYear || 'Year'}</Text>
+            <Text style={nativeDobTextStyle(dobYear)} numberOfLines={1}>{dobYear || 'Year'}</Text>
             <ChevronDown size={14} color={dobYear ? '#FF8C00' : '#9CA3AF'} />
           </Pressable>
         </View>
