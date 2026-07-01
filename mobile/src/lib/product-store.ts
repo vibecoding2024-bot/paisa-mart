@@ -34,6 +34,15 @@ export interface ProductDetails {
   commission: string;
   tag?: string;
   enabled: boolean;
+  applicationUrl?: string;
+  supportPhones?: {
+    primary: string;
+    secondary: string;
+  };
+  messageFooter?: {
+    name: string;
+    title: string;
+  };
   content: ProductContent;
   payoutTnC?: PayoutTnC;
 }
@@ -441,49 +450,63 @@ const PRODUCT_TEMPLATES: ProductDetails[] = [
   // KOTAK BANK SAVINGS ACCOUNT
   {
     id: 'kotak-savings-account',
-    providerName: 'Kotak Mahindra Bank',
+    providerName: 'Kotak 811',
     productName: 'Savings Account',
     category: 'bank-accounts',
-    bannerImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
+    bannerImageUrl: 'bank-account:kotak-811-banner',
     commission: 'Earn up to ₹600',
     tag: 'Bank',
     enabled: true,
+    applicationUrl: 'https://wee.bnking.in/c/ZjBmOWYyM',
+    supportPhones: {
+      primary: '9908234067',
+      secondary: '+91 7417274072',
+    },
+    messageFooter: {
+      name: 'PAISA MART PRIVATE LIMITED',
+      title: 'Business Consultant',
+    },
     content: {
       headline: {
-        english: 'Zero balance savings account!',
+        english: 'Looking for a new zero-balance account? Choose Kotak 811 and save while enjoying benefits!',
         hindi: 'जीरो बैलेंस सेविंग्स अकाउंट!',
         telugu: 'జీరో బ్యాలెన్స్ సేవింగ్స్ అకౌంట్!',
       },
       description: {
-        english: 'Open a Kotak 811 account with zero balance and enjoy digital banking benefits.',
+        english: 'Why choose Kotak 811 Savings Account?',
         hindi: 'जीरो बैलेंस के साथ कोटक 811 अकाउंट खोलें और डिजिटल बैंकिंग लाभ उठाएं।',
         telugu: 'జీరో బ్యాలెన్స్‌తో కోటక్ 811 అకౌంట్ ఓపెన్ చేసి డిజిటల్ బ్యాంకింగ్ ప్రయోజనాలు పొందండి.',
       },
       benefits: [
         {
-          english: 'Zero balance requirement',
+          english: '0️⃣ Zero balance account',
           hindi: 'जीरो बैलेंस आवश्यकता',
           telugu: 'జీరో బ్యాలెన్స్ అవసరం',
         },
         {
-          english: '6% interest rate',
+          english: '📈 Up to 7% interest p.a.',
           hindi: '6% ब्याज दर',
           telugu: '6% వడ్డీ రేటు',
         },
         {
-          english: 'Free virtual debit card',
+          english: '💳 Free virtual debit card',
           hindi: 'फ्री वर्चुअल डेबिट कार्ड',
           telugu: 'ఉచిత వర్చువల్ డెబిట్ కార్డ్',
+        },
+        {
+          english: '💰 Up to ₹6,000 cashback with 811 Super',
+          hindi: '811 सुपर के साथ ₹6,000 तक कैशबैक',
+          telugu: '811 సూపర్‌తో ₹6,000 వరకు క్యాష్‌బ్యాక్',
         },
       ],
       reasons: [
         {
-          english: 'Instant account opening',
+          english: 'Simple and convenient',
           hindi: 'तुरंत खाता खोलना',
           telugu: 'తక్షణ ఖాతా ఓపెనింగ్',
         },
         {
-          english: 'Video KYC available',
+          english: 'Fast, accessible, secure and paperless',
           hindi: 'वीडियो KYC उपलब्ध',
           telugu: 'వీడియో KYC అందుబాటులో',
         },
@@ -494,31 +517,40 @@ const PRODUCT_TEMPLATES: ProductDetails[] = [
   {
     id: 'indusind-bank-business-savings-account',
     providerName: 'IndusInd Bank',
-    productName: 'Business Savings Account',
+    productName: 'Indus Delite Savings Account',
     category: 'bank-accounts',
-    bannerImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
+    bannerImageUrl: 'bank-account:indus-delite-banner',
     commission: 'Earn up to ₹600',
     tag: 'Bank',
     enabled: true,
+    applicationUrl: 'https://wee.bnking.in/c/MDczOTI3Y',
+    supportPhones: {
+      primary: '9908234067',
+      secondary: '+91 7417274072',
+    },
+    messageFooter: {
+      name: 'PAISA MART PRIVATE LIMITED',
+      title: 'Business Consultant',
+    },
     content: {
       headline: {
-        english: 'Banking designed for business!',
+        english: 'Start saving big with the Indus Delite Savings Account!',
         hindi: 'व्यापार के लिए डिज़ाइन की गई बैंकिंग!',
         telugu: 'వ్యాపారం కోసం రూపొందించిన బ్యాంకింగ్!',
       },
       description: {
-        english: 'IndusInd Bank Business Savings Account with premium features for entrepreneurs.',
+        english: 'Top benefits of Indus Delite Zero Balance Savings Account:',
         hindi: 'उद्यमियों के लिए प्रीमियम सुविधाओं के साथ इंडसइंड बैंक बिजनेस सेविंग्स अकाउंट।',
         telugu: 'వ్యవస్థాపకులకు ప్రీమియం ఫీచర్లతో ఇండస్‌ఇండ్ బ్యాంక్ బిజినెస్ సేవింగ్స్ అకౌంట్.',
       },
       benefits: [
-        { english: 'Higher transaction limits', hindi: 'अधिक लेनदेन सीमा', telugu: 'అధిక లావాదేవీ పరిమితులు' },
-        { english: 'Free NEFT/RTGS transfers', hindi: 'मुफ्त NEFT/RTGS ट्रांसफर', telugu: 'ఉచిత NEFT/RTGS ట్రాన్స్‌ఫర్లు' },
-        { english: 'Dedicated relationship manager', hindi: 'समर्पित रिलेशनशिप मैनेजर', telugu: 'అంకితమైన రిలేషన్‌షిప్ మేనేజర్' },
+        { english: '0️⃣ Zero balance savings account', hindi: 'जीरो बैलेंस सेविंग्स अकाउंट', telugu: 'జీరో బ్యాలెన్స్ సేవింగ్స్ అకౌంట్' },
+        { english: '💸 Up to 5% cashback on debit card spends', hindi: 'डेबिट कार्ड खर्च पर 5% तक कैशबैक', telugu: 'డెబిట్ కార్డ్ ఖర్చులపై 5% వరకు క్యాష్‌బ్యాక్' },
+        { english: '🎬 Buy one get one on movie tickets', hindi: 'मूवी टिकट पर बाय वन गेट वन', telugu: 'మూవీ టికెట్లపై బై వన్ గెట్ వన్' },
       ],
       reasons: [
-        { english: 'Business-friendly features', hindi: 'व्यापार-अनुकूल सुविधाएं', telugu: 'వ్యాపార-అనుకూల ఫీచర్లు' },
-        { english: 'Quick account opening', hindi: 'त्वरित खाता खोलना', telugu: 'త్వరిత ఖాతా ఓపెనింగ్' },
+        { english: 'Simple and convenient', hindi: 'सरल और सुविधाजनक', telugu: 'సులభం మరియు సౌకర్యవంతం' },
+        { english: 'Fast, accessible, secure and paperless', hindi: 'तेज़, सुलभ, सुरक्षित और पेपरलेस', telugu: 'వేగవంతం, అందుబాటులో, సురక్షితం మరియు పేపర్‌లెస్' },
       ],
     },
   },
@@ -531,7 +563,7 @@ const PRODUCT_TEMPLATES: ProductDetails[] = [
     bannerImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=800',
     commission: 'Earn up to ₹600',
     tag: 'Bank',
-    enabled: true,
+    enabled: false,
     content: {
       headline: {
         english: 'Modern banking for modern businesses!',
@@ -1785,6 +1817,20 @@ const PRODUCT_TEMPLATES: ProductDetails[] = [
   },
 ];
 
+const REQUIRED_BANK_ACCOUNT_PRODUCT_IDS = new Set([
+  'kotak-savings-account',
+  'indusind-bank-business-savings-account',
+]);
+
+const applyRequiredBankAccountProducts = (products: ProductDetails[]): ProductDetails[] => {
+  const productsOutsideBankAccounts = products.filter((product) => product.category !== 'bank-accounts');
+  const requiredBankAccountProducts = PRODUCT_TEMPLATES.filter((product) =>
+    REQUIRED_BANK_ACCOUNT_PRODUCT_IDS.has(product.id)
+  );
+
+  return [...productsOutsideBankAccounts, ...requiredBankAccountProducts];
+};
+
 interface ProductState {
   products: ProductDetails[];
   advisor: AdvisorProfile;
@@ -1845,6 +1891,15 @@ export const useProductStore = create<ProductState>()(
         advisor: state.advisor,
         selectedLanguage: state.selectedLanguage,
       }),
+      merge: (persistedState, currentState) => {
+        const persisted = persistedState as Partial<ProductState> | undefined;
+
+        return {
+          ...currentState,
+          ...persisted,
+          products: applyRequiredBankAccountProducts(persisted?.products || currentState.products),
+        };
+      },
     }
   )
 );
@@ -1856,7 +1911,12 @@ export const generateShareMessage = (
   language: Language
 ): string => {
   const content = product.content;
-  const referralLink = `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
+  const referralLink = product.applicationUrl || `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
+  const supportPhones = product.supportPhones || SUPPORT_PHONES;
+  const messageFooter = product.messageFooter || {
+    name: advisor.name,
+    title: advisor.title,
+  };
 
   const greeting = {
     english: 'Namaste 🙏,',
@@ -1877,7 +1937,7 @@ export const generateShareMessage = (
   };
 
   const applyNow = {
-    english: 'Apply now to get your',
+    english: product.applicationUrl ? 'Now open a savings account from the comfort of your home -' : 'Apply now to get your',
     hindi: 'अभी आवेदन करें',
     telugu: 'ఇప్పుడే అప్లై చేయండి',
   };
@@ -1900,22 +1960,30 @@ export const generateShareMessage = (
     telugu: 'త్వరిత స్పందన కోసం.',
   };
 
-  let message = `${greeting[language]}\n\n`;
-  message += `*${content.headline[language]}*\n`;
+  let message = product.applicationUrl ? '' : `${greeting[language]}\n\n`;
+  message += product.applicationUrl
+    ? `${content.headline[language]}\n\n`
+    : `*${content.headline[language]}*\n`;
   message += `${content.description[language]}\n\n`;
-  message += `${youWillGet[language]}\n`;
+  if (!product.applicationUrl) {
+    message += `${youWillGet[language]}\n`;
+  }
   content.benefits.forEach((benefit) => {
-    message += `✅ ${benefit[language]}\n`;
+    message += product.applicationUrl ? `${benefit[language]}\n` : `✅ ${benefit[language]}\n`;
   });
   message += `\n${whyApply[language]}\n`;
   content.reasons.forEach((reason) => {
     message += `✓ ${reason[language]}\n`;
   });
-  message += `\n${applyNow[language]} ${product.providerName} ${product.productName} -\n`;
-  message += `${forDoubts[language]} ${SUPPORT_PHONES.primary}\n\n`;
-  message += `${ifUnavailable[language]} ${SUPPORT_PHONES.secondary} ${forQuickResponse[language]}\n\n`;
-  message += `${advisor.name}\n`;
-  message += `${advisor.title}`;
+  if (product.applicationUrl) {
+    message += `\n${applyNow[language]} ${referralLink}\n\n`;
+  } else {
+    message += `\n${applyNow[language]} ${product.providerName} ${product.productName} -\n`;
+  }
+  message += `${forDoubts[language]} ${supportPhones.primary}\n\n`;
+  message += `${ifUnavailable[language]} ${supportPhones.secondary} ${forQuickResponse[language]}\n\n`;
+  message += `${messageFooter.name}\n`;
+  message += `${messageFooter.title}`;
 
   return message;
 };
