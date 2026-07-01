@@ -30,6 +30,22 @@ function mimeFor(path: string): string {
   return MIME[ext] ?? "application/octet-stream";
 }
 
+function cacheHeadersFor(path: string): HeadersInit {
+  if (path.endsWith(".html")) {
+    return {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      "Pragma": "no-cache",
+      "Expires": "0",
+    };
+  }
+
+  return {
+    "Content-Type": mimeFor(path),
+    "Cache-Control": "public, max-age=31536000, immutable",
+  };
+}
+
 const INJECTED_HEAD = `
 <meta name="theme-color" content="#FF8C00" />
 <meta name="description" content="Join 40 Lakh+ partners earning real money by selling financial products online. Zero investment, instant payouts." />
@@ -203,10 +219,10 @@ app.get("*", async (c) => {
   const filePath = PUBLIC_DIR + reqPath;
   const file = Bun.file(filePath);
   if (await file.exists()) {
-    return new Response(file, { headers: { "Content-Type": mimeFor(filePath) } });
+    return new Response(file, { headers: cacheHeadersFor(filePath) });
   }
   const html = await serveHtml();
-  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+  return new Response(html, { headers: cacheHeadersFor("index.html") });
 });
 
 const port = Number(process.env.PORT) || 3000;
