@@ -10,6 +10,7 @@ import { applyCallback } from "./lib/txn-store";
 import { logger } from "hono/logger";
 import { authRouter } from "./routes/auth";
 import { kycRouter } from "./routes/kyc";
+import { personalLoansRouter } from "./routes/personal-loans";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
 
@@ -265,6 +266,7 @@ app.route("/api/payment", paymentRouter);
 app.route("/api/auth", authRouter);
 app.route("/api/users", usersRouter);
 app.route("/api/kyc", kycRouter);
+app.route("/api/personal-loans", personalLoansRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;

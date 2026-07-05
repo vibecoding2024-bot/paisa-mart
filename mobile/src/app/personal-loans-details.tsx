@@ -7,6 +7,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,6 +23,8 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import { usePersonalLoanStore } from '@/lib/personal-loan-store';
+import { submitPersonalLoanLead } from '@/lib/personal-loan-api';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const CREDIT_SCORE_OPTIONS = [
   { label: '300 – 500 (Poor)', value: '300-500' },
@@ -208,6 +211,7 @@ function NumericField({
 export default function PersonalLoansDetailsScreen() {
   const router = useRouter();
   const setData = usePersonalLoanStore((s) => s.setData);
+  const profile = useUserProfileStore((s) => s.profile);
 
   const [employmentType, setEmploymentType] = useState('');
   const [creditScore, setCreditScore] = useState('');
@@ -215,6 +219,8 @@ export default function PersonalLoansDetailsScreen() {
   const [monthlyEmi, setMonthlyEmi] = useState('');
   const [outstandingBalance, setOutstandingBalance] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const emiWarning =
     monthlyEmi &&
@@ -248,20 +254,38 @@ export default function PersonalLoansDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
+  const handleSubmit = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!validate()) return;
+    setSubmitError('');
+    if (!validate() || isSubmitting) return;
 
-    setData({
+    const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) || '';
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      setSubmitError('Phone number is missing. Please complete your basic profile first.');
+      return;
+    }
+
+    const leadData = {
       employment_type: employmentType,
       credit_score_range: creditScore || '',
       monthly_income: monthlyIncome,
       total_monthly_emi: monthlyEmi,
       total_outstanding_balance: outstandingBalance,
       timestamp: new Date().toISOString(),
-    });
+    };
 
-    router.replace('/(tabs)');
+    try {
+      setIsSubmitting(true);
+      await submitPersonalLoanLead({ ...leadData, phoneNumber });
+      setData(leadData);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(tabs)');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not submit personal loan details');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -490,43 +514,73 @@ export default function PersonalLoansDetailsScreen() {
               backgroundColor: '#fff',
               borderTopWidth: 1,
               borderTopColor: '#F3F4F6',
-              flexDirection: 'row',
-              gap: 12,
             }}
           >
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.back();
-              }}
-              style={{
-                flex: 1,
-                backgroundColor: '#F3F4F6',
-                borderRadius: 14,
-                paddingVertical: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#374151', fontWeight: '600', fontSize: 15 }}>Back</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleContinue}
-              style={{ flex: 2, borderRadius: 14, overflow: 'hidden' }}
-            >
-              <LinearGradient
-                colors={['#002561', '#003380']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+            {submitError ? (
+              <Text
                 style={{
+                  color: '#B91C1C',
+                  backgroundColor: '#FEF2F2',
+                  borderColor: '#FECACA',
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  paddingHorizontal: 10,
+                  paddingVertical: 7,
+                  fontSize: 12,
+                  marginBottom: 10,
+                }}
+              >
+                {submitError}
+              </Text>
+            ) : null}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.back();
+                }}
+                disabled={isSubmitting}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: 14,
                   paddingVertical: 16,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  opacity: isSubmitting ? 0.6 : 1,
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Continue</Text>
-              </LinearGradient>
-            </Pressable>
+                <Text style={{ color: '#374151', fontWeight: '600', fontSize: 15 }}>Back</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                style={{
+                  flex: 2,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  opacity: isSubmitting ? 0.85 : 1,
+                }}
+              >
+                <LinearGradient
+                  colors={['#002561', '#003380']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    paddingVertical: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 51,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Submit</Text>
+                  )}
+                </LinearGradient>
+              </Pressable>
+            </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
