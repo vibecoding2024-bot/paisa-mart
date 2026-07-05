@@ -3,6 +3,8 @@ import type { UserProfile } from './user-profile-store';
 
 export type OnboardingRoute = '/basic-info' | '/kyc' | '/(tabs)';
 
+export const KYC_ENFORCEMENT_DISABLED = true;
+
 const KYC_STATUSES: KYCStatus[] = ['not_started', 'submitted', 'verified', 'rejected'];
 
 export function normalizeKycStatus(status?: string | null): KYCStatus {
@@ -28,5 +30,6 @@ export function isProfileComplete(profile?: Partial<UserProfile> | null): profil
 
 export function getPostAuthRoute(profile?: Partial<UserProfile> | null, kycStatus?: string | null): OnboardingRoute {
   if (!isProfileComplete(profile)) return '/basic-info';
+  if (KYC_ENFORCEMENT_DISABLED) return '/(tabs)';
   return normalizeKycStatus(kycStatus) === 'verified' ? '/(tabs)' : '/kyc';
 }

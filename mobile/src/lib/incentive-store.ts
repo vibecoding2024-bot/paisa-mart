@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { KYC_ENFORCEMENT_DISABLED } from './onboarding-flow';
 
 // Commission rates per product category
 export const COMMISSION_RATES: Record<string, { rate: string; rateValue: number }> = {
@@ -387,7 +388,7 @@ export const useIncentiveStore = create<IncentiveStore>()(
       return false;
     }
 
-    if (!userKYC || userKYC.status !== 'verified') {
+    if (!KYC_ENFORCEMENT_DISABLED && (!userKYC || userKYC.status !== 'verified')) {
       return false;
     }
 

@@ -9,6 +9,7 @@ import * as Haptics from '@/lib/haptics';
 import { toast } from '@/lib/toast-store';
 import PressableScale from '@/components/PressableScale';
 import { useIncentiveStore } from '@/lib/incentive-store';
+import { KYC_ENFORCEMENT_DISABLED } from '@/lib/onboarding-flow';
 
 const TRANSACTIONS = [
   { type: 'credit', title: 'HDFC Credit Card Sale', amount: '₹2,100', date: 'Today', status: 'completed' },
@@ -32,7 +33,7 @@ export default function EarningsScreen() {
   const availableBalance = 7900; // In real app, this would come from the store
 
   const canWithdraw = useMemo(() => {
-    return userKYC?.status === 'verified' && bankAccounts.length > 0;
+    return (KYC_ENFORCEMENT_DISABLED || userKYC?.status === 'verified') && bankAccounts.length > 0;
   }, [userKYC, bankAccounts]);
 
   const primaryBank = useMemo(() => {
@@ -41,7 +42,7 @@ export default function EarningsScreen() {
 
   const handleWithdraw = () => {
     if (!canWithdraw) {
-      if (userKYC?.status !== 'verified') {
+      if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified') {
         toast.info('Complete your KYC to unlock withdrawals');
         router.push('/kyc');
       } else {
@@ -139,7 +140,7 @@ export default function EarningsScreen() {
                 haptic="light"
                 activeScale={0.98}
                 onPress={() => {
-                  if (userKYC?.status !== 'verified') {
+                  if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified') {
                     router.push('/kyc');
                   } else {
                     router.push('/bank-details');
@@ -152,10 +153,10 @@ export default function EarningsScreen() {
                 </View>
                 <View className="flex-1 ml-3">
                   <Text className="text-yellow-800 font-semibold">
-                    {userKYC?.status !== 'verified' ? 'Complete KYC' : 'Add Bank Account'}
+                    {!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified' ? 'Complete KYC' : 'Add Bank Account'}
                   </Text>
                   <Text className="text-yellow-700 text-sm">
-                    {userKYC?.status !== 'verified'
+                    {!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified'
                       ? 'Verify your identity to enable withdrawals'
                       : 'Add bank account to receive payouts'}
                   </Text>

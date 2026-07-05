@@ -11,6 +11,7 @@ import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/lib/toast-store';
 import PressableScale from '@/components/PressableScale';
 import { clearAuthToken } from '@/lib/auth-api';
+import { KYC_ENFORCEMENT_DISABLED } from '@/lib/onboarding-flow';
 
 type MenuItem = {
   icon: typeof Bell;
@@ -41,9 +42,9 @@ export default function ProfileScreen() {
   const displayName = profile?.name?.trim() || 'Partner Name';
   const displayPhone = profile?.phoneNumber || '+91 98765 43210';
   const avatarLetter = displayName.charAt(0).toUpperCase();
-  const isKYCVerified = userKYC?.status === 'verified';
-  const kycLabel = isKYCVerified ? 'Verified' : userKYC?.status === 'submitted' ? 'Under Review' : 'KYC Pending';
-  const kycBadgeClassName = isKYCVerified ? 'bg-green-500' : userKYC?.status === 'submitted' ? 'bg-amber-500' : 'bg-orange-500';
+  const isKYCVerified = KYC_ENFORCEMENT_DISABLED || userKYC?.status === 'verified';
+  const kycLabel = KYC_ENFORCEMENT_DISABLED ? 'KYC Disabled' : isKYCVerified ? 'Verified' : userKYC?.status === 'submitted' ? 'Under Review' : 'KYC Pending';
+  const kycBadgeClassName = KYC_ENFORCEMENT_DISABLED ? 'bg-blue-500' : isKYCVerified ? 'bg-green-500' : userKYC?.status === 'submitted' ? 'bg-amber-500' : 'bg-orange-500';
 
   const handleShare = async () => {
     try {
