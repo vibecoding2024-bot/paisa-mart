@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { usePathname, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -22,12 +22,7 @@ import { getAuthSecurityConfig } from '@/lib/auth-security';
 import { getMsg91AccessToken, getMsg91WebWidgetConfig, startMsg91WebOtp } from '@/lib/msg91-widget';
 import { fetchUserProfile } from '@/lib/user-profile-api';
 import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
-import {
-  cancelOtpLoginFlow,
-  finishOtpLoginFlow,
-  isOtpLoginFlowActive,
-  startOtpLoginFlow,
-} from '@/lib/auth-flow';
+import { cancelOtpLoginFlow, finishOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
 
 const isWeb = Platform.OS === 'web';
 
@@ -37,35 +32,22 @@ export default function LoginScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const pathname = usePathname();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
-  const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
   const userKYC = useIncentiveStore((s) => s.userKYC);
   const setKYCStatus = useIncentiveStore((s) => s.setKYCStatus);
-  const kycHasHydrated = useIncentiveStore((s) => s.hasHydrated);
-
-  useEffect(() => {
-    if (!profileHasHydrated || !kycHasHydrated) return;
-    const activePath =
-      Platform.OS === 'web' && typeof window !== 'undefined'
-        ? window.location.pathname
-        : pathname;
-    if (activePath !== '/') return;
-    if (isOtpLoginFlowActive()) return;
-    if (!profile) return;
-
-    const targetRoute = getPostAuthRoute(profile, userKYC?.status);
-
-    getAuthSecurityConfig().then((config) => {
-      router.replace({
-        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-        params: { next: targetRoute },
-      });
-    });
-  }, [kycHasHydrated, pathname, profile, profileHasHydrated, router, userKYC?.status]);
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
+
+  const handleMpinLogin = async () => {
+    if (!profile) return;
+    const targetRoute = getPostAuthRoute(profile, userKYC?.status);
+    const config = await getAuthSecurityConfig();
+    router.push({
+      pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+      params: { next: targetRoute },
+    });
+  };
 
   const routeAfterVerifiedAuth = async (verifiedPhone: string) => {
     let serverProfile: Awaited<ReturnType<typeof fetchUserProfile>> = null;
@@ -260,6 +242,14 @@ export default function LoginScreen() {
               </View>
 
               {!!error && <Text className="text-red-500 text-sm mt-2">{error}</Text>}
+
+              {profile ? (
+                <Pressable onPress={handleMpinLogin} className="mt-4">
+                  <View className="rounded-xl py-3 items-center justify-center bg-blue-50 border border-blue-100">
+                    <Text className="text-blue-700 font-bold text-sm">Login with MPIN</Text>
+                  </View>
+                </Pressable>
+              ) : null}
 
               {/* Continue Button */}
               <Pressable
