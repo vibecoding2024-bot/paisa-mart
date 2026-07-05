@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -16,8 +16,8 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { ChevronDown, User, Mail, Briefcase, GraduationCap, IndianRupee, MapPin, Gift, X, Phone, CreditCard, Calendar } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
-import { useUserProfileStore } from '@/lib/user-profile-store';
-import { saveUserProfile } from '@/lib/user-profile-api';
+import { useUserProfileStore, type UserProfile } from '@/lib/user-profile-store';
+import { fetchUserProfile, saveUserProfile } from '@/lib/user-profile-api';
 import { toast } from '@/lib/toast-store';
 import { useIncentiveStore } from '@/lib/incentive-store';
 import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
@@ -507,7 +507,8 @@ function FormScroll({ children }: { children: React.ReactNode }) {
 // ─────────────────────────────────────────────
 export default function BasicInfoScreen() {
   const router = useRouter();
-  const { phone } = useLocalSearchParams<{ phone?: string }>();
+  const { phone, returnTo } = useLocalSearchParams<{ phone?: string; returnTo?: string }>();
+  const currentProfile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
   const setKYCStatus = useIncentiveStore((s) => s.setKYCStatus);
 
@@ -530,6 +531,68 @@ export default function BasicInfoScreen() {
   const [showMonthModal, setShowMonthModal] = useState(false);
   const [showYearModal, setShowYearModal] = useState(false);
 
+  useEffect(() => {
+    let isMounted = true;
+    const lookupPhone = (phone || currentProfile?.phoneNumber || '').replace(/\D/g, '').slice(-10);
+    const applyProfileToForm = (profile: Partial<UserProfile>) => {
+      setName(profile.name || '');
+      setPhoneNumber((profile.phoneNumber || phone || '').replace(/\D/g, '').slice(-10));
+      setEmail(profile.email || '');
+      setOccupation(profile.occupation || '');
+      setQualification(profile.qualification || '');
+      setAnnualIncome(profile.annualIncome || '');
+      setCibilScoreRange(profile.cibilScore || '');
+      setPincode(profile.pincode || '');
+      setDobDay(profile.dateOfBirth?.day || '');
+      setDobMonth(profile.dateOfBirth?.month || '');
+      setDobYear(profile.dateOfBirth?.year || '');
+    };
+
+    if (currentProfile) {
+      applyProfileToForm(currentProfile);
+    } else if (lookupPhone) {
+      setPhoneNumber(lookupPhone);
+    }
+
+    if (lookupPhone.length === 10) {
+      fetchUserProfile(lookupPhone)
+        .then((serverProfile) => {
+          if (!isMounted || !serverProfile) return;
+          applyProfileToForm(serverProfile);
+          const profileChanged =
+            !currentProfile ||
+            currentProfile.name !== serverProfile.name ||
+            currentProfile.email !== serverProfile.email ||
+            currentProfile.phoneNumber !== serverProfile.phoneNumber ||
+            currentProfile.occupation !== serverProfile.occupation ||
+            currentProfile.qualification !== serverProfile.qualification ||
+            currentProfile.annualIncome !== serverProfile.annualIncome ||
+            currentProfile.cibilScore !== serverProfile.cibilScore ||
+            currentProfile.pincode !== serverProfile.pincode ||
+            currentProfile.dateOfBirth?.day !== serverProfile.dateOfBirth?.day ||
+            currentProfile.dateOfBirth?.month !== serverProfile.dateOfBirth?.month ||
+            currentProfile.dateOfBirth?.year !== serverProfile.dateOfBirth?.year;
+
+          if (profileChanged) {
+            setProfile(serverProfile);
+          }
+          setKYCStatus(serverProfile.phoneNumber, normalizeKycStatus(serverProfile.kycStatus));
+        })
+        .catch((error) => {
+          console.warn('Profile prefill failed', error);
+        });
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [
+    currentProfile,
+    phone,
+    setKYCStatus,
+    setProfile,
+  ]);
+
   const isFormValid = !!(
     name.trim() && phoneNumber.length === 10 && email.trim() &&
     occupation && qualification && annualIncome &&
@@ -549,7 +612,7 @@ export default function BasicInfoScreen() {
       pincode,
       cibilScore: cibilScoreRange,
       dateOfBirth: dobDay && dobMonth && dobYear ? { day: dobDay, month: dobMonth, year: dobYear } : undefined,
-      createdAt: new Date().toISOString(),
+      createdAt: currentProfile?.createdAt || new Date().toISOString(),
     };
 
     setIsSaving(true);
@@ -560,6 +623,16 @@ export default function BasicInfoScreen() {
       toast.success('Profile saved successfully');
 
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      if (returnTo) {
+        router.replace(returnTo as any);
+        return;
+      }
+
+      if (currentProfile) {
+        router.replace('/(tabs)/profile');
+        return;
+      }
+
       router.replace({
         pathname: '/mpin-setup',
         params: { next: getPostAuthRoute(savedProfile, savedProfile.kycStatus) },

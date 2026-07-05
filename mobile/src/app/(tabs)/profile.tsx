@@ -69,7 +69,13 @@ export default function ProfileScreen() {
   };
 
   const handleEdit = () => {
-    router.push('/basic-info');
+    router.push({
+      pathname: '/basic-info',
+      params: {
+        phone: profile?.phoneNumber || '',
+        returnTo: '/(tabs)/profile',
+      },
+    });
   };
 
   const handleLogout = async () => {
