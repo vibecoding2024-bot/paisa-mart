@@ -22,6 +22,12 @@ import { getAuthSecurityConfig } from '@/lib/auth-security';
 import { getMsg91AccessToken, getMsg91WebWidgetConfig, startMsg91WebOtp } from '@/lib/msg91-widget';
 import { fetchUserProfile } from '@/lib/user-profile-api';
 import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
+import {
+  cancelOtpLoginFlow,
+  finishOtpLoginFlow,
+  isOtpLoginFlowActive,
+  startOtpLoginFlow,
+} from '@/lib/auth-flow';
 
 const isWeb = Platform.OS === 'web';
 
@@ -41,7 +47,12 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (!profileHasHydrated || !kycHasHydrated) return;
-    if (pathname !== '/') return;
+    const activePath =
+      Platform.OS === 'web' && typeof window !== 'undefined'
+        ? window.location.pathname
+        : pathname;
+    if (activePath !== '/') return;
+    if (isOtpLoginFlowActive()) return;
     if (!profile) return;
 
     const targetRoute = getPostAuthRoute(profile, userKYC?.status);
@@ -76,6 +87,7 @@ export default function LoginScreen() {
           ? targetRoute
           : { pathname: '/mpin-setup', params: { next: targetRoute } }
       );
+      finishOtpLoginFlow();
       return;
     }
 
@@ -87,9 +99,11 @@ export default function LoginScreen() {
           ? targetRoute
           : { pathname: '/mpin-setup', params: { next: targetRoute } }
       );
+      finishOtpLoginFlow();
       return;
     }
 
+    finishOtpLoginFlow();
     router.replace({ pathname: '/basic-info', params: { phone: verifiedPhone } });
   };
 
@@ -98,6 +112,7 @@ export default function LoginScreen() {
       setError('');
       setIsSending(true);
       try {
+        startOtpLoginFlow();
         if (isWeb && getMsg91WebWidgetConfig()) {
           try {
             const widgetResult = await startMsg91WebOtp(phoneNumber);
@@ -115,6 +130,7 @@ export default function LoginScreen() {
         const otpResult = await sendOtp(phoneNumber, isWeb ? 'web' : 'mobile');
         router.push({ pathname: '/otp', params: { phone: phoneNumber, reqId: otpResult.reqId } });
       } catch (e) {
+        cancelOtpLoginFlow();
         setError(e instanceof Error ? e.message : 'Unable to send OTP');
       } finally {
         setIsSending(false);

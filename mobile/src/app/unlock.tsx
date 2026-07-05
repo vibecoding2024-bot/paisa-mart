@@ -8,6 +8,7 @@ import * as Haptics from '@/lib/haptics';
 import { authenticateWithBiometric, getAuthSecurityConfig, verifyMpin } from '@/lib/auth-security';
 import { sendOtp } from '@/lib/auth-api';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { cancelOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
 
 export default function UnlockScreen() {
   const router = useRouter();
@@ -39,6 +40,7 @@ export default function UnlockScreen() {
     setError('');
     setIsSendingOtp(true);
     try {
+      startOtpLoginFlow();
       const otpResult = await sendOtp(phoneNumber, Platform.OS === 'web' ? 'web' : 'mobile');
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       router.replace({
@@ -46,6 +48,7 @@ export default function UnlockScreen() {
         params: { phone: phoneNumber, reqId: otpResult.reqId, next: targetRoute },
       });
     } catch (e) {
+      cancelOtpLoginFlow();
       setError(e instanceof Error ? e.message : 'Unable to send OTP');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {

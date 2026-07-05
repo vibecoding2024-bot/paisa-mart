@@ -26,6 +26,7 @@ import { getAuthSecurityConfig } from '@/lib/auth-security';
 import { fetchUserProfile } from '@/lib/user-profile-api';
 import { saveAuthToken, sendOtp, verifyOtp as verifyOtpRequest } from '@/lib/auth-api';
 import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
+import { cancelOtpLoginFlow, finishOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
 
 const OTP_LENGTH = 6;
 
@@ -129,6 +130,7 @@ export default function OTPScreen() {
     setError('');
     try {
       if (!phone) throw new Error('Mobile number is missing');
+      startOtpLoginFlow();
       const result = await verifyOtpRequest(phone, otpValue, Platform.OS === 'web' ? 'web' : 'mobile', reqId);
       await saveAuthToken(result.token);
       setIsVerified(true);
@@ -149,6 +151,7 @@ export default function OTPScreen() {
                 ? targetRoute
                 : { pathname: '/mpin-setup', params: { next: targetRoute } }
             );
+            finishOtpLoginFlow();
             return;
           }
         } catch (error) {
@@ -163,12 +166,15 @@ export default function OTPScreen() {
               ? targetRoute
               : { pathname: '/mpin-setup', params: { next: targetRoute } }
           );
+          finishOtpLoginFlow();
           return;
         }
 
+        finishOtpLoginFlow();
         router.replace({ pathname: '/basic-info', params: { phone } });
       }, 1000);
     } catch (e) {
+      cancelOtpLoginFlow();
       setError(e instanceof Error ? e.message : 'OTP verification failed');
       triggerShake();
       setIsVerifying(false);
@@ -183,6 +189,7 @@ export default function OTPScreen() {
     setIsResending(true);
     try {
       if (!phone) throw new Error('Mobile number is missing');
+      startOtpLoginFlow();
       const result = await sendOtp(phone, Platform.OS === 'web' ? 'web' : 'mobile');
       setReqId(result.reqId);
       setResendTimer(30);
