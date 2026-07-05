@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -31,6 +31,7 @@ export default function LoginScreen() {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const pathname = usePathname();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
   const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
@@ -40,6 +41,7 @@ export default function LoginScreen() {
 
   useEffect(() => {
     if (!profileHasHydrated || !kycHasHydrated) return;
+    if (pathname !== '/') return;
     if (!profile) return;
 
     const targetRoute = getPostAuthRoute(profile, userKYC?.status);
@@ -50,7 +52,7 @@ export default function LoginScreen() {
         params: { next: targetRoute },
       });
     });
-  }, [kycHasHydrated, profile, profileHasHydrated, router, userKYC?.status]);
+  }, [kycHasHydrated, pathname, profile, profileHasHydrated, router, userKYC?.status]);
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
