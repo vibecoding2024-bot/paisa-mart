@@ -639,8 +639,8 @@ export default function ProductsScreen() {
     const productId = partner.id || getProductId(partner.name, categoryId);
     const existingProduct = products.find(p => p.id === productId);
 
-    if (productId === 'kotak-savings-account') {
-      Linking.openURL(existingProduct?.applicationUrl || 'https://wee.bnking.in/c/ZjBmOWYyM');
+    if (categoryId === 'bank-accounts' && existingProduct?.applicationUrl) {
+      Linking.openURL(existingProduct.applicationUrl);
       return;
     }
 
