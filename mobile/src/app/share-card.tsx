@@ -15,7 +15,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ChevronLeft,
   X,
-  Share2,
   Volume2,
   Info,
   Check,
@@ -291,22 +290,6 @@ export default function ShareCardScreen() {
     // router.back();
   }, []);
 
-  const handleShare = useCallback(async () => {
-    if (!product) return;
-
-    const message = generateShareMessage(product, advisor, selectedLanguage);
-
-    try {
-      const { Share } = await import('react-native');
-      await Share.share({
-        message,
-        title: `${product.providerName} ${product.productName}`,
-      });
-    } catch (error) {
-      console.log('Share error:', error);
-    }
-  }, [product, advisor, selectedLanguage]);
-
   if (!product) {
     return (
       <View className="flex-1 bg-gray-50 items-center justify-center">
@@ -339,10 +322,10 @@ export default function ShareCardScreen() {
             onPress={handleBack}
             className="w-10 h-10 items-center justify-center"
           >
-            <Share2 size={22} color="#374151" />
+            <ChevronLeft size={24} color="#374151" />
           </Pressable>
           <Text className="text-gray-800 font-semibold text-lg">
-            Share Card Link
+            Product Details
           </Text>
           <Pressable
             onPress={handleClose}
@@ -573,14 +556,8 @@ export default function ShareCardScreen() {
             </Text>
           </View>
 
-          {/* Share Buttons */}
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={handleShare}
-              className="w-14 h-14 bg-gray-100 rounded-xl items-center justify-center"
-            >
-              <Share2 size={24} color="#374151" />
-            </Pressable>
+          {/* WhatsApp Action */}
+          <View className="flex-row">
             <Pressable
               onPress={handleShareWhatsApp}
               className="flex-1 bg-green-600 rounded-xl flex-row items-center justify-center py-4"

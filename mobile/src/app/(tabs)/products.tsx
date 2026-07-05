@@ -461,19 +461,16 @@ const BANK_ACCOUNT_CARD_DETAILS: Record<string, {
   title: string;
   logo: string;
   benefits: string[];
-  payout: string;
 }> = {
   'kotak-savings-account': {
     title: 'Kotak 811',
     logo: 'kotak 811',
     benefits: ['Zero balance account', 'Virtual debit card'],
-    payout: 'Payout: ₹600',
   },
   'indusind-bank-business-savings-account': {
     title: 'Indus Delite: Zero Balance',
     logo: 'IndusInd Bank',
     benefits: ['Zero Balance Savings Account', 'Up to 5% cashback on debit card spends'],
-    payout: 'Payout: ₹600',
   },
 };
 
@@ -797,12 +794,7 @@ export default function ProductsScreen() {
                           </View>
                         </PressableScale>
 
-                        <View className="flex-row items-end justify-between">
-                          <View>
-                            <Text className="text-gray-400 text-xs">Payout</Text>
-                            <Text className="text-gray-900 font-bold text-lg">{card.payout.replace('Payout: ', '')}</Text>
-                          </View>
-
+                        <View className="flex-row items-center justify-end">
                           <PressableScale
                             haptic="medium"
                             activeScale={0.96}
