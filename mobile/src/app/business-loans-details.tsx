@@ -7,6 +7,7 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,6 +16,8 @@ import { ChevronLeft, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lu
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import { useBusinessLoanStore } from '@/lib/business-loan-store';
+import { submitBusinessLoanLead } from '@/lib/business-loan-api';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const BUSINESS_TYPES = [
   'Manufacturing Business',
@@ -139,12 +142,15 @@ function Dropdown({ label, value, options, onSelect, error }: DropdownProps) {
 export default function BusinessLoansDetailsScreen() {
   const router = useRouter();
   const setData = useBusinessLoanStore((s) => s.setData);
+  const profile = useUserProfileStore((s) => s.profile);
 
   const [businessType, setBusinessType] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
   const [loanPurpose, setLoanPurpose] = useState('');
   const [otherText, setOtherText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -162,19 +168,37 @@ export default function BusinessLoansDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleContinue = () => {
+  const handleSubmit = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    if (!validate()) return;
+    setSubmitError('');
+    if (!validate() || isSubmitting) return;
 
-    setData({
+    const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) || '';
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      setSubmitError('Phone number is missing. Please complete your basic profile first.');
+      return;
+    }
+
+    const leadData = {
       business_type: businessType,
       loan_amount_required: loanAmount,
       loan_purpose: loanPurpose,
       loan_purpose_other_text: loanPurpose === 'Other' ? otherText : '',
       timestamp: new Date().toISOString(),
-    });
+    };
 
-    router.replace('/(tabs)');
+    try {
+      setIsSubmitting(true);
+      await submitBusinessLoanLead({ ...leadData, phoneNumber });
+      setData(leadData);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace('/(tabs)');
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not submit business loan details');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -368,45 +392,75 @@ export default function BusinessLoansDetailsScreen() {
               backgroundColor: '#fff',
               borderTopWidth: 1,
               borderTopColor: '#F3F4F6',
-              flexDirection: 'row',
-              gap: 12,
             }}
           >
-            <Pressable
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.back();
-              }}
-              style={{
-                flex: 1,
-                backgroundColor: '#F3F4F6',
-                borderRadius: 14,
-                paddingVertical: 16,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ color: '#374151', fontWeight: '600', fontSize: 15 }}>Back</Text>
-            </Pressable>
-            <Pressable
-              onPress={handleContinue}
-              style={{ flex: 2, borderRadius: 14, overflow: 'hidden' }}
-            >
-              <LinearGradient
-                colors={['#002561', '#003380']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
+            {submitError ? (
+              <Text
                 style={{
+                  color: '#B91C1C',
+                  backgroundColor: '#FEF2F2',
+                  borderColor: '#FECACA',
+                  borderWidth: 1,
+                  borderRadius: 10,
+                  paddingHorizontal: 10,
+                  paddingVertical: 7,
+                  fontSize: 12,
+                  marginBottom: 10,
+                }}
+              >
+                {submitError}
+              </Text>
+            ) : null}
+            <View style={{ flexDirection: 'row', gap: 12 }}>
+              <Pressable
+                onPress={() => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  router.back();
+                }}
+                disabled={isSubmitting}
+                style={{
+                  flex: 1,
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: 14,
                   paddingVertical: 16,
                   alignItems: 'center',
                   justifyContent: 'center',
+                  opacity: isSubmitting ? 0.6 : 1,
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
-                  Continue
-                </Text>
-              </LinearGradient>
-            </Pressable>
+                <Text style={{ color: '#374151', fontWeight: '600', fontSize: 15 }}>Back</Text>
+              </Pressable>
+              <Pressable
+                onPress={handleSubmit}
+                disabled={isSubmitting}
+                style={{
+                  flex: 2,
+                  borderRadius: 14,
+                  overflow: 'hidden',
+                  opacity: isSubmitting ? 0.85 : 1,
+                }}
+              >
+                <LinearGradient
+                  colors={['#002561', '#003380']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={{
+                    paddingVertical: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minHeight: 51,
+                  }}
+                >
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>
+                      Submit
+                    </Text>
+                  )}
+                </LinearGradient>
+              </Pressable>
+            </View>
           </Animated.View>
         </KeyboardAvoidingView>
       </SafeAreaView>
