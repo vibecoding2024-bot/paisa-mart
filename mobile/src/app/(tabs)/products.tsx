@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput } from 'react-native';
+import { View, Text, ScrollView, TextInput, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella, X, SearchX } from 'lucide-react-native';
@@ -635,6 +635,18 @@ export default function ProductsScreen() {
     }
   }, [router, products, goldLoanEnabled, realEstateEnabled]);
 
+  const handleApplyPress = useCallback((partner: Partner, categoryId: string) => {
+    const productId = partner.id || getProductId(partner.name, categoryId);
+    const existingProduct = products.find(p => p.id === productId);
+
+    if (productId === 'kotak-savings-account') {
+      Linking.openURL(existingProduct?.applicationUrl || 'https://wee.bnking.in/c/ZjBmOWYyM');
+      return;
+    }
+
+    handleProductPress(partner, categoryId);
+  }, [handleProductPress, products]);
+
   return (
     <View className="flex-1 bg-gray-50">
       <SafeAreaView className="flex-1" edges={['top']}>
@@ -798,7 +810,7 @@ export default function ProductsScreen() {
                           <PressableScale
                             haptic="medium"
                             activeScale={0.96}
-                            onPress={() => handleProductPress(partner, selectedCategory)}
+                            onPress={() => handleApplyPress(partner, selectedCategory)}
                           >
                             <View className="bg-blue-600 rounded-xl px-8 py-3">
                               <Text className="text-white font-bold text-lg">Apply</Text>
