@@ -5,19 +5,21 @@ import { getUserProfile, updateUserKycStatus } from "../lib/user-profile-store";
 
 const kycRouter = new Hono();
 
-type DigiLockerSessionStatus = "pending" | "verified" | "failed";
+type KycSessionStatus = "pending" | "verified" | "failed";
 
-type DigiLockerSession = {
+type KycSession = {
   id: string;
   phoneNumber: string;
-  status: DigiLockerSessionStatus;
+  providerRefId: string;
+  status: KycSessionStatus;
   createdAt: number;
   updatedAt: number;
   error?: string;
+  raw?: unknown;
 };
 
-const SESSION_TTL_MS = 15 * 60_000;
-const sessions = new Map<string, DigiLockerSession>();
+const SESSION_TTL_MS = 30 * 60_000;
+const sessions = new Map<string, KycSession>();
 
 const startSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/),
@@ -29,27 +31,8 @@ function configuredBackendUrl(c: any) {
   return new URL(c.req.url).origin;
 }
 
-function getDigiLockerConfig(c: any) {
-  const backendUrl = configuredBackendUrl(c);
-  const clientId = process.env.DIGILOCKER_CLIENT_ID;
-  const clientSecret = process.env.DIGILOCKER_CLIENT_SECRET;
-  const redirectUri =
-    process.env.DIGILOCKER_REDIRECT_URI ||
-    `${backendUrl}/api/kyc/digilocker/callback`;
-  const authUrl =
-    process.env.DIGILOCKER_AUTH_URL ||
-    "https://api.digitallocker.gov.in/public/oauth2/1/authorize";
-  const tokenUrl =
-    process.env.DIGILOCKER_TOKEN_URL ||
-    "https://api.digitallocker.gov.in/public/oauth2/1/token";
-  const scope = process.env.DIGILOCKER_SCOPE || "openid";
-
-  if (!clientId || !clientSecret) return null;
-  return { clientId, clientSecret, redirectUri, authUrl, tokenUrl, scope };
-}
-
 function signingSecret() {
-  return process.env.AUTH_TOKEN_SECRET || process.env.DIGILOCKER_STATE_SECRET || "paisa-mart-local-state";
+  return process.env.AUTH_TOKEN_SECRET || process.env.VIMOPAY_KYC_STATE_SECRET || "paisa-mart-local-state";
 }
 
 function signState(payload: string) {
@@ -83,32 +66,173 @@ function cleanupSessions() {
   }
 }
 
-async function exchangeCodeForToken(code: string, config: NonNullable<ReturnType<typeof getDigiLockerConfig>>) {
-  const body = new URLSearchParams({
-    grant_type: "authorization_code",
-    code,
-    client_id: config.clientId,
-    client_secret: config.clientSecret,
-    redirect_uri: config.redirectUri,
-  });
+function getVimoPayKycConfig(c: any) {
+  const backendUrl = configuredBackendUrl(c);
+  const callbackUrl =
+    process.env.VIMOPAY_KYC_CALLBACK_URL ||
+    `${backendUrl}/api/kyc/vimopay/callback`;
+  const startUrl = process.env.VIMOPAY_KYC_START_URL;
+  const statusUrl = process.env.VIMOPAY_KYC_STATUS_URL;
+  const hostedUrlTemplate = process.env.VIMOPAY_KYC_URL_TEMPLATE;
+  const authToken = process.env.VIMOPAY_KYC_AUTH_TOKEN;
+  const apiKey = process.env.VIMOPAY_KYC_API_KEY;
+  const userId = process.env.VIMOPAY_USER_ID;
 
-  const response = await fetch(config.tokenUrl, {
-    method: "POST",
-    headers: {
-      "content-type": "application/x-www-form-urlencoded",
-      accept: "application/json",
-    },
-    body,
-  });
-  const data = await response.json().catch(() => ({})) as Record<string, unknown>;
-  const safeData = JSON.stringify(data, (key, value) => (/token|secret/i.test(key) ? "[redacted]" : value));
+  if (!startUrl && !hostedUrlTemplate) return null;
+  return { callbackUrl, startUrl, statusUrl, hostedUrlTemplate, authToken, apiKey, userId };
+}
 
-  if (!response.ok || typeof data.access_token !== "string") {
-    console.error("DigiLocker token exchange failed", { status: response.status, body: safeData });
-    throw new Error("DigiLocker verification failed");
+function redact(value: unknown) {
+  return JSON.stringify(value, (key, item) => (/token|secret|key|auth/i.test(key) ? "[redacted]" : item));
+}
+
+function statusFromProvider(value: unknown): KycSessionStatus {
+  const status = String(value || "").toLowerCase();
+  if (["verified", "success", "approved", "completed", "complete", "000"].includes(status)) return "verified";
+  if (["failed", "failure", "rejected", "cancelled", "canceled", "error"].includes(status)) return "failed";
+  return "pending";
+}
+
+function valueAt(data: any, keys: string[]) {
+  for (const key of keys) {
+    if (data && data[key] != null) return data[key];
+    if (data?.data && data.data[key] != null) return data.data[key];
+  }
+  return undefined;
+}
+
+function findSessionFromCallback(params: Record<string, unknown>) {
+  const state = String(params.state || "");
+  if (state) {
+    const verifiedState = verifyState(state);
+    if (!verifiedState) return { error: "Invalid VimoPay KYC session" };
+
+    const session = sessions.get(verifiedState.sessionId);
+    if (!session || session.phoneNumber !== verifiedState.phoneNumber) {
+      return { error: "This VimoPay KYC session has expired" };
+    }
+    return { session };
   }
 
-  console.log("DigiLocker token exchange succeeded", { status: response.status });
+  const sessionId = valueAt(params, ["sessionId", "kycSessionId"]);
+  if (typeof sessionId === "string" && sessions.has(sessionId)) {
+    return { session: sessions.get(sessionId) };
+  }
+
+  const providerRefId = valueAt(params, ["providerRefId", "partnerRefId", "merchantRefId", "referenceId"]);
+  if (providerRefId != null) {
+    const session = [...sessions.values()].find((item) => item.providerRefId === String(providerRefId));
+    if (session) return { session };
+  }
+
+  const phoneNumber = String(valueAt(params, ["phoneNumber", "mobile", "custMobile"]) || "").replace(/\D/g, "").slice(-10);
+  if (phoneNumber.length === 10) {
+    const session = [...sessions.values()].find((item) => item.phoneNumber === phoneNumber);
+    if (session) return { session };
+  }
+
+  return { error: "Unable to match VimoPay KYC session" };
+}
+
+function applyTemplate(template: string, values: Record<string, string>) {
+  return Object.entries(values).reduce(
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, encodeURIComponent(value)),
+    template,
+  );
+}
+
+function requestHeaders(config: NonNullable<ReturnType<typeof getVimoPayKycConfig>>) {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    accept: "application/json",
+  };
+  if (config.authToken) headers.Authorization = `Bearer ${config.authToken}`;
+  if (config.apiKey) headers["x-api-key"] = config.apiKey;
+  if (config.userId) headers.userId = config.userId;
+  return headers;
+}
+
+async function createVimoPaySession(
+  config: NonNullable<ReturnType<typeof getVimoPayKycConfig>>,
+  payload: { sessionId: string; phoneNumber: string; state: string },
+) {
+  const callbackUrl = config.callbackUrl;
+  const partnerRefId = `PMKYC${Date.now()}${payload.phoneNumber.slice(-4)}`;
+
+  if (config.hostedUrlTemplate && !config.startUrl) {
+    return {
+      providerRefId: partnerRefId,
+      kycUrl: applyTemplate(config.hostedUrlTemplate, {
+        sessionId: payload.sessionId,
+        phoneNumber: payload.phoneNumber,
+        partnerRefId,
+        state: payload.state,
+        callbackUrl,
+      }),
+      raw: { source: "VIMOPAY_KYC_URL_TEMPLATE" },
+    };
+  }
+
+  const response = await fetch(config.startUrl!, {
+    method: "POST",
+    headers: requestHeaders(config),
+    body: JSON.stringify({
+      partnerRefId,
+      merchantRefId: partnerRefId,
+      phoneNumber: payload.phoneNumber,
+      mobile: payload.phoneNumber,
+      custMobile: payload.phoneNumber,
+      callbackUrl,
+      redirectUrl: callbackUrl,
+      state: payload.state,
+    }),
+  });
+  const data = await response.json().catch(() => ({})) as Record<string, unknown>;
+
+  if (!response.ok) {
+    console.error("VimoPay KYC start failed", { status: response.status, body: redact(data) });
+    throw new Error("VimoPay KYC could not be started");
+  }
+
+  const kycUrl = valueAt(data, ["kycUrl", "authUrl", "redirectUrl", "url", "paymentUrl"]);
+  const providerRefId = valueAt(data, ["providerRefId", "partnerRefId", "merchantRefId", "referenceId", "sessionId"]);
+  if (typeof kycUrl !== "string") {
+    console.error("VimoPay KYC start missing redirect URL", { status: response.status, body: redact(data) });
+    throw new Error("VimoPay KYC did not return a verification URL");
+  }
+
+  return {
+    providerRefId: typeof providerRefId === "string" ? providerRefId : partnerRefId,
+    kycUrl,
+    raw: data,
+  };
+}
+
+async function fetchVimoPayStatus(config: NonNullable<ReturnType<typeof getVimoPayKycConfig>>, session: KycSession) {
+  if (!config.statusUrl) return null;
+
+  const statusUrl = applyTemplate(config.statusUrl, {
+    sessionId: session.id,
+    phoneNumber: session.phoneNumber,
+    partnerRefId: session.providerRefId,
+  });
+  const response = await fetch(statusUrl, { headers: requestHeaders(config) });
+  const data = await response.json().catch(() => ({})) as Record<string, unknown>;
+  if (!response.ok) {
+    console.error("VimoPay KYC status failed", { status: response.status, body: redact(data) });
+    return null;
+  }
+
+  const providerStatus = valueAt(data, ["kycStatus", "status", "txnStatusCode", "responseCode"]);
+  const status = statusFromProvider(providerStatus);
+  session.status = status;
+  session.raw = data;
+  session.updatedAt = Date.now();
+  if (status === "verified") updateUserKycStatus(session.phoneNumber, "verified");
+  if (status === "failed") {
+    session.error = String(valueAt(data, ["error", "message", "responseMessage"]) || "VimoPay KYC failed");
+    updateUserKycStatus(session.phoneNumber, "rejected");
+  }
   return data;
 }
 
@@ -136,7 +260,28 @@ function callbackHtml(title: string, message: string) {
 </html>`;
 }
 
-kycRouter.post("/digilocker/start", async (c) => {
+function updateSessionFromCallback(params: Record<string, unknown>) {
+  const matched = findSessionFromCallback(params);
+  if (!matched.session) return { ok: false as const, error: matched.error || "Unable to match VimoPay KYC session" };
+  const session = matched.session;
+
+  const providerStatus = valueAt(params, ["kycStatus", "status", "txnStatusCode", "responseCode"]);
+  const status = statusFromProvider(providerStatus);
+  session.status = status;
+  session.raw = params;
+  session.updatedAt = Date.now();
+
+  if (status === "verified") {
+    updateUserKycStatus(session.phoneNumber, "verified");
+  } else if (status === "failed") {
+    session.error = String(valueAt(params, ["error", "message", "responseMessage"]) || "VimoPay KYC failed");
+    updateUserKycStatus(session.phoneNumber, "rejected");
+  }
+
+  return { ok: true as const, session };
+}
+
+kycRouter.post("/vimopay/start", async (c) => {
   cleanupSessions();
   const parsed = startSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ success: false, error: "Invalid phone number" }, 400);
@@ -144,12 +289,12 @@ kycRouter.post("/digilocker/start", async (c) => {
   const profile = getUserProfile(parsed.data.phoneNumber);
   if (!profile) return c.json({ success: false, error: "Complete profile before KYC" }, 404);
 
-  const config = getDigiLockerConfig(c);
+  const config = getVimoPayKycConfig(c);
   if (!config) {
     return c.json(
       {
         success: false,
-        error: "DigiLocker is not configured. Add DIGILOCKER_CLIENT_ID and DIGILOCKER_CLIENT_SECRET.",
+        error: "VimoPay KYC is not configured. Add VIMOPAY_KYC_START_URL or VIMOPAY_KYC_URL_TEMPLATE.",
       },
       503,
     );
@@ -157,89 +302,80 @@ kycRouter.post("/digilocker/start", async (c) => {
 
   const sessionId = randomUUID();
   const state = makeState(sessionId, parsed.data.phoneNumber);
-  sessions.set(sessionId, {
-    id: sessionId,
-    phoneNumber: parsed.data.phoneNumber,
-    status: "pending",
-    createdAt: Date.now(),
-    updatedAt: Date.now(),
-  });
 
-  updateUserKycStatus(parsed.data.phoneNumber, "submitted");
+  try {
+    const providerSession = await createVimoPaySession(config, {
+      sessionId,
+      phoneNumber: parsed.data.phoneNumber,
+      state,
+    });
 
-  const authUrl = new URL(config.authUrl);
-  authUrl.searchParams.set("response_type", "code");
-  authUrl.searchParams.set("client_id", config.clientId);
-  authUrl.searchParams.set("redirect_uri", config.redirectUri);
-  authUrl.searchParams.set("state", state);
-  authUrl.searchParams.set("scope", config.scope);
+    sessions.set(sessionId, {
+      id: sessionId,
+      phoneNumber: parsed.data.phoneNumber,
+      providerRefId: providerSession.providerRefId,
+      status: "pending",
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+      raw: providerSession.raw,
+    });
 
-  return c.json({ success: true, sessionId, authUrl: authUrl.toString(), status: "pending" });
+    updateUserKycStatus(parsed.data.phoneNumber, "submitted");
+
+    return c.json({
+      success: true,
+      sessionId,
+      providerRefId: providerSession.providerRefId,
+      kycUrl: providerSession.kycUrl,
+      status: "pending",
+    });
+  } catch (error) {
+    return c.json(
+      { success: false, error: error instanceof Error ? error.message : "Unable to start VimoPay KYC" },
+      502,
+    );
+  }
 });
 
-kycRouter.get("/digilocker/status/:sessionId", (c) => {
+kycRouter.get("/vimopay/status/:sessionId", async (c) => {
   cleanupSessions();
   const session = sessions.get(c.req.param("sessionId"));
   if (!session) return c.json({ success: false, error: "KYC session expired" }, 404);
+
+  const config = getVimoPayKycConfig(c);
+  if (config) await fetchVimoPayStatus(config, session);
 
   const profile = getUserProfile(session.phoneNumber);
   return c.json({
     success: true,
     sessionId: session.id,
+    providerRefId: session.providerRefId,
     status: session.status,
     kycStatus: profile?.kycStatus || "submitted",
     error: session.error,
   });
 });
 
-kycRouter.get("/digilocker/callback", async (c) => {
-  const state = c.req.query("state");
-  const code = c.req.query("code");
-  const error = c.req.query("error");
+kycRouter.get("/vimopay/callback", (c) => {
+  const result = updateSessionFromCallback(Object.fromEntries(new URL(c.req.url).searchParams.entries()));
+  if (!result.ok) return c.html(callbackHtml("KYC failed", `${result.error}. Please return to Paisa Mart and try again.`), 400);
 
-  if (!state) {
-    return c.html(callbackHtml("KYC failed", "Missing DigiLocker state. Please return to Paisa Mart and try again."), 400);
+  if (result.session.status === "verified") {
+    return c.html(callbackHtml("KYC verified", "Your VimoPay KYC is complete. You can return to Paisa Mart."));
   }
 
-  const verifiedState = verifyState(state);
-  if (!verifiedState) {
-    return c.html(callbackHtml("KYC failed", "Invalid DigiLocker session. Please return to Paisa Mart and try again."), 400);
+  if (result.session.status === "failed") {
+    return c.html(callbackHtml("KYC failed", "VimoPay KYC was not completed. Please return to Paisa Mart and try again."), 400);
   }
 
-  const session = sessions.get(verifiedState.sessionId);
-  if (!session || session.phoneNumber !== verifiedState.phoneNumber) {
-    return c.html(callbackHtml("KYC failed", "This DigiLocker session has expired. Please return to Paisa Mart and try again."), 410);
-  }
+  return c.html(callbackHtml("KYC pending", "VimoPay KYC is still being processed. Please return to Paisa Mart."));
+});
 
-  if (error || !code) {
-    session.status = "failed";
-    session.error = error || "DigiLocker did not return an authorization code";
-    session.updatedAt = Date.now();
-    updateUserKycStatus(session.phoneNumber, "rejected");
-    return c.html(callbackHtml("KYC failed", "DigiLocker verification was not completed. Please return to Paisa Mart and try again."), 400);
-  }
-
-  const config = getDigiLockerConfig(c);
-  if (!config) {
-    session.status = "failed";
-    session.error = "DigiLocker backend is not configured";
-    session.updatedAt = Date.now();
-    return c.html(callbackHtml("KYC failed", "DigiLocker is not configured. Please contact support."), 503);
-  }
-
-  try {
-    await exchangeCodeForToken(code, config);
-    session.status = "verified";
-    session.updatedAt = Date.now();
-    updateUserKycStatus(session.phoneNumber, "verified");
-    return c.html(callbackHtml("KYC verified", "Your DigiLocker KYC is complete. You can return to Paisa Mart."));
-  } catch (exchangeError) {
-    session.status = "failed";
-    session.error = exchangeError instanceof Error ? exchangeError.message : "DigiLocker verification failed";
-    session.updatedAt = Date.now();
-    updateUserKycStatus(session.phoneNumber, "rejected");
-    return c.html(callbackHtml("KYC failed", "DigiLocker verification failed. Please return to Paisa Mart and try again."), 400);
-  }
+kycRouter.post("/vimopay/callback", async (c) => {
+  const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
+  const result = updateSessionFromCallback(body);
+  if (!result.ok) return c.json({ success: false, error: result.error }, 400);
+  return c.json({ success: true, status: result.session.status });
 });
 
 export { kycRouter };

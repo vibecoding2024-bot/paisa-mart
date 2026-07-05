@@ -18,20 +18,20 @@ import {
 import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore, type KYCStatus } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
-import { getDigiLockerKycStatus, startDigiLockerKyc } from '@/lib/kyc-api';
+import { getVimoPayKycStatus, startVimoPayKyc } from '@/lib/kyc-api';
 
 const STATUS_CONFIG: Record<KYCStatus, { bg: string; text: string; title: string; message: string; icon: React.ReactNode }> = {
   not_started: {
     bg: '#F3F4F6',
     text: '#6B7280',
-    title: 'DigiLocker KYC Pending',
-    message: 'Start DigiLocker verification to complete your KYC.',
+    title: 'VimoPay KYC Pending',
+    message: 'Start VimoPay verification to complete your KYC.',
     icon: <Clock size={16} color="#6B7280" />,
   },
   submitted: {
     bg: '#FEF3C7',
     text: '#F59E0B',
-    title: 'Waiting for DigiLocker',
+    title: 'Waiting for VimoPay',
     message: 'Finish the authorization in the browser window.',
     icon: <Clock size={16} color="#F59E0B" />,
   },
@@ -39,14 +39,14 @@ const STATUS_CONFIG: Record<KYCStatus, { bg: string; text: string; title: string
     bg: '#D1FAE5',
     text: '#10B981',
     title: 'KYC Verified',
-    message: 'Your DigiLocker KYC is complete.',
+    message: 'Your VimoPay KYC is complete.',
     icon: <CheckCircle size={16} color="#10B981" />,
   },
   rejected: {
     bg: '#FEE2E2',
     text: '#EF4444',
     title: 'KYC Failed',
-    message: 'DigiLocker verification was not completed. Please try again.',
+    message: 'VimoPay verification was not completed. Please try again.',
     icon: <XCircle size={16} color="#EF4444" />,
   },
 };
@@ -85,27 +85,27 @@ export default function KYCScreen() {
     let isMounted = true;
     const interval = setInterval(async () => {
       try {
-        const result = await getDigiLockerKycStatus(activeSessionId);
+        const result = await getVimoPayKycStatus(activeSessionId);
         if (!isMounted) return;
 
         if (result.status === 'verified' || result.kycStatus === 'verified') {
           setKYCStatus(phoneNumber, 'verified');
-          setStatusMessage('DigiLocker KYC verified successfully.');
+          setStatusMessage('VimoPay KYC verified successfully.');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
           setActiveSessionId(null);
           router.replace('/(tabs)');
         } else if (result.status === 'failed' || result.kycStatus === 'rejected') {
           setKYCStatus(phoneNumber, 'rejected');
-          setStatusMessage(result.error || 'DigiLocker KYC failed. Please try again.');
+          setStatusMessage(result.error || 'VimoPay KYC failed. Please try again.');
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
           setActiveSessionId(null);
         } else {
           setKYCStatus(phoneNumber, 'submitted');
-          setStatusMessage('Waiting for DigiLocker authorization...');
+          setStatusMessage('Waiting for VimoPay authorization...');
         }
       } catch (error) {
         if (!isMounted) return;
-        setStatusMessage(error instanceof Error ? error.message : 'Unable to check DigiLocker status.');
+        setStatusMessage(error instanceof Error ? error.message : 'Unable to check VimoPay status.');
       }
     }, 3000);
 
@@ -115,7 +115,7 @@ export default function KYCScreen() {
     };
   }, [activeSessionId, phoneNumber, router, setKYCStatus]);
 
-  const handleStartDigiLocker = async () => {
+  const handleStartVimoPay = async () => {
     const normalizedPhone = phoneNumber.replace(/\D/g, '').slice(-10);
     if (normalizedPhone.length !== 10) {
       Alert.alert('Profile Required', 'Please complete your profile before starting KYC.');
@@ -127,19 +127,19 @@ export default function KYCScreen() {
     setStatusMessage('');
 
     try {
-      const result = await startDigiLockerKyc(normalizedPhone);
+      const result = await startVimoPayKyc(normalizedPhone);
       setActiveSessionId(result.sessionId);
       setKYCStatus(normalizedPhone, 'submitted');
-      setStatusMessage('Opening DigiLocker. Complete authorization to finish KYC.');
+      setStatusMessage('Opening VimoPay. Complete authorization to finish KYC.');
 
-      const canOpen = await Linking.canOpenURL(result.authUrl);
-      if (!canOpen) throw new Error('Unable to open DigiLocker on this device.');
-      await Linking.openURL(result.authUrl);
+      const canOpen = await Linking.canOpenURL(result.kycUrl);
+      if (!canOpen) throw new Error('Unable to open VimoPay on this device.');
+      await Linking.openURL(result.kycUrl);
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unable to start DigiLocker KYC.';
+      const message = error instanceof Error ? error.message : 'Unable to start VimoPay KYC.';
       setStatusMessage(message);
-      Alert.alert('DigiLocker KYC', message);
+      Alert.alert('VimoPay KYC', message);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
       setIsStarting(false);
@@ -148,11 +148,11 @@ export default function KYCScreen() {
 
   const buttonDisabled = isStarting || Boolean(activeSessionId) || kycStatus === 'verified';
   const buttonLabel =
-    isStarting ? 'Starting DigiLocker...' :
-    activeSessionId ? 'Waiting for DigiLocker' :
+    isStarting ? 'Starting VimoPay...' :
+    activeSessionId ? 'Waiting for VimoPay' :
     kycStatus === 'verified' ? 'KYC Verified' :
-    kycStatus === 'submitted' ? 'Restart DigiLocker KYC' :
-    'Start DigiLocker KYC';
+    kycStatus === 'submitted' ? 'Restart VimoPay KYC' :
+    'Start VimoPay KYC';
 
   return (
     <View className="flex-1 bg-white">
@@ -171,7 +171,7 @@ export default function KYCScreen() {
               </Pressable>
               <View className="flex-1">
                 <Text className="text-white text-xl font-semibold">KYC Verification</Text>
-                <Text className="text-white/70 text-sm">Verify securely with DigiLocker</Text>
+                <Text className="text-white/70 text-sm">Verify securely with VimoPay</Text>
               </View>
             </View>
 
@@ -215,10 +215,10 @@ export default function KYCScreen() {
             <View className="bg-blue-50 border border-blue-100 rounded-xl p-4">
               <View className="flex-row items-center mb-2">
                 <Shield size={18} color="#0A3D91" />
-                <Text className="text-blue-900 font-semibold ml-2">DigiLocker Based KYC</Text>
+                <Text className="text-blue-900 font-semibold ml-2">VimoPay Based KYC</Text>
               </View>
               <Text className="text-blue-800 text-sm leading-5">
-                Authorize Paisa Mart through DigiLocker to verify your identity digitally. You will be redirected to DigiLocker and brought back after authorization.
+                Authorize Paisa Mart through VimoPay to verify your identity digitally. You will be redirected to VimoPay and brought back after authorization.
               </Text>
             </View>
           </Animated.View>
@@ -231,7 +231,7 @@ export default function KYCScreen() {
                     <FileText size={22} color="#FF8C00" />
                   </View>
                   <View className="flex-1">
-                    <Text className="text-gray-900 font-bold">Verify using DigiLocker</Text>
+                    <Text className="text-gray-900 font-bold">Verify using VimoPay</Text>
                     <Text className="text-gray-500 text-xs mt-0.5">Aadhaar and issued document verification</Text>
                   </View>
                 </View>
@@ -252,7 +252,7 @@ export default function KYCScreen() {
                 </View>
 
                 <Pressable
-                  onPress={handleStartDigiLocker}
+                  onPress={handleStartVimoPay}
                   disabled={buttonDisabled}
                   className={`py-4 rounded-xl flex-row items-center justify-center ${
                     buttonDisabled ? 'bg-gray-300' : 'bg-orange-500'
@@ -280,7 +280,7 @@ export default function KYCScreen() {
                 <Text className="text-yellow-800 font-semibold ml-2">Before You Start</Text>
               </View>
               <Text className="text-yellow-700 text-sm leading-5">
-                Keep your DigiLocker login ready. If the browser does not return automatically, come back to this screen and it will keep checking your KYC status.
+                Keep your verification details ready. If the browser does not return automatically, come back to this screen and it will keep checking your KYC status.
               </Text>
             </View>
           </Animated.View>

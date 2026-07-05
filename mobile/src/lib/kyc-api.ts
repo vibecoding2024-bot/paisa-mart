@@ -20,21 +20,22 @@ async function parseResponse<T>(response: Response): Promise<T> {
   return body as T;
 }
 
-export async function startDigiLockerKyc(phoneNumber: string) {
-  const response = await fetch(`${BACKEND_URL}/api/kyc/digilocker/start`, {
+export async function startVimoPayKyc(phoneNumber: string) {
+  const response = await fetch(`${BACKEND_URL}/api/kyc/vimopay/start`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ phoneNumber: normalizePhone(phoneNumber) }),
   });
 
-  return parseResponse<{ success: true; sessionId: string; authUrl: string; status: 'pending' }>(response);
+  return parseResponse<{ success: true; sessionId: string; providerRefId?: string; kycUrl: string; status: 'pending' }>(response);
 }
 
-export async function getDigiLockerKycStatus(sessionId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/kyc/digilocker/status/${sessionId}`);
+export async function getVimoPayKycStatus(sessionId: string) {
+  const response = await fetch(`${BACKEND_URL}/api/kyc/vimopay/status/${sessionId}`);
   return parseResponse<{
     success: true;
     sessionId: string;
+    providerRefId?: string;
     status: 'pending' | 'verified' | 'failed';
     kycStatus: 'not_started' | 'submitted' | 'verified' | 'rejected';
     error?: string;

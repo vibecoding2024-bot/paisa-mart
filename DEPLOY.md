@@ -130,30 +130,34 @@ EXPO_PUBLIC_MSG91_MOBILE_WIDGET_TOKEN_AUTH=<mobile widget token auth>
 Legacy env names still work as fallback: `MSG91_AUTH_KEY`, `MSG91_OTP_TEMPLATE_ID`,
 `MSG91_SERVER_KEY`, and `MSG91_WIDGET_TOKEN_AUTH`.
 
-## DigiLocker KYC
-The KYC screen now starts DigiLocker verification through the backend:
+## VimoPay KYC
+The KYC screen now starts VimoPay verification through the backend:
 
-- `POST /api/kyc/digilocker/start`
-- `GET /api/kyc/digilocker/status/:sessionId`
-- `GET /api/kyc/digilocker/callback`
+- `POST /api/kyc/vimopay/start`
+- `GET /api/kyc/vimopay/status/:sessionId`
+- `GET /api/kyc/vimopay/callback`
 
 Configure the production process environment before enabling live KYC:
 ```bash
-DIGILOCKER_CLIENT_ID=<partner client id>
-DIGILOCKER_CLIENT_SECRET=<partner client secret>
-DIGILOCKER_REDIRECT_URI=https://paisa-mart.com/api/kyc/digilocker/callback
-DIGILOCKER_SCOPE=openid
-DIGILOCKER_STATE_SECRET=<at least 32 random bytes; e.g. openssl rand -hex 32>
+VIMOPAY_KYC_START_URL=<vimopay hosted kyc session endpoint>
+VIMOPAY_KYC_CALLBACK_URL=https://paisa-mart.com/api/kyc/vimopay/callback
+VIMOPAY_KYC_STATE_SECRET=<at least 32 random bytes; e.g. openssl rand -hex 32>
 ```
 
-If API Setu/DigiLocker provides tenant-specific OAuth endpoints, set them explicitly:
+Optional values depend on the final VimoPay KYC contract:
 ```bash
-DIGILOCKER_AUTH_URL=<digilocker authorize endpoint>
-DIGILOCKER_TOKEN_URL=<digilocker token endpoint>
+VIMOPAY_KYC_STATUS_URL=<vimopay status endpoint, can include {{sessionId}} or {{partnerRefId}}>
+VIMOPAY_KYC_AUTH_TOKEN=<bearer token if VimoPay provides one>
+VIMOPAY_KYC_API_KEY=<api key if VimoPay provides one>
+```
+
+If VimoPay provides a direct hosted URL instead of a create-session API, use a URL template:
+```bash
+VIMOPAY_KYC_URL_TEMPLATE=https://example.vimopay.in/kyc?ref={{partnerRefId}}&mobile={{phoneNumber}}&state={{state}}&callback={{callbackUrl}}
 ```
 
 Restart with updated environment (`pm2 restart paisa-mart --update-env`). Without
-`DIGILOCKER_CLIENT_ID` and `DIGILOCKER_CLIENT_SECRET`, the KYC start endpoint returns `503`
+`VIMOPAY_KYC_START_URL` or `VIMOPAY_KYC_URL_TEMPLATE`, the KYC start endpoint returns `503`
 and the app shows a setup error instead of accepting manual document uploads.
 
 ## Troubleshoot
