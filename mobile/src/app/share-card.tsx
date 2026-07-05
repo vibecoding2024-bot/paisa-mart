@@ -312,8 +312,8 @@ export default function ShareCardScreen() {
     title: advisor.title,
   };
   const isBankAccount = product.category === 'bank-accounts';
-  const showWhatsAppAction = product.id !== 'kotak-savings-account';
-  const bottomPadding = showWhatsAppAction ? 180 : 40;
+  const showWhatsAppAction = false;
+  const bottomPadding = 40;
 
   return (
     <View className="flex-1 bg-gray-100">
