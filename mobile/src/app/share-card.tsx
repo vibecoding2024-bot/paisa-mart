@@ -312,6 +312,8 @@ export default function ShareCardScreen() {
     title: advisor.title,
   };
   const isBankAccount = product.category === 'bank-accounts';
+  const showWhatsAppAction = product.id !== 'kotak-savings-account';
+  const bottomPadding = showWhatsAppAction ? 180 : 40;
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -338,7 +340,7 @@ export default function ShareCardScreen() {
         <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 180 }}
+          contentContainerStyle={{ paddingBottom: bottomPadding }}
         >
           {/* Info Text */}
           <Animated.View entering={FadeInDown.delay(100)} className="px-4 py-3">
@@ -540,44 +542,45 @@ export default function ShareCardScreen() {
           </Animated.View>
         </ScrollView>
 
-        {/* Bottom Fixed Section */}
-        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-3 pb-8">
-          {/* Note */}
-          <View className="flex-row items-start mb-4 bg-gray-50 p-3 rounded-xl">
-            <Volume2 size={18} color="#6B7280" className="mt-0.5" />
-            <Text className="text-gray-500 text-xs ml-2 flex-1">
-              {selectedLanguage === 'english'
-                ? isBankAccount
-                  ? 'Note: Banks run certain internal policy criteria to select a customer for opening savings accounts'
-                  : 'Note: Banks run certain internal policy criteria to select a customer for issuing credit cards'
-                : selectedLanguage === 'hindi'
-                ? 'नोट: बैंक क्रेडिट कार्ड जारी करने के लिए ग्राहक का चयन करने हेतु कुछ आंतरिक नीति मानदंड चलाते हैं'
-                : 'గమనిక: క్రెడిట్ కార్డ్ జారీ చేయడానికి కస్టమర్‌ను ఎంపిక చేయడానికి బ్యాంకులు కొన్ని అంతర్గత పాలసీ ప్రమాణాలను అమలు చేస్తాయి'}
-            </Text>
-          </View>
-
-          {/* WhatsApp Action */}
-          <View className="flex-row">
-            <Pressable
-              onPress={handleShareWhatsApp}
-              className="flex-1 bg-green-600 rounded-xl flex-row items-center justify-center py-4"
-              style={{
-                shadowColor: '#16A34A',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 8,
-                elevation: 4,
-              }}
-            >
-              <View className="w-6 h-6 bg-white rounded-full items-center justify-center mr-2">
-                <Text className="text-green-600 font-bold text-xs">W</Text>
-              </View>
-              <Text className="text-white font-semibold text-base">
-                Share via WhatsApp
+        {showWhatsAppAction && (
+          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-3 pb-8">
+            {/* Note */}
+            <View className="flex-row items-start mb-4 bg-gray-50 p-3 rounded-xl">
+              <Volume2 size={18} color="#6B7280" className="mt-0.5" />
+              <Text className="text-gray-500 text-xs ml-2 flex-1">
+                {selectedLanguage === 'english'
+                  ? isBankAccount
+                    ? 'Note: Banks run certain internal policy criteria to select a customer for opening savings accounts'
+                    : 'Note: Banks run certain internal policy criteria to select a customer for issuing credit cards'
+                  : selectedLanguage === 'hindi'
+                  ? 'नोट: बैंक क्रेडिट कार्ड जारी करने के लिए ग्राहक का चयन करने हेतु कुछ आंतरिक नीति मानदंड चलाते हैं'
+                  : 'గమనిక: క్రెడిట్ కార్డ్ జారీ చేయడానికి కస్టమర్‌ను ఎంపిక చేయడానికి బ్యాంకులు కొన్ని అంతర్గత పాలసీ ప్రమాణాలను అమలు చేస్తాయి'}
               </Text>
-            </Pressable>
+            </View>
+
+            {/* WhatsApp Action */}
+            <View className="flex-row">
+              <Pressable
+                onPress={handleShareWhatsApp}
+                className="flex-1 bg-green-600 rounded-xl flex-row items-center justify-center py-4"
+                style={{
+                  shadowColor: '#16A34A',
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 4,
+                }}
+              >
+                <View className="w-6 h-6 bg-white rounded-full items-center justify-center mr-2">
+                  <Text className="text-green-600 font-bold text-xs">W</Text>
+                </View>
+                <Text className="text-white font-semibold text-base">
+                  Share via WhatsApp
+                </Text>
+              </Pressable>
+            </View>
           </View>
-        </View>
+        )}
 
         {/* T&C Modal */}
         <TnCModal
