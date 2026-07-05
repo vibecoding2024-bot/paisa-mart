@@ -10,6 +10,7 @@ import { useIncentiveStore } from '@/lib/incentive-store';
 import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/lib/toast-store';
 import PressableScale from '@/components/PressableScale';
+import { clearAuthToken } from '@/lib/auth-api';
 
 type MenuItem = {
   icon: typeof Bell;
@@ -71,11 +72,17 @@ export default function ProfileScreen() {
     router.push('/basic-info');
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setShowLogoutModal(false);
-    clearProfile();
-    toast.success('Logged out successfully');
-    router.replace('/');
+    try {
+      await clearAuthToken();
+      clearProfile();
+      toast.success('Logged out successfully');
+      router.dismissAll();
+      router.replace('/');
+    } catch {
+      toast.error('Unable to log out. Please try again.');
+    }
   };
 
   return (

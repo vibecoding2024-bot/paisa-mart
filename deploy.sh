@@ -27,11 +27,21 @@ echo "==> Installing backend dependencies"
 cd "$APP_DIR"
 "$BUN" install
 
+if [[ -f "$APP_DIR/.env.production" ]]; then
+  echo "==> Loading backend production environment"
+  set -a
+  # shellcheck disable=SC1091
+  source "$APP_DIR/.env.production"
+  set +a
+fi
+export NODE_ENV="${NODE_ENV:-production}"
+export PORT="${PORT:-3000}"
+
 echo "==> Restarting app via pm2"
 if pm2 describe "$PM2_NAME" >/dev/null 2>&1; then
   pm2 restart "$PM2_NAME" --update-env
 else
-  PORT=3000 pm2 start "$BUN" --name "$PM2_NAME" --cwd "$APP_DIR" -- run src/index.ts
+  pm2 start "$BUN" --name "$PM2_NAME" --cwd "$APP_DIR" -- run src/index.ts
 fi
 pm2 save
 

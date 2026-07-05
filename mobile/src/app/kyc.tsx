@@ -22,6 +22,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Haptics from '@/lib/haptics';
 import { useIncentiveStore, KYCDocument } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { saveKycStatus } from '@/lib/user-profile-api';
 
 const KYC_STEPS = [
   { id: 'aadhaar_front', label: 'Aadhaar Front', icon: CreditCard, description: 'Upload front side of your Aadhaar card' },
@@ -127,11 +128,22 @@ export default function KYCScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Submit',
-          onPress: () => {
-            submitKYC();
-            approveKYC('System');
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            router.replace('/(tabs)');
+          onPress: async () => {
+            try {
+              submitKYC();
+              if (profile?.phoneNumber) {
+                await saveKycStatus(profile.phoneNumber, 'submitted');
+              }
+              approveKYC('System');
+              if (profile?.phoneNumber) {
+                await saveKycStatus(profile.phoneNumber, 'verified');
+              }
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              router.replace('/(tabs)');
+            } catch (error) {
+              console.warn('KYC status save failed', error);
+              Alert.alert('KYC Update Failed', 'Could not update your KYC status. Please check your connection and try again.');
+            }
           },
         },
       ]

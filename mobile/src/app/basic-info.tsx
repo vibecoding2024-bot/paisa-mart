@@ -19,6 +19,8 @@ import * as Haptics from '@/lib/haptics';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 import { saveUserProfile } from '@/lib/user-profile-api';
 import { toast } from '@/lib/toast-store';
+import { useIncentiveStore } from '@/lib/incentive-store';
+import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
 
 const isWeb = Platform.OS === 'web';
 
@@ -507,6 +509,7 @@ export default function BasicInfoScreen() {
   const router = useRouter();
   const { phone } = useLocalSearchParams<{ phone?: string }>();
   const setProfile = useUserProfileStore((s) => s.setProfile);
+  const setKYCStatus = useIncentiveStore((s) => s.setKYCStatus);
 
   const [name, setName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState(phone || '');
@@ -553,7 +556,14 @@ export default function BasicInfoScreen() {
     try {
       const savedProfile = await saveUserProfile(profile);
       setProfile(savedProfile);
+      setKYCStatus(savedProfile.phoneNumber, normalizeKycStatus(savedProfile.kycStatus));
       toast.success('Profile saved successfully');
+
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      router.replace({
+        pathname: '/mpin-setup',
+        params: { next: getPostAuthRoute(savedProfile, savedProfile.kycStatus) },
+      });
     } catch (error) {
       console.warn('Profile database save failed', error);
       toast.error('Could not save profile. Please check your connection and try again.');
@@ -563,9 +573,6 @@ export default function BasicInfoScreen() {
     } finally {
       setIsSaving(false);
     }
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    router.replace({ pathname: '/mpin-setup', params: { next: '/(tabs)/profile' } });
   };
 
   return (

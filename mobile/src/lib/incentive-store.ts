@@ -274,6 +274,7 @@ interface IncentiveStore {
 
   // KYC actions
   initializeKYC: (userId: string) => void;
+  setKYCStatus: (userId: string, status: KYCStatus) => void;
   uploadKYCDocument: (docType: KYCDocument['type'], uri: string) => void;
   submitKYC: () => void;
   approveKYC: (adminName: string) => void;
@@ -447,6 +448,27 @@ export const useIncentiveStore = create<IncentiveStore>()(
         nameMatch: false,
         progressPercentage: 0,
       },
+    });
+  },
+
+  setKYCStatus: (userId: string, status: KYCStatus) => {
+    set(state => {
+      const currentKYC = state.userKYC?.userId === userId ? state.userKYC : null;
+
+      return {
+        userKYC: {
+          userId,
+          status,
+          documents: currentKYC?.documents ?? [],
+          nameMatch: currentKYC?.nameMatch ?? false,
+          submittedAt: status === 'submitted' ? currentKYC?.submittedAt ?? new Date().toISOString() : currentKYC?.submittedAt,
+          verifiedAt: status === 'verified' ? currentKYC?.verifiedAt ?? new Date().toISOString() : currentKYC?.verifiedAt,
+          rejectedAt: status === 'rejected' ? currentKYC?.rejectedAt ?? new Date().toISOString() : currentKYC?.rejectedAt,
+          rejectionReason: currentKYC?.rejectionReason,
+          verifiedBy: currentKYC?.verifiedBy,
+          progressPercentage: currentKYC?.progressPercentage ?? 0,
+        },
+      };
     });
   },
 

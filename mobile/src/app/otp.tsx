@@ -20,30 +20,32 @@ import Animated, {
 } from 'react-native-reanimated';
 import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
-import type { KYCStatus } from '@/lib/incentive-store';
 import { useIncentiveStore } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 import { getAuthSecurityConfig } from '@/lib/auth-security';
 import { fetchUserProfile } from '@/lib/user-profile-api';
 import { saveAuthToken, sendOtp, verifyOtp as verifyOtpRequest } from '@/lib/auth-api';
+import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
 
 const OTP_LENGTH = 6;
 
 export default function OTPScreen() {
-  const { phone } = useLocalSearchParams<{ phone: string }>();
+  const { phone, reqId: initialReqId } = useLocalSearchParams<{ phone: string; reqId?: string }>();
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [reqId, setReqId] = useState(initialReqId);
   const [resendTimer, setResendTimer] = useState(30);
+  const [resendMessage, setResendMessage] = useState('');
   const [error, setError] = useState('');
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
-  const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
   const userKYC = useIncentiveStore((s) => s.userKYC);
-  const kycHasHydrated = useIncentiveStore((s) => s.hasHydrated);
+  const setKYCStatus = useIncentiveStore((s) => s.setKYCStatus);
 
   const shakeValue = useSharedValue(0);
 
@@ -88,10 +90,6 @@ export default function OTPScreen() {
       const nextIndex = Math.min(index + pastedOtp.length, OTP_LENGTH - 1);
       setActiveIndex(nextIndex);
       inputRefs.current[nextIndex]?.focus();
-      const fullOtp = newOtp.join('');
-      if (fullOtp.length === OTP_LENGTH) {
-        verifyOtp(fullOtp);
-      }
     } else {
       const newOtp = [...otp];
       newOtp[index] = value;
@@ -100,13 +98,6 @@ export default function OTPScreen() {
       if (value && index < OTP_LENGTH - 1) {
         setActiveIndex(index + 1);
         inputRefs.current[index + 1]?.focus();
-      }
-
-      if (value && index === OTP_LENGTH - 1) {
-        const fullOtp = newOtp.join('');
-        if (fullOtp.length === OTP_LENGTH) {
-          verifyOtp(fullOtp);
-        }
       }
     }
 
@@ -123,46 +114,48 @@ export default function OTPScreen() {
     }
   };
 
+  const handleManualVerify = () => {
+    const fullOtp = otp.join('');
+    if (fullOtp.length !== OTP_LENGTH || isVerifying || isVerified) return;
+    verifyOtp(fullOtp);
+  };
+
   const verifyOtp = async (otpValue: string) => {
     setIsVerifying(true);
     setError('');
     try {
       if (!phone) throw new Error('Mobile number is missing');
-      const result = await verifyOtpRequest(phone, otpValue);
+      const result = await verifyOtpRequest(phone, otpValue, Platform.OS === 'web' ? 'web' : 'mobile', reqId);
       await saveAuthToken(result.token);
       setIsVerified(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
 
       setTimeout(async () => {
-        const existingUser = profile?.phoneNumber === phone;
-        let hasExistingUser = existingUser;
-        let kycStatus: KYCStatus | undefined = userKYC?.status;
-
         try {
           const serverProfile = await fetchUserProfile(phone);
           if (serverProfile) {
-            hasExistingUser = true;
-            if (
-              serverProfile.kycStatus === 'not_started' ||
-              serverProfile.kycStatus === 'submitted' ||
-              serverProfile.kycStatus === 'verified' ||
-              serverProfile.kycStatus === 'rejected'
-            ) {
-              kycStatus = serverProfile.kycStatus;
-            }
+            const kycStatus = normalizeKycStatus(serverProfile.kycStatus);
             setProfile(serverProfile);
+            setKYCStatus(serverProfile.phoneNumber, kycStatus);
+
+            const targetRoute = getPostAuthRoute(serverProfile, kycStatus);
+            const config = await getAuthSecurityConfig();
+            router.replace({
+              pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+              params: { next: targetRoute },
+            });
+            return;
           }
         } catch (error) {
           console.warn('Profile lookup failed, falling back to local profile', error);
         }
 
-        if (profileHasHydrated && kycHasHydrated && hasExistingUser) {
-          const targetRoute = kycStatus === 'verified' ? '/(tabs)' : '/(tabs)/profile';
-          getAuthSecurityConfig().then((config) => {
-            router.replace({
-              pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-              params: { next: targetRoute },
-            });
+        if (profile?.phoneNumber === phone) {
+          const targetRoute = getPostAuthRoute(profile, userKYC?.status);
+          const config = await getAuthSecurityConfig();
+          router.replace({
+            pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+            params: { next: targetRoute },
           });
           return;
         }
@@ -177,19 +170,25 @@ export default function OTPScreen() {
   };
 
   const handleResend = async () => {
-    if (resendTimer === 0) {
-      setError('');
-      try {
-        if (!phone) throw new Error('Mobile number is missing');
-        await sendOtp(phone);
-        setResendTimer(30);
-        setOtp(Array(OTP_LENGTH).fill(''));
-        setActiveIndex(0);
-        inputRefs.current[0]?.focus();
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Unable to resend OTP');
-      }
+    if (resendTimer > 0 || isResending) return;
+
+    setError('');
+    setResendMessage('');
+    setIsResending(true);
+    try {
+      if (!phone) throw new Error('Mobile number is missing');
+      const result = await sendOtp(phone, Platform.OS === 'web' ? 'web' : 'mobile');
+      setReqId(result.reqId);
+      setResendTimer(30);
+      setOtp(Array(OTP_LENGTH).fill(''));
+      setActiveIndex(0);
+      setResendMessage('OTP resent successfully');
+      inputRefs.current[0]?.focus();
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to resend OTP');
+    } finally {
+      setIsResending(false);
     }
   };
 
@@ -306,6 +305,22 @@ export default function OTPScreen() {
 
               {!!error && <Text className="text-red-500 text-sm text-center mt-3">{error}</Text>}
 
+              <Pressable
+                onPress={handleManualVerify}
+                disabled={otp.join('').length !== OTP_LENGTH || isVerifying || isVerified}
+                className={`mt-5 rounded-xl py-4 items-center ${
+                  otp.join('').length === OTP_LENGTH && !isVerifying && !isVerified ? 'bg-orange-500' : 'bg-gray-300'
+                }`}
+              >
+                <Text
+                  className={`font-bold text-base ${
+                    otp.join('').length === OTP_LENGTH && !isVerifying && !isVerified ? 'text-white' : 'text-gray-500'
+                  }`}
+                >
+                  {isVerifying ? 'Verifying...' : 'Submit OTP'}
+                </Text>
+              </Pressable>
+
               {/* Resend */}
               <View className="mt-6 items-center">
                 <Text className="text-gray-500 text-sm">
@@ -313,17 +328,20 @@ export default function OTPScreen() {
                 </Text>
                 <Pressable
                   onPress={handleResend}
-                  disabled={resendTimer > 0}
+                  disabled={resendTimer > 0 || isResending}
                   className="mt-2"
                 >
                   <Text
                     className={`text-base font-semibold ${
-                      resendTimer > 0 ? 'text-gray-400' : 'text-orange-500'
+                      resendTimer > 0 || isResending ? 'text-gray-400' : 'text-orange-500'
                     }`}
                   >
-                    {resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
+                    {isResending ? 'Sending...' : resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
                   </Text>
                 </Pressable>
+                {!!resendMessage && !error && (
+                  <Text className="text-green-600 text-sm text-center mt-2">{resendMessage}</Text>
+                )}
               </View>
             </Animated.View>
 

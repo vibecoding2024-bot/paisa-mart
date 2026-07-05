@@ -98,6 +98,38 @@ NODE_ENV=production
 Restart with updated environment (`pm2 restart paisa-mart --update-env`). For a separately hosted
 mobile/web build, set `EXPO_PUBLIC_API_URL=https://paisa-mart.com` at build time.
 
+### Separate mobile and web OTP widgets
+The backend supports two OTP channels:
+
+- `mobile`: numeric OTP flow used by the native app (`/api/auth/send-otp` then `/api/auth/verify-otp`)
+- `web`: MSG91 widget-token flow used by the browser app (`/api/auth/verify-otp-token`)
+
+Use channel-specific MSG91 values when mobile and web use different templates/widgets:
+```bash
+# Native app/manual OTP template
+MSG91_MOBILE_AUTH_KEY=<mobile template auth key>
+MSG91_MOBILE_OTP_TEMPLATE_ID=<mobile approved template id>
+
+# Web fallback/manual OTP template, only used if the web widget env is absent
+MSG91_WEB_AUTH_KEY=<web template auth key>
+MSG91_WEB_OTP_TEMPLATE_ID=<web approved template id>
+
+# Server-side widget token verification
+MSG91_WEB_WIDGET_SERVER_KEY=<web widget server/auth key>
+MSG91_MOBILE_WIDGET_SERVER_KEY=<mobile widget server/auth key>
+```
+
+The web build also needs the public MSG91 widget values at build time:
+```bash
+EXPO_PUBLIC_MSG91_WEB_WIDGET_ID=<web widget id>
+EXPO_PUBLIC_MSG91_WEB_WIDGET_TOKEN_AUTH=<web widget token auth>
+EXPO_PUBLIC_MSG91_MOBILE_WIDGET_ID=<mobile widget id>
+EXPO_PUBLIC_MSG91_MOBILE_WIDGET_TOKEN_AUTH=<mobile widget token auth>
+```
+
+Legacy env names still work as fallback: `MSG91_AUTH_KEY`, `MSG91_OTP_TEMPLATE_ID`,
+`MSG91_SERVER_KEY`, and `MSG91_WIDGET_TOKEN_AUTH`.
+
 ## Troubleshoot
 - `pm2 logs paisa-mart --lines 50` — app errors
 - Crash-loop with `bun: not found` -> pm2 must run bun by FULL path (`~/.bun/bin/bun`), not via npm

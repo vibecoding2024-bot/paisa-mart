@@ -15,10 +15,13 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { Phone, ArrowRight, Users, Wallet, Award, Star, Info, Headphones } from 'lucide-react-native';
-import { sendOtp } from '@/lib/auth-api';
+import { saveAuthToken, sendOtp, verifyOtpAccessToken } from '@/lib/auth-api';
 import { useIncentiveStore } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 import { getAuthSecurityConfig } from '@/lib/auth-security';
+import { getMsg91AccessToken, getMsg91WebWidgetConfig, startMsg91WebOtp } from '@/lib/msg91-widget';
+import { fetchUserProfile } from '@/lib/user-profile-api';
+import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
 
 const isWeb = Platform.OS === 'web';
 
@@ -29,15 +32,17 @@ export default function LoginScreen() {
   const [error, setError] = useState('');
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
+  const setProfile = useUserProfileStore((s) => s.setProfile);
   const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
   const userKYC = useIncentiveStore((s) => s.userKYC);
+  const setKYCStatus = useIncentiveStore((s) => s.setKYCStatus);
   const kycHasHydrated = useIncentiveStore((s) => s.hasHydrated);
 
   useEffect(() => {
     if (!profileHasHydrated || !kycHasHydrated) return;
     if (!profile) return;
 
-    const targetRoute = userKYC?.status === 'verified' ? '/(tabs)' : '/(tabs)/profile';
+    const targetRoute = getPostAuthRoute(profile, userKYC?.status);
 
     getAuthSecurityConfig().then((config) => {
       router.replace({
@@ -49,13 +54,62 @@ export default function LoginScreen() {
 
   const isValidPhone = phoneNumber.length === 10 && /^\d+$/.test(phoneNumber);
 
+  const routeAfterVerifiedAuth = async (verifiedPhone: string) => {
+    let serverProfile: Awaited<ReturnType<typeof fetchUserProfile>> = null;
+    try {
+      serverProfile = await fetchUserProfile(verifiedPhone);
+    } catch (error) {
+      console.warn('Profile lookup failed after OTP verification', error);
+    }
+
+    if (serverProfile) {
+      const kycStatus = normalizeKycStatus(serverProfile.kycStatus);
+      setProfile(serverProfile);
+      setKYCStatus(serverProfile.phoneNumber, kycStatus);
+
+      const targetRoute = getPostAuthRoute(serverProfile, kycStatus);
+      const config = await getAuthSecurityConfig();
+      router.replace({
+        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+        params: { next: targetRoute },
+      });
+      return;
+    }
+
+    if (profile?.phoneNumber === verifiedPhone) {
+      const targetRoute = getPostAuthRoute(profile, userKYC?.status);
+      const config = await getAuthSecurityConfig();
+      router.replace({
+        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+        params: { next: targetRoute },
+      });
+      return;
+    }
+
+    router.replace({ pathname: '/basic-info', params: { phone: verifiedPhone } });
+  };
+
   const handleContinue = async () => {
     if (isValidPhone) {
       setError('');
       setIsSending(true);
       try {
-        await sendOtp(phoneNumber);
-        router.push({ pathname: '/otp', params: { phone: phoneNumber } });
+        if (isWeb && getMsg91WebWidgetConfig()) {
+          try {
+            const widgetResult = await startMsg91WebOtp(phoneNumber);
+            const accessToken = getMsg91AccessToken(widgetResult);
+            if (!accessToken) throw new Error('OTP verification did not return an access token');
+            const result = await verifyOtpAccessToken(accessToken, 'web', phoneNumber);
+            await saveAuthToken(result.token);
+            await routeAfterVerifiedAuth(result.phone || phoneNumber);
+            return;
+          } catch (widgetError) {
+            console.warn('MSG91 web widget flow failed, falling back to OTP screen', widgetError);
+          }
+        }
+
+        const otpResult = await sendOtp(phoneNumber, isWeb ? 'web' : 'mobile');
+        router.push({ pathname: '/otp', params: { phone: phoneNumber, reqId: otpResult.reqId } });
       } catch (e) {
         setError(e instanceof Error ? e.message : 'Unable to send OTP');
       } finally {
