@@ -5,6 +5,7 @@ import {
   ScrollView,
   Pressable,
   Image,
+  type ImageSourcePropType,
   Linking,
   Alert,
   Modal,
@@ -42,6 +43,15 @@ const LANGUAGE_OPTIONS: { id: Language; label: string; icon: string }[] = [
   { id: 'hindi', label: 'Hindi', icon: 'कखग' },
   { id: 'telugu', label: 'Telugu', icon: 'అఆఇ' },
 ];
+
+const LOCAL_BANNER_IMAGES: Record<string, ImageSourcePropType> = {
+  'bank-account:kotak-811-banner': require('../../assets/bank-accounts/kotak-811-banner.jpeg'),
+  'bank-account:indus-delite-banner': require('../../assets/bank-accounts/indus-delite-banner.jpeg'),
+};
+
+const getBannerImageSource = (bannerImageUrl: string): ImageSourcePropType => {
+  return LOCAL_BANNER_IMAGES[bannerImageUrl] || { uri: bannerImageUrl };
+};
 
 // Create a fallback product for products not in the store
 const createFallbackProduct = (
@@ -312,7 +322,13 @@ export default function ShareCardScreen() {
   }
 
   const content = product.content;
-  const referralLink = `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
+  const referralLink = product.applicationUrl || `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
+  const supportPhones = product.supportPhones || SUPPORT_PHONES;
+  const messageFooter = product.messageFooter || {
+    name: advisor.name,
+    title: advisor.title,
+  };
+  const isBankAccount = product.category === 'bank-accounts';
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -357,7 +373,7 @@ export default function ShareCardScreen() {
             <View className="mx-4 mt-4">
               {!imageError ? (
                 <Image
-                  source={{ uri: product.bannerImageUrl }}
+                  source={getBannerImageSource(product.bannerImageUrl)}
                   className="w-full h-48 rounded-xl"
                   resizeMode="cover"
                   onError={() => setImageError(true)}
@@ -377,17 +393,21 @@ export default function ShareCardScreen() {
             {/* Message Content */}
             <View className="p-4">
               {/* Greeting */}
-              <Text className="text-gray-800 font-bold text-base">
-                {selectedLanguage === 'english'
-                  ? 'Namaste 🙏,'
-                  : selectedLanguage === 'hindi'
-                  ? 'नमस्ते 🙏,'
-                  : 'నమస్తే 🙏,'}
-              </Text>
+              {!product.applicationUrl && (
+                <Text className="text-gray-800 font-bold text-base">
+                  {selectedLanguage === 'english'
+                    ? 'Namaste 🙏,'
+                    : selectedLanguage === 'hindi'
+                    ? 'नमस्ते 🙏,'
+                    : 'నమస్తే 🙏,'}
+                </Text>
+              )}
 
               {/* Headline */}
-              <Text className="text-gray-700 italic mt-2">
-                *{content.headline[selectedLanguage]}*
+              <Text className={`text-gray-700 ${product.applicationUrl ? 'font-semibold' : 'italic mt-2'}`}>
+                {product.applicationUrl
+                  ? content.headline[selectedLanguage]
+                  : `*${content.headline[selectedLanguage]}*`}
               </Text>
 
               {/* Description */}
@@ -396,22 +416,30 @@ export default function ShareCardScreen() {
               </Text>
 
               {/* Benefits */}
-              <Text className="text-gray-800 font-semibold mt-4">
-                {selectedLanguage === 'english'
-                  ? 'You will get:'
-                  : selectedLanguage === 'hindi'
-                  ? 'आपको मिलेगा:'
-                  : 'మీకు లభిస్తుంది:'}
-              </Text>
+              {!product.applicationUrl && (
+                <Text className="text-gray-800 font-semibold mt-4">
+                  {selectedLanguage === 'english'
+                    ? 'You will get:'
+                    : selectedLanguage === 'hindi'
+                    ? 'आपको मिलेगा:'
+                    : 'మీకు లభిస్తుంది:'}
+                </Text>
+              )}
               {content.benefits.map((benefit, index) => (
-                <View key={index} className="flex-row items-center mt-2">
-                  <View className="w-5 h-5 bg-green-500 rounded items-center justify-center mr-2">
-                    <Check size={14} color="#fff" />
-                  </View>
-                  <Text className="text-gray-700 flex-1">
+                product.applicationUrl ? (
+                  <Text key={index} className="text-gray-700 mt-2">
                     {benefit[selectedLanguage]}
                   </Text>
-                </View>
+                ) : (
+                  <View key={index} className="flex-row items-center mt-2">
+                    <View className="w-5 h-5 bg-green-500 rounded items-center justify-center mr-2">
+                      <Check size={14} color="#fff" />
+                    </View>
+                    <Text className="text-gray-700 flex-1">
+                      {benefit[selectedLanguage]}
+                    </Text>
+                  </View>
+                )
               ))}
 
               {/* Reasons */}
@@ -433,7 +461,9 @@ export default function ShareCardScreen() {
 
               {/* Apply Now */}
               <Text className="text-gray-700 mt-4">
-                {selectedLanguage === 'english'
+                {product.applicationUrl && selectedLanguage === 'english'
+                  ? `Now open a savings account from the comfort of your home - ${referralLink}`
+                  : selectedLanguage === 'english'
                   ? `Apply now to get your ${product.providerName} ${product.productName} -`
                   : selectedLanguage === 'hindi'
                   ? `अभी आवेदन करें अपना ${product.providerName} ${product.productName} पाने के लिए -`
@@ -443,25 +473,25 @@ export default function ShareCardScreen() {
               {/* Support Info */}
               <Text className="text-gray-700 mt-3">
                 {selectedLanguage === 'english'
-                  ? `For any doubts, please call on ${SUPPORT_PHONES.primary}`
+                  ? `For any doubts, please call on ${supportPhones.primary}`
                   : selectedLanguage === 'hindi'
-                  ? `किसी भी संदेह के लिए कॉल करें ${SUPPORT_PHONES.primary}`
-                  : `ఏవైనా సందేహాలకు కాల్ చేయండి ${SUPPORT_PHONES.primary}`}
+                  ? `किसी भी संदेह के लिए कॉल करें ${supportPhones.primary}`
+                  : `ఏవైనా సందేహాలకు కాల్ చేయండి ${supportPhones.primary}`}
               </Text>
               <Text className="text-gray-700 mt-1">
                 {selectedLanguage === 'english'
-                  ? `If the above number is unavailable, you can call ${SUPPORT_PHONES.secondary} for a quick response.`
+                  ? `If the above number is unavailable, you can call ${supportPhones.secondary} for a quick response.`
                   : selectedLanguage === 'hindi'
-                  ? `अगर उपरोक्त नंबर उपलब्ध नहीं है, तो ${SUPPORT_PHONES.secondary} पर कॉल करें।`
-                  : `పై నంబర్ అందుబాటులో లేకపోతే, ${SUPPORT_PHONES.secondary} కు కాల్ చేయండి.`}
+                  ? `अगर उपरोक्त नंबर उपलब्ध नहीं है, तो ${supportPhones.secondary} पर कॉल करें।`
+                  : `పై నంబర్ అందుబాటులో లేకపోతే, ${supportPhones.secondary} కు కాల్ చేయండి.`}
               </Text>
 
               {/* Advisor Info */}
               <View className="mt-4 pt-3 border-t border-green-200">
                 <Text className="text-gray-800 font-semibold">
-                  {advisor.name}
+                  {messageFooter.name}
                 </Text>
-                <Text className="text-gray-600 text-sm">{advisor.title}</Text>
+                <Text className="text-gray-600 text-sm">{messageFooter.title}</Text>
               </View>
             </View>
           </Animated.View>
@@ -534,7 +564,9 @@ export default function ShareCardScreen() {
             <Volume2 size={18} color="#6B7280" className="mt-0.5" />
             <Text className="text-gray-500 text-xs ml-2 flex-1">
               {selectedLanguage === 'english'
-                ? 'Note: Banks run certain internal policy criteria to select a customer for issuing credit cards'
+                ? isBankAccount
+                  ? 'Note: Banks run certain internal policy criteria to select a customer for opening savings accounts'
+                  : 'Note: Banks run certain internal policy criteria to select a customer for issuing credit cards'
                 : selectedLanguage === 'hindi'
                 ? 'नोट: बैंक क्रेडिट कार्ड जारी करने के लिए ग्राहक का चयन करने हेतु कुछ आंतरिक नीति मानदंड चलाते हैं'
                 : 'గమనిక: క్రెడిట్ కార్డ్ జారీ చేయడానికి కస్టమర్‌ను ఎంపిక చేయడానికి బ్యాంకులు కొన్ని అంతర్గత పాలసీ ప్రమాణాలను అమలు చేస్తాయి'}

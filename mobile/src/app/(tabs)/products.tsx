@@ -91,18 +91,8 @@ const CATEGORY_DATA: CategoryData = {
       {
         title: 'Savings Accounts',
         partners: [
-          { name: 'Kotak Mahindra Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'kotak-savings-account' },
-          { name: 'Airtel Payments Bank', tag: 'Payments Bank', commission: 'Earn up to ₹600', id: 'airtel-savings-account' },
-          { name: 'DBS Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'dbs-savings-account' },
-          { name: 'Equitas Small Finance Bank', tag: 'SFB', commission: 'Earn up to ₹600', id: 'equitas-savings-account' },
-          { name: 'IDFC First Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'idfc-savings-account' },
-        ],
-      },
-      {
-        title: 'Business Savings Accounts',
-        partners: [
+          { name: 'Kotak 811', tag: 'Bank', commission: 'Earn up to ₹600', id: 'kotak-savings-account' },
           { name: 'IndusInd Bank', tag: 'Bank', commission: 'Earn up to ₹600', id: 'indusind-bank-business-savings-account' },
-          { name: 'Tide Business', tag: 'Bank', commission: 'Earn up to ₹600', id: 'tide-business-savings-account' },
         ],
       },
     ],
@@ -467,6 +457,26 @@ const getTagColor = (tag: string) => {
   }
 };
 
+const BANK_ACCOUNT_CARD_DETAILS: Record<string, {
+  title: string;
+  logo: string;
+  benefits: string[];
+  payout: string;
+}> = {
+  'kotak-savings-account': {
+    title: 'Kotak 811',
+    logo: 'kotak 811',
+    benefits: ['Zero balance account', 'Virtual debit card'],
+    payout: 'Payout: ₹600',
+  },
+  'indusind-bank-business-savings-account': {
+    title: 'Indus Delite: Zero Balance',
+    logo: 'IndusInd Bank',
+    benefits: ['Zero Balance Savings Account', 'Up to 5% cashback on debit card spends'],
+    payout: 'Payout: ₹600',
+  },
+};
+
 export default function ProductsScreen() {
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category?: string }>();
@@ -525,6 +535,10 @@ export default function ProductsScreen() {
   }, [categoryData, searchQuery]);
 
   const hasResults = filteredSections.length > 0;
+  const visibleBankAccountPartners = useMemo(
+    () => filteredSections.flatMap((section) => section.partners),
+    [filteredSections]
+  );
 
   const handleCategoryPress = (catId: string) => {
     if (catId === 'gold-loans' && !goldLoanEnabled) {
@@ -710,7 +724,102 @@ export default function ProductsScreen() {
                 </Text>
               </View>
             )}
-            {filteredSections.map((section, sectionIndex) => (
+            {selectedCategory === 'bank-accounts' && hasResults ? (
+              <View className="mb-6">
+                <View className="flex-row items-center mb-3">
+                  <View
+                    className="w-1 h-5 rounded-full mr-2"
+                    style={{ backgroundColor: selectedCategoryInfo?.color }}
+                  />
+                  <Text className="text-gray-800 font-semibold">Savings Accounts</Text>
+                  <View className="bg-gray-200 px-2 py-0.5 rounded-full ml-2">
+                    <Text className="text-gray-500 text-xs">{visibleBankAccountPartners.length}</Text>
+                  </View>
+                </View>
+
+                {visibleBankAccountPartners.map((partner, partnerIndex) => {
+                  const card = BANK_ACCOUNT_CARD_DETAILS[partner.id || ''];
+                  if (!card) return null;
+
+                  return (
+                    <Animated.View
+                      key={partner.id || partnerIndex}
+                      entering={FadeInDown.delay(150 + partnerIndex * 80).springify()}
+                      className="mb-4"
+                    >
+                      <LinearGradient
+                        colors={['#E0F2FE', '#FFFFFF']}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{
+                          borderRadius: 20,
+                          padding: 18,
+                          borderWidth: 1,
+                          borderColor: '#D1D5DB',
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.06,
+                          shadowRadius: 8,
+                          elevation: 2,
+                        }}
+                      >
+                        <View className="flex-row items-start justify-between mb-8">
+                          <Text className="text-gray-900 font-bold text-xl flex-1 pr-3">{card.title}</Text>
+                          <Text
+                            className={`font-extrabold text-lg ${
+                              partner.id === 'kotak-savings-account' ? 'text-slate-700' : 'text-red-800 italic'
+                            }`}
+                          >
+                            {card.logo}
+                          </Text>
+                        </View>
+
+                        <View className="mb-5">
+                          {card.benefits.map((benefit, benefitIndex) => (
+                            <View key={benefitIndex} className="flex-row items-center mb-3">
+                              <View className="w-8 h-8 rounded-full bg-white/80 items-center justify-center mr-3 border border-slate-200">
+                                <Text className="text-slate-600 text-base">{benefitIndex === 0 ? '₹' : '↗'}</Text>
+                              </View>
+                              <Text className="text-gray-900 text-base font-medium flex-1">{benefit}</Text>
+                            </View>
+                          ))}
+                        </View>
+
+                        <PressableScale
+                          haptic="light"
+                          activeScale={0.98}
+                          onPress={() => handleProductPress(partner, selectedCategory)}
+                          className="self-start mb-5"
+                        >
+                          <View className="flex-row items-center">
+                            <Text className="text-blue-600 font-semibold text-base">View all Details and Benefits</Text>
+                            <ChevronRight size={20} color="#2563EB" />
+                          </View>
+                        </PressableScale>
+
+                        <View className="flex-row items-end justify-between">
+                          <View>
+                            <Text className="text-gray-400 text-xs">Payout</Text>
+                            <Text className="text-gray-900 font-bold text-lg">{card.payout.replace('Payout: ', '')}</Text>
+                          </View>
+
+                          <PressableScale
+                            haptic="medium"
+                            activeScale={0.96}
+                            onPress={() => handleProductPress(partner, selectedCategory)}
+                          >
+                            <View className="bg-blue-600 rounded-xl px-8 py-3">
+                              <Text className="text-white font-bold text-lg">Apply</Text>
+                            </View>
+                          </PressableScale>
+                        </View>
+                      </LinearGradient>
+                    </Animated.View>
+                  );
+                })}
+              </View>
+            ) : (
+            filteredSections.map((section, sectionIndex) => (
               <View key={sectionIndex} className="mb-6">
                 <View className="flex-row items-center mb-3">
                   <View
@@ -769,7 +878,8 @@ export default function ProductsScreen() {
                   );
                 })}
               </View>
-            ))}
+            ))
+            )}
           </Animated.View>
 
           <View className="h-6" />
