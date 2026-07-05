@@ -69,20 +69,22 @@ export default function LoginScreen() {
 
       const targetRoute = getPostAuthRoute(serverProfile, kycStatus);
       const config = await getAuthSecurityConfig();
-      router.replace({
-        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-        params: { next: targetRoute },
-      });
+      router.replace(
+        config.hasMpin
+          ? targetRoute
+          : { pathname: '/mpin-setup', params: { next: targetRoute } }
+      );
       return;
     }
 
     if (profile?.phoneNumber === verifiedPhone) {
       const targetRoute = getPostAuthRoute(profile, userKYC?.status);
       const config = await getAuthSecurityConfig();
-      router.replace({
-        pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-        params: { next: targetRoute },
-      });
+      router.replace(
+        config.hasMpin
+          ? targetRoute
+          : { pathname: '/mpin-setup', params: { next: targetRoute } }
+      );
       return;
     }
 

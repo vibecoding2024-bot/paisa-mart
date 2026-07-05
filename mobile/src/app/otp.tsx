@@ -30,7 +30,11 @@ import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
 const OTP_LENGTH = 6;
 
 export default function OTPScreen() {
-  const { phone, reqId: initialReqId } = useLocalSearchParams<{ phone: string; reqId?: string }>();
+  const { phone, reqId: initialReqId, next } = useLocalSearchParams<{
+    phone: string;
+    reqId?: string;
+    next?: string;
+  }>();
   const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -138,12 +142,13 @@ export default function OTPScreen() {
             setProfile(serverProfile);
             setKYCStatus(serverProfile.phoneNumber, kycStatus);
 
-            const targetRoute = getPostAuthRoute(serverProfile, kycStatus);
+            const targetRoute = next || getPostAuthRoute(serverProfile, kycStatus);
             const config = await getAuthSecurityConfig();
-            router.replace({
-              pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-              params: { next: targetRoute },
-            });
+            router.replace(
+              config.hasMpin
+                ? targetRoute
+                : { pathname: '/mpin-setup', params: { next: targetRoute } }
+            );
             return;
           }
         } catch (error) {
@@ -151,12 +156,13 @@ export default function OTPScreen() {
         }
 
         if (profile?.phoneNumber === phone) {
-          const targetRoute = getPostAuthRoute(profile, userKYC?.status);
+          const targetRoute = next || getPostAuthRoute(profile, userKYC?.status);
           const config = await getAuthSecurityConfig();
-          router.replace({
-            pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
-            params: { next: targetRoute },
-          });
+          router.replace(
+            config.hasMpin
+              ? targetRoute
+              : { pathname: '/mpin-setup', params: { next: targetRoute } }
+          );
           return;
         }
 

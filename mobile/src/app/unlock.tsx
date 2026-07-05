@@ -1,27 +1,55 @@
 import { useEffect, useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Platform, Pressable, Text, TextInput, View } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Fingerprint, LockKeyhole, Shield } from 'lucide-react-native';
+import { Fingerprint, LockKeyhole, MessageCircle, Shield } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
 import { authenticateWithBiometric, getAuthSecurityConfig, verifyMpin } from '@/lib/auth-security';
+import { sendOtp } from '@/lib/auth-api';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 export default function UnlockScreen() {
   const router = useRouter();
   const { next } = useLocalSearchParams<{ next?: string }>();
+  const profile = useUserProfileStore((s) => s.profile);
   const [mpin, setMpin] = useState('');
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
+  const [isSendingOtp, setIsSendingOtp] = useState(false);
   const [error, setError] = useState('');
 
   const targetRoute = next || '/(tabs)';
+  const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) || '';
 
   const unlockWithBiometric = async () => {
     const success = await authenticateWithBiometric();
     if (success) {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace(targetRoute as never);
+    }
+  };
+
+  const loginWithOtp = async () => {
+    if (!/^\d{10}$/.test(phoneNumber) || isSendingOtp) {
+      setError('Phone number is missing. Please login again with your mobile number.');
+      return;
+    }
+
+    setError('');
+    setIsSendingOtp(true);
+    try {
+      const otpResult = await sendOtp(phoneNumber, Platform.OS === 'web' ? 'web' : 'mobile');
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      router.replace({
+        pathname: '/otp',
+        params: { phone: phoneNumber, reqId: otpResult.reqId, next: targetRoute },
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Unable to send OTP');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsSendingOtp(false);
     }
   };
 
@@ -100,6 +128,27 @@ export default function UnlockScreen() {
             </View>
 
             {!!error && <Text className="text-red-500 text-sm mt-3">{error}</Text>}
+
+            <Pressable
+              onPress={loginWithOtp}
+              disabled={isSendingOtp}
+              className="mt-5"
+            >
+              <View
+                className={`rounded-xl py-4 flex-row items-center justify-center ${
+                  isSendingOtp ? 'bg-gray-200' : 'bg-blue-50'
+                }`}
+              >
+                <MessageCircle size={20} color={isSendingOtp ? '#9CA3AF' : '#0A3D91'} />
+                <Text
+                  className={`font-bold ml-2 ${
+                    isSendingOtp ? 'text-gray-400' : 'text-blue-700'
+                  }`}
+                >
+                  {isSendingOtp ? 'Sending OTP...' : 'Login with OTP'}
+                </Text>
+              </View>
+            </Pressable>
           </View>
         </View>
       </SafeAreaView>
