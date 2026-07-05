@@ -24,25 +24,24 @@ export default function TabLayout() {
     let isMounted = true;
 
     const guardDashboard = async () => {
-      const localRoute = getPostAuthRoute(profile, userKYC?.status);
-      if (localRoute !== '/(tabs)') {
-        router.replace(
-          profile?.phoneNumber
-            ? { pathname: localRoute, params: { phone: profile.phoneNumber } }
-            : localRoute
-        );
-        return;
-      }
-
       if (!profile?.phoneNumber) {
         router.replace('/basic-info');
         return;
       }
 
+      const localRoute = getPostAuthRoute(profile, userKYC?.status);
+      if (localRoute !== '/(tabs)') {
+        router.replace(
+          { pathname: localRoute, params: { phone: profile.phoneNumber } }
+        );
+        return;
+      }
+
+      if (isMounted) setIsCheckingAccess(false);
+
       try {
         const serverProfile = await fetchUserProfile(profile.phoneNumber);
         if (!serverProfile) {
-          router.replace({ pathname: '/basic-info', params: { phone: profile.phoneNumber } });
           return;
         }
 
@@ -58,24 +57,14 @@ export default function TabLayout() {
           profile.dateOfBirth?.month !== serverProfile.dateOfBirth?.month ||
           profile.dateOfBirth?.year !== serverProfile.dateOfBirth?.year;
 
-        if (profileChanged) {
+        const serverRoute = getPostAuthRoute(serverProfile, serverKycStatus);
+        if (profileChanged && serverRoute === '/(tabs)') {
           setProfile(serverProfile);
         }
         setKYCStatus(serverProfile.phoneNumber, serverKycStatus);
-
-        const serverRoute = getPostAuthRoute(serverProfile, serverKycStatus);
-        if (serverRoute !== '/(tabs)') {
-          router.replace({
-            pathname: serverRoute,
-            params: { phone: serverProfile.phoneNumber },
-          });
-          return;
-        }
       } catch (error) {
         console.warn('Dashboard access check failed, using local profile state', error);
       }
-
-      if (isMounted) setIsCheckingAccess(false);
     };
 
     guardDashboard();
