@@ -73,6 +73,8 @@ function providerTokenKey(channel: OtpChannel) {
   return (
     process.env.MSG91_MOBILE_WIDGET_SERVER_KEY ||
     process.env.MSG91_MOBILE_WIDGET_TOKEN_AUTH ||
+    process.env.MSG91_WEB_WIDGET_SERVER_KEY ||
+    process.env.MSG91_WEB_WIDGET_TOKEN_AUTH ||
     process.env.MSG91_SERVER_KEY ||
     process.env.MSG91_WIDGET_TOKEN_AUTH ||
     process.env.MSG91_AUTH_KEY
@@ -84,7 +86,11 @@ function widgetConfig(channel: OtpChannel) {
   const widgetId =
     channel === "web"
       ? process.env.MSG91_WEB_WIDGET_ID || process.env.EXPO_PUBLIC_MSG91_WEB_WIDGET_ID || process.env.MSG91_OTP_TEMPLATE_ID
-      : process.env.MSG91_MOBILE_WIDGET_ID || process.env.EXPO_PUBLIC_MSG91_MOBILE_WIDGET_ID;
+      : process.env.MSG91_MOBILE_WIDGET_ID ||
+        process.env.EXPO_PUBLIC_MSG91_MOBILE_WIDGET_ID ||
+        process.env.MSG91_WEB_WIDGET_ID ||
+        process.env.EXPO_PUBLIC_MSG91_WEB_WIDGET_ID ||
+        process.env.MSG91_OTP_TEMPLATE_ID;
   if (tokenAuth && widgetId) return { tokenAuth, widgetId };
   return null;
 }
