@@ -130,6 +130,32 @@ EXPO_PUBLIC_MSG91_MOBILE_WIDGET_TOKEN_AUTH=<mobile widget token auth>
 Legacy env names still work as fallback: `MSG91_AUTH_KEY`, `MSG91_OTP_TEMPLATE_ID`,
 `MSG91_SERVER_KEY`, and `MSG91_WIDGET_TOKEN_AUTH`.
 
+## DigiLocker KYC
+The KYC screen now starts DigiLocker verification through the backend:
+
+- `POST /api/kyc/digilocker/start`
+- `GET /api/kyc/digilocker/status/:sessionId`
+- `GET /api/kyc/digilocker/callback`
+
+Configure the production process environment before enabling live KYC:
+```bash
+DIGILOCKER_CLIENT_ID=<partner client id>
+DIGILOCKER_CLIENT_SECRET=<partner client secret>
+DIGILOCKER_REDIRECT_URI=https://paisa-mart.com/api/kyc/digilocker/callback
+DIGILOCKER_SCOPE=openid
+DIGILOCKER_STATE_SECRET=<at least 32 random bytes; e.g. openssl rand -hex 32>
+```
+
+If API Setu/DigiLocker provides tenant-specific OAuth endpoints, set them explicitly:
+```bash
+DIGILOCKER_AUTH_URL=<digilocker authorize endpoint>
+DIGILOCKER_TOKEN_URL=<digilocker token endpoint>
+```
+
+Restart with updated environment (`pm2 restart paisa-mart --update-env`). Without
+`DIGILOCKER_CLIENT_ID` and `DIGILOCKER_CLIENT_SECRET`, the KYC start endpoint returns `503`
+and the app shows a setup error instead of accepting manual document uploads.
+
 ## Troubleshoot
 - `pm2 logs paisa-mart --lines 50` — app errors
 - Crash-loop with `bun: not found` -> pm2 must run bun by FULL path (`~/.bun/bin/bun`), not via npm
