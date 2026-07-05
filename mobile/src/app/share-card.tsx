@@ -6,8 +6,6 @@ import {
   Pressable,
   Image,
   type ImageSourcePropType,
-  Linking,
-  Alert,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -15,7 +13,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ChevronLeft,
   X,
-  Volume2,
   Info,
   Check,
   AlertCircle,
@@ -23,19 +20,10 @@ import {
 import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
 import {
   useProductStore,
-  generateShareMessage,
   SUPPORT_PHONES,
   type Language,
   type ProductDetails,
 } from '@/lib/product-store';
-import {
-  useWhatsAppLeadsStore,
-  shouldCaptureLeadForCategory,
-  formatLeadForWhatsApp,
-  type WhatsAppLead,
-} from '@/lib/whatsapp-leads-store';
-import LeadCaptureModal, { type LeadCaptureData } from '@/components/LeadCaptureModal';
-import ShareConfirmationModal from '@/components/ShareConfirmationModal';
 
 const LANGUAGE_OPTIONS: { id: Language; label: string; icon: string }[] = [
   { id: 'english', label: 'English', icon: 'ABC' },
@@ -142,13 +130,6 @@ export default function ShareCardScreen() {
 
   const [showTnCModal, setShowTnCModal] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [showLeadCaptureModal, setShowLeadCaptureModal] = useState(false);
-  const [showConfirmationModal, setShowConfirmationModal] = useState(false);
-  const [leadCaptureData, setLeadCaptureData] = useState<LeadCaptureData | null>(null);
-
-  // WhatsApp Leads Store
-  const addLead = useWhatsAppLeadsStore((s) => s.addLead);
-  const canCreateLead = useWhatsAppLeadsStore((s) => s.canCreateLead);
 
   const handleBack = useCallback(() => {
     router.back();
@@ -158,137 +139,6 @@ export default function ShareCardScreen() {
     router.dismissAll();
     router.push('/(tabs)/products');
   }, [router]);
-
-  const handleShareWhatsApp = useCallback(async () => {
-    if (!product) return;
-
-    // Check if this product category supports lead capture
-    if (shouldCaptureLeadForCategory(product.category)) {
-      // Show lead capture modal first
-      setShowLeadCaptureModal(true);
-    } else {
-      // For unsupported categories (bank accounts, credit cards), directly share
-      await proceedWithWhatsAppShare(null);
-    }
-  }, [product]);
-
-  const proceedWithWhatsAppShare = useCallback(async (captureData: LeadCaptureData | null) => {
-    if (!product) return;
-
-    const message = generateShareMessage(product, advisor, selectedLanguage);
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `whatsapp://send?text=${encodedMessage}`;
-
-    try {
-      const canOpen = await Linking.canOpenURL(whatsappUrl);
-      if (canOpen) {
-        await Linking.openURL(whatsappUrl);
-
-        // After successful WhatsApp share, create lead (if category supports it)
-        if (shouldCaptureLeadForCategory(product.category)) {
-          await handleCreateLead(captureData);
-        }
-
-        // Show confirmation modal
-        setShowConfirmationModal(true);
-      } else {
-        Alert.alert(
-          'WhatsApp Not Installed',
-          'WhatsApp is not installed on your device. Please install WhatsApp to share.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      Alert.alert('Error', 'Unable to open WhatsApp. Please try again.');
-    }
-  }, [product, advisor, selectedLanguage]);
-
-  const handleLeadCaptureSubmit = useCallback((data: LeadCaptureData) => {
-    setLeadCaptureData(data);
-    setShowLeadCaptureModal(false);
-
-    // Check anti-spam protection
-    const userMobile = advisor.phone; // In a real app, get from user profile
-    const canCreate = canCreateLead(userMobile, product?.category || '', product?.providerName || '');
-
-    if (!canCreate) {
-      Alert.alert(
-        'Request Already Sent',
-        'We already received your request. We will reach out soon.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    // Proceed with WhatsApp share
-    proceedWithWhatsAppShare(data);
-  }, [advisor, product, canCreateLead, proceedWithWhatsAppShare]);
-
-  const handleCreateLead = useCallback(async (captureData: LeadCaptureData | null) => {
-    if (!product) return;
-
-    try {
-      // Get loan amount display value
-      let loanAmountDisplay = '';
-      if (captureData?.loanAmount) {
-        if (captureData.loanAmount === 'custom' && captureData.customLoanAmount) {
-          loanAmountDisplay = captureData.customLoanAmount;
-        } else {
-          loanAmountDisplay = captureData.loanAmount;
-        }
-      }
-
-      // Get callback time display value
-      let callbackTimeDisplay = '';
-      if (captureData?.callbackTime) {
-        if (captureData.callbackTime === 'custom' && captureData.customCallbackTime) {
-          callbackTimeDisplay = captureData.customCallbackTime;
-        } else {
-          callbackTimeDisplay = captureData.callbackTime;
-        }
-      }
-
-      // Create lead
-      const newLead = addLead({
-        customerName: advisor.name, // In real app, get from user profile
-        mobile: advisor.phone, // In real app, get from user profile
-        productCategory: product.category,
-        bankName: product.providerName,
-        loanAmount: loanAmountDisplay,
-        propertyType: captureData?.propertyType,
-        preferredCallbackTime: callbackTimeDisplay,
-        timestamp: new Date().toISOString(),
-      });
-
-      // Send to WhatsApp Business Group
-      await sendToWhatsAppBusinessGroup(newLead);
-    } catch (error) {
-      console.error('Error creating lead:', error);
-    }
-  }, [product, advisor, addLead]);
-
-  const sendToWhatsAppBusinessGroup = useCallback(async (lead: WhatsAppLead) => {
-    // Format lead message for business group
-    const businessMessage = formatLeadForWhatsApp(lead);
-    const encodedBusinessMessage = encodeURIComponent(businessMessage);
-
-    // Business WhatsApp Group Numbers
-    const businessNumbers = ['+919908234067', '+917416423434'];
-
-    // Note: In a production app, you would use WhatsApp Business API
-    // For now, we'll just log this (user needs to manually send to group)
-    console.log('Lead created and ready to send to business group:', businessMessage);
-
-    // Optionally, you could open WhatsApp with the formatted message
-    // but you cannot directly send to a group programmatically without WhatsApp Business API
-    // The admin will need to manually forward or you'll need to integrate WhatsApp Business API
-  }, []);
-
-  const handleConfirmationClose = useCallback(() => {
-    setShowConfirmationModal(false);
-    // Optionally navigate back
-    // router.back();
-  }, []);
 
   if (!product) {
     return (
@@ -311,9 +161,6 @@ export default function ShareCardScreen() {
     name: advisor.name,
     title: advisor.title,
   };
-  const isBankAccount = product.category === 'bank-accounts';
-  const showWhatsAppAction = false;
-  const bottomPadding = 40;
 
   return (
     <View className="flex-1 bg-gray-100">
@@ -340,7 +187,7 @@ export default function ShareCardScreen() {
         <ScrollView keyboardShouldPersistTaps="handled"
           className="flex-1"
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: bottomPadding }}
+          contentContainerStyle={{ paddingBottom: 40 }}
         >
           {/* Info Text */}
           <Animated.View entering={FadeInDown.delay(100)} className="px-4 py-3">
@@ -542,46 +389,6 @@ export default function ShareCardScreen() {
           </Animated.View>
         </ScrollView>
 
-        {showWhatsAppAction && (
-          <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 pt-3 pb-8">
-            {/* Note */}
-            <View className="flex-row items-start mb-4 bg-gray-50 p-3 rounded-xl">
-              <Volume2 size={18} color="#6B7280" className="mt-0.5" />
-              <Text className="text-gray-500 text-xs ml-2 flex-1">
-                {selectedLanguage === 'english'
-                  ? isBankAccount
-                    ? 'Note: Banks run certain internal policy criteria to select a customer for opening savings accounts'
-                    : 'Note: Banks run certain internal policy criteria to select a customer for issuing credit cards'
-                  : selectedLanguage === 'hindi'
-                  ? 'नोट: बैंक क्रेडिट कार्ड जारी करने के लिए ग्राहक का चयन करने हेतु कुछ आंतरिक नीति मानदंड चलाते हैं'
-                  : 'గమనిక: క్రెడిట్ కార్డ్ జారీ చేయడానికి కస్టమర్‌ను ఎంపిక చేయడానికి బ్యాంకులు కొన్ని అంతర్గత పాలసీ ప్రమాణాలను అమలు చేస్తాయి'}
-              </Text>
-            </View>
-
-            {/* WhatsApp Action */}
-            <View className="flex-row">
-              <Pressable
-                onPress={handleShareWhatsApp}
-                className="flex-1 bg-green-600 rounded-xl flex-row items-center justify-center py-4"
-                style={{
-                  shadowColor: '#16A34A',
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 4,
-                }}
-              >
-                <View className="w-6 h-6 bg-white rounded-full items-center justify-center mr-2">
-                  <Text className="text-green-600 font-bold text-xs">W</Text>
-                </View>
-                <Text className="text-white font-semibold text-base">
-                  Share via WhatsApp
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
-
         {/* T&C Modal */}
         <TnCModal
           visible={showTnCModal}
@@ -590,21 +397,6 @@ export default function ShareCardScreen() {
           language={selectedLanguage}
         />
 
-        {/* Lead Capture Modal */}
-        <LeadCaptureModal
-          visible={showLeadCaptureModal}
-          onClose={() => setShowLeadCaptureModal(false)}
-          onSubmit={handleLeadCaptureSubmit}
-          productCategory={product.category}
-        />
-
-        {/* Share Confirmation Modal */}
-        <ShareConfirmationModal
-          visible={showConfirmationModal}
-          onClose={handleConfirmationClose}
-          productName={product.productName}
-          bankName={product.providerName}
-        />
       </SafeAreaView>
     </View>
   );
