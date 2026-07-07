@@ -6,9 +6,7 @@ import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { toast } from '@/lib/toast-store';
-import { useUserProfileStore } from '@/lib/user-profile-store';
-import { useUtilityTransactionStore } from '@/lib/utility-transaction-store';
+import NoPayout_TCGate from '@/components/NoPayout_TCGate';
 
 const OPERATORS = {
   mobile: ['Airtel', 'Jio', 'Vi (Vodafone Idea)', 'BSNL'],
@@ -18,7 +16,6 @@ const OPERATORS = {
   water: ['Delhi Jal Board', 'Mumbai Water', 'Bangalore Water', 'Other'],
   broadband: ['Airtel Broadband', 'Jio Fiber', 'ACT Fibernet', 'BSNL', 'Other'],
   fastag: ['HDFC FASTag', 'ICICI FASTag', 'Paytm FASTag', 'Axis FASTag'],
-  'credit-card': ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI Card', 'Kotak Mahindra Bank', 'Other'],
 };
 
 const BILL_CATEGORIES = [
@@ -32,8 +29,8 @@ const BILL_CATEGORIES = [
 
 export default function RechargeBillsScreen() {
   const router = useRouter();
-  const profile = useUserProfileStore((state) => state.profile);
-  const addTransaction = useUtilityTransactionStore((state) => state.addTransaction);
+  const [tcVisible, setTcVisible] = useState(true);
+  const [tcAccepted, setTcAccepted] = useState(false);
   const [activeTab, setActiveTab] = useState<'recharge' | 'bills'>('recharge');
 
   // Recharge states
@@ -49,7 +46,6 @@ export default function RechargeBillsScreen() {
   const [billOperator, setBillOperator] = useState('');
   const [billAmount, setBillAmount] = useState('');
   const [billOperatorModalVisible, setBillOperatorModalVisible] = useState(false);
-  const [actionError, setActionError] = useState('');
 
   const handleBack = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -58,64 +54,27 @@ export default function RechargeBillsScreen() {
 
   const handleTabChange = (tab: 'recharge' | 'bills') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActionError('');
     setActiveTab(tab);
   };
 
   const handleRechargeTypeChange = (type: 'mobile' | 'dth') => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActionError('');
     setRechargeType(type);
     setSelectedOperator('');
   };
 
   const handleContinue = () => {
-    setActionError('');
-
-    if (!mobileNumber || !selectedOperator || !amount) {
-      setActionError('Enter the number, operator, and amount to continue.');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    addTransaction({
-      user_name: profile?.name || 'User',
-      mobile: mobileNumber,
-      module: 'recharge-bills',
-      transaction_amount: `₹${amount}`,
-      timestamp: new Date().toISOString(),
-      status: 'Pending',
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success('Recharge request submitted');
-    router.replace('/(tabs)');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    // Payment gateway integration placeholder
   };
 
   const handleBillPayment = () => {
-    setActionError('');
-
-    if (!selectedBillType || !consumerId || !billOperator) {
-      setActionError('Select bill type, provider, and enter consumer details to continue.');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      return;
-    }
-
-    addTransaction({
-      user_name: profile?.name || 'User',
-      mobile: profile?.phoneNumber || consumerId,
-      module: 'recharge-bills',
-      transaction_amount: billAmount ? `₹${billAmount}` : '₹0',
-      timestamp: new Date().toISOString(),
-      status: 'Pending',
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    toast.success('Bill payment request submitted');
-    router.replace('/(tabs)');
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    // Payment gateway integration placeholder
   };
 
   const handleSelectBillCategory = (categoryId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setActionError('');
     setSelectedBillType(categoryId);
     setBillOperator('');
     setConsumerId('');
@@ -124,6 +83,13 @@ export default function RechargeBillsScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <NoPayout_TCGate
+        visible={tcVisible}
+        module="recharge-bills"
+        onAccept={() => { setTcAccepted(true); setTcVisible(false); }}
+        onDecline={() => router.back()}
+      />
+      {tcAccepted && (
       <SafeAreaView className="flex-1" edges={['top']}>
         {/* Header */}
         <LinearGradient
@@ -256,16 +222,20 @@ export default function RechargeBillsScreen() {
                 />
               </View>
 
-              {actionError ? (
-                <Text className="text-red-500 text-sm text-center mb-3 font-medium">{actionError}</Text>
-              ) : null}
+              {/* Coming Soon Label */}
+              <View className="bg-orange-50 rounded-xl p-3 mb-4 border border-orange-200">
+                <Text className="text-orange-700 text-xs text-center font-medium">
+                  🚀 Payments coming soon - Integration in progress
+                </Text>
+              </View>
 
               {/* Continue Button */}
               <Pressable
                 onPress={handleContinue}
-                className="rounded-xl py-4 items-center bg-orange-500"
+                disabled={!mobileNumber || !selectedOperator || !amount}
+                className={`rounded-xl py-4 items-center ${mobileNumber && selectedOperator && amount ? 'bg-orange-500' : 'bg-gray-300'}`}
               >
-                <Text className="font-bold text-base text-white">
+                <Text className={`font-bold text-base ${mobileNumber && selectedOperator && amount ? 'text-white' : 'text-gray-500'}`}>
                   Continue
                 </Text>
               </Pressable>
@@ -337,17 +307,21 @@ export default function RechargeBillsScreen() {
                     />
                   </View>
 
-                  {actionError ? (
-                    <Text className="text-red-500 text-sm text-center mb-3 font-medium">{actionError}</Text>
-                  ) : null}
+                  {/* Coming Soon Label */}
+                  <View className="bg-orange-50 rounded-xl p-3 mb-4 border border-orange-200">
+                    <Text className="text-orange-700 text-xs text-center font-medium">
+                      🚀 Payments coming soon - Integration in progress
+                    </Text>
+                  </View>
 
-                  {/* Continue Button */}
+                  {/* Pay Now Button */}
                   <Pressable
                     onPress={handleBillPayment}
-                    className="rounded-xl py-4 items-center bg-orange-500"
+                    disabled={!consumerId || !billOperator}
+                    className={`rounded-xl py-4 items-center ${consumerId && billOperator ? 'bg-orange-500' : 'bg-gray-300'}`}
                   >
-                    <Text className="font-bold text-base text-white">
-                      Continue
+                    <Text className={`font-bold text-base ${consumerId && billOperator ? 'text-white' : 'text-gray-500'}`}>
+                      Pay Now
                     </Text>
                   </Pressable>
                 </Animated.View>
@@ -420,6 +394,7 @@ export default function RechargeBillsScreen() {
           </Pressable>
         </Modal>
       </SafeAreaView>
+      )}
     </View>
   );
 }
