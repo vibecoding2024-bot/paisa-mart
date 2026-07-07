@@ -69,7 +69,6 @@ export interface Lead {
   kycCompleted?: string;
   creditScore?: number;
   consentGiven?: boolean;
-  extraDetails?: Record<string, string>;
 }
 
 export interface LeadNote {
@@ -232,7 +231,6 @@ interface AdminStore {
   logout: () => void;
 
   // Lead actions
-  addLead: (lead: Omit<Lead, 'id' | 'createdAt' | 'updatedAt' | 'notes' | 'stageHistory'>) => Lead;
   updateLeadStage: (leadId: string, newStage: LeadStage, reason?: string, note?: string) => void;
   assignLead: (leadId: string, owner: string) => void;
   addLeadNote: (leadId: string, text: string) => void;
@@ -272,32 +270,6 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
       return true;
     }
     return false;
-  },
-
-  addLead: (leadData) => {
-    const createdAt = new Date().toISOString();
-    const lead: Lead = {
-      ...leadData,
-      id: `LEAD-${Date.now()}`,
-      createdAt,
-      updatedAt: createdAt,
-      notes: [],
-      stageHistory: [
-        {
-          fromStage: null,
-          toStage: leadData.stage,
-          changedBy: 'System',
-          changedAt: createdAt,
-        },
-      ],
-    };
-
-    set(state => ({
-      leads: [lead, ...state.leads],
-    }));
-
-    get().logAction('ADD_LEAD', 'lead', lead.id);
-    return lead;
   },
 
   logout: () => {

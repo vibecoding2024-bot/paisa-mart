@@ -265,20 +265,6 @@ export default function LeadDetailsScreen() {
               </View>
             </Animated.View>
 
-            {lead.extraDetails && Object.keys(lead.extraDetails).length > 0 && (
-              <Animated.View entering={FadeInDown.delay(125).springify()}>
-                <View className="bg-slate-800 rounded-xl p-4 mb-4">
-                  <Text className="text-white font-semibold mb-4">Submitted Details</Text>
-                  {Object.entries(lead.extraDetails).map(([label, value]) => (
-                    <View key={label} className="flex-row items-center justify-between mb-3">
-                      <Text className="text-slate-400 flex-1 pr-3">{label}</Text>
-                      <Text className="text-white flex-1 text-right">{value || '-'}</Text>
-                    </View>
-                  ))}
-                </View>
-              </Animated.View>
-            )}
-
             {/* Status Info */}
             <Animated.View entering={FadeInDown.delay(150).springify()}>
               <View className="bg-slate-800 rounded-xl p-4 mb-4">

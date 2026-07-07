@@ -15,7 +15,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lucide-react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useAdminStore } from '@/lib/admin-store';
 import { useBusinessLoanStore } from '@/lib/business-loan-store';
 import { submitBusinessLoanLead } from '@/lib/business-loan-api';
 import { useUserProfileStore } from '@/lib/user-profile-store';
@@ -140,71 +139,13 @@ function Dropdown({ label, value, options, onSelect, error }: DropdownProps) {
   );
 }
 
-type FormFieldProps = {
-  label: string;
-  value: string;
-  placeholder: string;
-  onChangeText: (val: string) => void;
-  error?: string;
-  keyboardType?: 'default' | 'numeric' | 'phone-pad';
-  prefix?: string;
-};
-
-function FormField({
-  label,
-  value,
-  placeholder,
-  onChangeText,
-  error,
-  keyboardType = 'default',
-  prefix,
-}: FormFieldProps) {
-  return (
-    <View style={{ marginBottom: 20 }}>
-      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
-        {label}
-      </Text>
-      <View
-        style={{
-          borderWidth: 1.5,
-          borderColor: error ? '#EF4444' : '#E5E7EB',
-          borderRadius: 12,
-          backgroundColor: '#fff',
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 14,
-        }}
-      >
-        {prefix ? <Text style={{ color: '#6B7280', fontSize: 16, marginRight: 6 }}>{prefix}</Text> : null}
-        <TextInput
-          placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
-          keyboardType={keyboardType}
-          value={value}
-          onChangeText={onChangeText}
-          style={{ flex: 1, paddingVertical: 14, fontSize: 14, color: '#111827' }}
-        />
-      </View>
-      {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
-    </View>
-  );
-}
-
 export default function BusinessLoansDetailsScreen() {
   const router = useRouter();
   const setData = useBusinessLoanStore((s) => s.setData);
   const profile = useUserProfileStore((s) => s.profile);
-  const addLead = useAdminStore((s) => s.addLead);
 
   const [businessType, setBusinessType] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [cibil, setCibil] = useState('');
-  const [dateOfBirth, setDateOfBirth] = useState('');
-  const [cityState, setCityState] = useState('');
-  const [monthlyIncome, setMonthlyIncome] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
-  const [existingEmi, setExistingEmi] = useState('');
   const [loanPurpose, setLoanPurpose] = useState('');
   const [otherText, setOtherText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -214,29 +155,10 @@ export default function BusinessLoansDetailsScreen() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!businessType) newErrors.businessType = 'Please select a business type';
-    if (!fullName.trim()) newErrors.fullName = 'Please enter full name';
-    if (!/^[6-9]\d{9}$/.test(mobileNumber)) newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
-    if (!cibil.trim()) {
-      newErrors.cibil = 'Please enter CIBIL score';
-    } else if (Number(cibil) < 300 || Number(cibil) > 900) {
-      newErrors.cibil = 'CIBIL score must be between 300 and 900';
-    }
-    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
-    if (!cityState.trim()) newErrors.cityState = 'Please enter city and state';
-    if (!monthlyIncome || monthlyIncome.trim() === '') {
-      newErrors.monthlyIncome = 'Please enter monthly income';
-    } else if (Number(monthlyIncome) <= 0) {
-      newErrors.monthlyIncome = 'Please enter a valid monthly income';
-    }
     if (!loanAmount || loanAmount.trim() === '') {
       newErrors.loanAmount = 'Please enter loan amount';
     } else if (isNaN(Number(loanAmount)) || Number(loanAmount) <= 0) {
       newErrors.loanAmount = 'Please enter a valid amount greater than 0';
-    }
-    if (existingEmi === '' || existingEmi === undefined) {
-      newErrors.existingEmi = 'Please enter existing EMI (enter 0 if none)';
-    } else if (Number(existingEmi) < 0) {
-      newErrors.existingEmi = 'Existing EMI cannot be negative';
     }
     if (!loanPurpose) newErrors.loanPurpose = 'Please select a loan purpose';
     if (loanPurpose === 'Other' && !otherText.trim()) {
@@ -257,54 +179,18 @@ export default function BusinessLoansDetailsScreen() {
       return;
     }
 
-    const [city = cityState, state = ''] = cityState.split(',').map((item) => item.trim());
-    const submittedAt = new Date().toISOString();
     const leadData = {
       business_type: businessType,
-      full_name: fullName.trim(),
-      mobile_number: mobileNumber,
-      cibil,
-      date_of_birth: dateOfBirth.trim(),
-      city_state: cityState.trim(),
-      monthly_income: monthlyIncome,
       loan_amount_required: loanAmount,
-      existing_emi: existingEmi,
       loan_purpose: loanPurpose,
       loan_purpose_other_text: loanPurpose === 'Other' ? otherText : '',
-      timestamp: submittedAt,
+      timestamp: new Date().toISOString(),
     };
 
     try {
       setIsSubmitting(true);
       await submitBusinessLoanLead({ ...leadData, phoneNumber });
       setData(leadData);
-      addLead({
-        userName: fullName.trim(),
-        mobile: mobileNumber,
-        email: '',
-        productType: 'business-loans',
-        provider: 'Business Loan',
-        stage: 'new',
-        outcome: 'pending',
-        priority: 'medium',
-        city,
-        state,
-        source: 'Business Loan Form',
-        creditScore: Number(cibil),
-        consentGiven: true,
-        extraDetails: {
-          'Full Name': fullName.trim(),
-          'Mobile Number': mobileNumber,
-          Cibil: cibil,
-          'Date of Birth': dateOfBirth.trim(),
-          'City & State': cityState.trim(),
-          'Monthly Income': monthlyIncome,
-          'Loan Amount Required': loanAmount,
-          'Existing EMI': existingEmi,
-          'Business Type': businessType,
-          'Loan Purpose': loanPurpose === 'Other' ? otherText.trim() : loanPurpose,
-        },
-      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace('/(tabs)');
     } catch (error) {
@@ -413,90 +299,8 @@ export default function BusinessLoansDetailsScreen() {
               />
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(120).springify()}>
-              <FormField
-                label="Full Name"
-                placeholder="Enter full name"
-                value={fullName}
-                onChangeText={(val) => {
-                  setFullName(val);
-                  setErrors((e) => ({ ...e, fullName: '' }));
-                }}
-                error={errors.fullName}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(140).springify()}>
-              <FormField
-                label="Mobile Number"
-                placeholder="Enter 10-digit mobile number"
-                value={mobileNumber}
-                keyboardType="phone-pad"
-                onChangeText={(val) => {
-                  setMobileNumber(val.replace(/[^0-9]/g, '').slice(0, 10));
-                  setErrors((e) => ({ ...e, mobileNumber: '' }));
-                }}
-                error={errors.mobileNumber}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(160).springify()}>
-              <FormField
-                label="Cibil"
-                placeholder="Enter CIBIL score"
-                value={cibil}
-                keyboardType="numeric"
-                onChangeText={(val) => {
-                  setCibil(val.replace(/[^0-9]/g, '').slice(0, 3));
-                  setErrors((e) => ({ ...e, cibil: '' }));
-                }}
-                error={errors.cibil}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(180).springify()}>
-              <FormField
-                label="Date of Birth"
-                placeholder="DD/MM/YYYY"
-                value={dateOfBirth}
-                onChangeText={(val) => {
-                  setDateOfBirth(val);
-                  setErrors((e) => ({ ...e, dateOfBirth: '' }));
-                }}
-                error={errors.dateOfBirth}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(200).springify()}>
-              <FormField
-                label="City & State"
-                placeholder="Example: Hyderabad, Telangana"
-                value={cityState}
-                onChangeText={(val) => {
-                  setCityState(val);
-                  setErrors((e) => ({ ...e, cityState: '' }));
-                }}
-                error={errors.cityState}
-              />
-            </Animated.View>
-
-            <Animated.View entering={FadeInDown.delay(220).springify()}>
-              <FormField
-                label="Monthly Income"
-                placeholder="Enter monthly income"
-                value={monthlyIncome}
-                keyboardType="numeric"
-                prefix="₹"
-                onChangeText={(val) => {
-                  setMonthlyIncome(val.replace(/[^0-9]/g, ''));
-                  setErrors((e) => ({ ...e, monthlyIncome: '' }));
-                }}
-                error={errors.monthlyIncome}
-              />
-            </Animated.View>
-
             {/* Field B: Loan Amount */}
-            <Animated.View entering={FadeInDown.delay(240).springify()} style={{ marginBottom: 20 }}>
+            <Animated.View entering={FadeInDown.delay(150).springify()} style={{ marginBottom: 20 }}>
               <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
                 Loan Amount Required
               </Text>
@@ -530,23 +334,8 @@ export default function BusinessLoansDetailsScreen() {
               ) : null}
             </Animated.View>
 
-            <Animated.View entering={FadeInDown.delay(260).springify()}>
-              <FormField
-                label="Existing EMI"
-                placeholder="Enter existing EMI"
-                value={existingEmi}
-                keyboardType="numeric"
-                prefix="₹"
-                onChangeText={(val) => {
-                  setExistingEmi(val.replace(/[^0-9]/g, ''));
-                  setErrors((e) => ({ ...e, existingEmi: '' }));
-                }}
-                error={errors.existingEmi}
-              />
-            </Animated.View>
-
             {/* Field C: Loan Purpose */}
-            <Animated.View entering={FadeInDown.delay(280).springify()}>
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
               <Dropdown
                 label="Purpose of Loan"
                 value={loanPurpose}
