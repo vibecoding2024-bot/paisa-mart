@@ -4,7 +4,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export interface BusinessLoanData {
   business_type: string;
+  full_name: string;
+  mobile_number: string;
+  cibil: string;
+  date_of_birth: string;
+  city_state: string;
+  monthly_income: string;
   loan_amount_required: string;
+  existing_emi: string;
   loan_purpose: string;
   loan_purpose_other_text: string;
   timestamp: string;
