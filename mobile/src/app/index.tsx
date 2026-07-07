@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ export default function LoginScreen() {
   const [isFocused, setIsFocused] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const isSubmittingRef = useRef(false);
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
@@ -90,7 +91,9 @@ export default function LoginScreen() {
   };
 
   const handleContinue = async () => {
+    if (isSubmittingRef.current || isSending) return;
     if (isValidPhone) {
+      isSubmittingRef.current = true;
       setError('');
       setIsSending(true);
       try {
@@ -115,6 +118,7 @@ export default function LoginScreen() {
         cancelOtpLoginFlow();
         setError(e instanceof Error ? e.message : 'Unable to send OTP');
       } finally {
+        isSubmittingRef.current = false;
         setIsSending(false);
       }
     }

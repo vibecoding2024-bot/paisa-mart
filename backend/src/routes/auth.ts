@@ -21,7 +21,7 @@ type RateEntry = { count: number; resetAt: number };
 const rates = new Map<string, RateEntry>();
 
 const SEND_DEDUPE_WINDOW_MS = 10_000;
-const otpStore = new Map<string, { otp: string; expiresAt: number; lastSentAt: number; reqId?: string }>();
+const otpStore = new Map<string, { otp?: string; expiresAt: number; lastSentAt: number; reqId?: string }>();
 
 function allow(key: string, limit: number, windowMs: number) {
   const now = Date.now();
@@ -226,9 +226,13 @@ authRouter.post("/send-otp", async (c) => {
   try {
     const mobile = `91${parsed.data.phone}`;
     const existing = otpStore.get(mobile);
-    if (isDev && existing && existing.expiresAt > Date.now() && Date.now() - existing.lastSentAt < SEND_DEDUPE_WINDOW_MS) {
-      console.log("OTP send skipped; active OTP was recently sent", { mobile: maskedMobile(mobile) });
-      return c.json({ success: true, message: "OTP sent (dev mode)", devOtp: existing.otp });
+    if (existing && existing.expiresAt > Date.now() && Date.now() - existing.lastSentAt < SEND_DEDUPE_WINDOW_MS) {
+      console.log("OTP send skipped; active OTP was recently sent", { channel, mobile: maskedMobile(mobile) });
+      return c.json({
+        success: true,
+        ...(existing.reqId ? { reqId: existing.reqId } : {}),
+        ...(isDev && existing.otp ? { message: "OTP sent (dev mode)", devOtp: existing.otp } : {}),
+      });
     }
     
     if (widget) {
@@ -238,6 +242,7 @@ authRouter.post("/send-otp", async (c) => {
         identifier: mobile,
       }, channel);
       const reqId = findReqId(data);
+      otpStore.set(mobile, { reqId: reqId || undefined, expiresAt: Date.now() + 10 * 60_000, lastSentAt: Date.now() });
       return c.json(reqId ? { success: true, reqId } : { success: true });
     } else if (isDev) {
       const otp = generateOtp();
@@ -253,6 +258,7 @@ authRouter.post("/send-otp", async (c) => {
         otp_expiry: "10",
       });
       await msg91(`/api/v5/otp?${params.toString()}`, config.authKey, channel);
+      otpStore.set(mobile, { expiresAt: Date.now() + 10 * 60_000, lastSentAt: Date.now() });
       return c.json({ success: true });
     }
   } catch (error) {
