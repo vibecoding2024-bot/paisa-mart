@@ -174,7 +174,12 @@ const BRAND_FOOTER = `
 </div>`;
 
 async function serveHtml(): Promise<string> {
-  return Bun.file(PUBLIC_DIR + "/index.html").text();
+  const html = await Bun.file(PUBLIC_DIR + "/index.html").text();
+  if (html.includes("paisa-web-polish")) return html;
+
+  return html
+    .replace("</head>", `${INJECTED_HEAD}</head>`)
+    .replace('<div id="root"></div>', `${BRAND_HEADER}<div id="root"></div>${BRAND_FOOTER}`);
 }
 
 const app = new Hono();
