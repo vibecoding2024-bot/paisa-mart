@@ -11,8 +11,9 @@ PUBLIC_DIR="$APP_DIR/public"
 PM2_NAME="paisa-mart"
 BRANCH="main"
 
-echo "==> Pulling latest ($BRANCH)"
-git -C "$REPO" pull origin "$BRANCH"
+echo "==> Checking out latest ($BRANCH)"
+git -C "$REPO" fetch origin "$BRANCH"
+git -C "$REPO" checkout -B "$BRANCH" "origin/$BRANCH"
 
 echo "==> Building web app"
 cd "$MOBILE_DIR"
