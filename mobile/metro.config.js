@@ -14,6 +14,13 @@ const sharedFolder = path.resolve(__dirname, "../shared");
 const sharedFolderExists = fs.existsSync(sharedFolder);
 const mobileNodeModules = path.resolve(__dirname, "node_modules");
 const rootNodeModules = path.resolve(__dirname, "../node_modules");
+const packageRoot = (packageName) =>
+  path.dirname(require.resolve(`${packageName}/package.json`, { paths: [__dirname] }));
+const reactPath = packageRoot("react");
+const reactDomPath = packageRoot("react-dom");
+const reactNativePath = packageRoot("react-native");
+const expoPath = packageRoot("expo");
+const schedulerPath = packageRoot("scheduler");
 
 // DEBUG: Log metro.config.js version and shared folder status at startup
 console.log("[Metro Config] Version: 2025-02-03-v3-fix-dynamic-imports (source: workspace-mobile)");
@@ -49,9 +56,11 @@ config.resolver = {
   disableHierarchicalLookup: true,
   extraNodeModules: {
     ...config.resolver.extraNodeModules,
-    react: path.join(mobileNodeModules, "react"),
-    "react-native": path.join(mobileNodeModules, "react-native"),
-    "expo": path.join(mobileNodeModules, "expo"),
+    react: reactPath,
+    "react-dom": reactDomPath,
+    "react-native": reactNativePath,
+    "expo": expoPath,
+    "scheduler": schedulerPath,
     "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
     "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
     "invariant": path.join(rootNodeModules, "invariant"),
@@ -76,9 +85,11 @@ config.resolver = {
     unstable_enablePackageExports: true,
     extraNodeModules: {
       ...config.resolver.extraNodeModules,
-      react: path.join(mobileNodeModules, "react"),
-      "react-native": path.join(mobileNodeModules, "react-native"),
-      "expo": path.join(mobileNodeModules, "expo"),
+      react: reactPath,
+      "react-dom": reactDomPath,
+      "react-native": reactNativePath,
+      "expo": expoPath,
+      "scheduler": schedulerPath,
       "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
       "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
       "invariant": path.join(rootNodeModules, "invariant"),
