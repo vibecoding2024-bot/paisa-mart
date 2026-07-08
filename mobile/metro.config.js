@@ -15,10 +15,15 @@ const sharedFolderExists = fs.existsSync(sharedFolder);
 const mobileNodeModules = path.resolve(__dirname, "node_modules");
 const rootNodeModules = path.resolve(__dirname, "../node_modules");
 const packageRoot = (packageName) =>
-  path.dirname(require.resolve(`${packageName}/package.json`, { paths: [__dirname] }));
+  path.dirname(
+    require.resolve(`${packageName}/package.json`, {
+      paths: [mobileNodeModules, __dirname, rootNodeModules],
+    })
+  );
 const reactPath = packageRoot("react");
 const reactDomPath = packageRoot("react-dom");
 const reactNativePath = packageRoot("react-native");
+const reactNativeWebPath = packageRoot("react-native-web");
 const expoPath = packageRoot("expo");
 const schedulerPath = packageRoot("scheduler");
 
@@ -59,6 +64,7 @@ config.resolver = {
     react: reactPath,
     "react-dom": reactDomPath,
     "react-native": reactNativePath,
+    "react-native-web": reactNativeWebPath,
     "expo": expoPath,
     "scheduler": schedulerPath,
     "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
@@ -88,6 +94,7 @@ config.resolver = {
       react: reactPath,
       "react-dom": reactDomPath,
       "react-native": reactNativePath,
+      "react-native-web": reactNativeWebPath,
       "expo": expoPath,
       "scheduler": schedulerPath,
       "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
