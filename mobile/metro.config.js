@@ -25,7 +25,11 @@ const reactDomPath = packageRoot("react-dom");
 const reactNativePath = packageRoot("react-native");
 const reactNativeWebPath = packageRoot("react-native-web");
 const expoPath = packageRoot("expo");
-const schedulerPath = packageRoot("scheduler");
+const schedulerPath = path.dirname(
+  require.resolve("scheduler/package.json", {
+    paths: [reactDomPath, mobileNodeModules, __dirname, rootNodeModules],
+  })
+);
 
 // DEBUG: Log metro.config.js version and shared folder status at startup
 console.log("[Metro Config] Version: 2025-02-03-v3-fix-dynamic-imports (source: workspace-mobile)");
