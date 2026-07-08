@@ -17,7 +17,14 @@ git -C "$REPO" pull origin "$BRANCH"
 echo "==> Building web app"
 cd "$MOBILE_DIR"
 "$BUN" install --frozen-lockfile
-EXPO_PUBLIC_API_URL="https://paisa-mart.com" "$BUN" run build:web
+if [[ -f "$MOBILE_DIR/.env.production" ]]; then
+  echo "==> Loading mobile production environment"
+  set -a
+  # shellcheck disable=SC1091
+  source "$MOBILE_DIR/.env.production"
+  set +a
+fi
+EXPO_PUBLIC_API_URL="${EXPO_PUBLIC_API_URL:-https://paisa-mart.com}" "$BUN" run build:web
 
 echo "==> Publishing web app"
 rm -rf "$PUBLIC_DIR"
@@ -38,11 +45,16 @@ export NODE_ENV="${NODE_ENV:-production}"
 export PORT="${PORT:-3000}"
 
 echo "==> Restarting app via pm2"
-if pm2 describe "$PM2_NAME" >/dev/null 2>&1; then
-  pm2 restart "$PM2_NAME" --update-env
-else
-  pm2 start "$BUN" --name "$PM2_NAME" --cwd "$APP_DIR" -- run src/index.ts
+pm2 delete "$PM2_NAME" >/dev/null 2>&1 || true
+if command -v lsof >/dev/null 2>&1; then
+  LISTENER_PID="$(lsof -t -iTCP:"$PORT" -sTCP:LISTEN || true)"
+  if [[ -n "$LISTENER_PID" ]]; then
+    echo "==> Stopping stale listener on port $PORT"
+    kill $LISTENER_PID || true
+    sleep 1
+  fi
 fi
+pm2 start "$BUN" --name "$PM2_NAME" --cwd "$APP_DIR" -- run src/index.ts
 pm2 save
 
 echo "==> Health check"
