@@ -108,7 +108,10 @@ export default function LoginScreen() {
             await routeAfterVerifiedAuth(result.phone || phoneNumber);
             return;
           } catch (widgetError) {
-            console.warn('MSG91 web widget flow failed, falling back to OTP screen', widgetError);
+            console.warn('MSG91 web widget flow failed', widgetError);
+            cancelOtpLoginFlow();
+            setError('OTP verification was not completed. Please try again.');
+            return;
           }
         }
 
