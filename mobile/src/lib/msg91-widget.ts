@@ -86,6 +86,6 @@ export async function startMsg91WebOtp(phone: string) {
 }
 
 export function getMsg91AccessToken(data: Msg91WidgetResult) {
-  const token = data.accessToken || data.token;
+  const token = data.accessToken || data.token || data.message;
   return typeof token === 'string' ? token : null;
 }
