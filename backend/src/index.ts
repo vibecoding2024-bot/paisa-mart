@@ -174,11 +174,7 @@ const BRAND_FOOTER = `
 </div>`;
 
 async function serveHtml(): Promise<string> {
-  const raw = await Bun.file(PUBLIC_DIR + "/index.html").text();
-  return raw
-    .replace("</head>", INJECTED_HEAD + "\n</head>")
-    .replace("<body>", "<body>\n" + BRAND_HEADER)
-    .replace("</body>", BRAND_FOOTER + "\n</body>");
+  return Bun.file(PUBLIC_DIR + "/index.html").text();
 }
 
 const app = new Hono();
