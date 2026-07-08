@@ -15,11 +15,10 @@ import Animated, {
   FadeInUp,
 } from 'react-native-reanimated';
 import { Phone, ArrowRight, Users, Wallet, Award, Star, Info, Headphones } from 'lucide-react-native';
-import { saveAuthToken, sendOtp, verifyOtpAccessToken } from '@/lib/auth-api';
+import { sendOtp } from '@/lib/auth-api';
 import { useIncentiveStore } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
 import { getAuthSecurityConfig } from '@/lib/auth-security';
-import { getMsg91AccessToken, getMsg91WebWidgetConfig, startMsg91WebOtp } from '@/lib/msg91-widget';
 import { fetchUserProfile } from '@/lib/user-profile-api';
 import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
 import { cancelOtpLoginFlow, finishOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
@@ -97,23 +96,6 @@ export default function LoginScreen() {
       setIsSending(true);
       try {
         startOtpLoginFlow();
-        if (isWeb && getMsg91WebWidgetConfig()) {
-          try {
-            const widgetResult = await startMsg91WebOtp(phoneNumber);
-            const accessToken = getMsg91AccessToken(widgetResult);
-            if (!accessToken) throw new Error('OTP verification did not return an access token');
-            const result = await verifyOtpAccessToken(accessToken, 'web', phoneNumber);
-            await saveAuthToken(result.token);
-            await routeAfterVerifiedAuth(result.phone || phoneNumber);
-            return;
-          } catch (widgetError) {
-            console.warn('MSG91 web widget flow failed', widgetError);
-            cancelOtpLoginFlow();
-            setError('OTP verification was not completed. Please try again.');
-            return;
-          }
-        }
-
         const otpResult = await sendOtp(phoneNumber, isWeb ? 'web' : 'mobile');
         router.push({ pathname: '/otp', params: { phone: phoneNumber, reqId: otpResult.reqId } });
       } catch (e) {
