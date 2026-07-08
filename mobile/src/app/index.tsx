@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -31,6 +31,7 @@ export default function LoginScreen() {
   const [isFocused, setIsFocused] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState('');
+  const sendInFlightRef = useRef(false);
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
@@ -90,7 +91,8 @@ export default function LoginScreen() {
   };
 
   const handleContinue = async () => {
-    if (isValidPhone) {
+    if (isValidPhone && !sendInFlightRef.current) {
+      sendInFlightRef.current = true;
       setError('');
       setIsSending(true);
       try {
@@ -105,7 +107,10 @@ export default function LoginScreen() {
             await routeAfterVerifiedAuth(result.phone || phoneNumber);
             return;
           } catch (widgetError) {
-            console.warn('MSG91 web widget flow failed, falling back to OTP screen', widgetError);
+            console.warn('MSG91 web widget flow failed', widgetError);
+            cancelOtpLoginFlow();
+            setError('OTP verification was not completed. Please try again.');
+            return;
           }
         }
 
@@ -115,6 +120,7 @@ export default function LoginScreen() {
         cancelOtpLoginFlow();
         setError(e instanceof Error ? e.message : 'Unable to send OTP');
       } finally {
+        sendInFlightRef.current = false;
         setIsSending(false);
       }
     }
