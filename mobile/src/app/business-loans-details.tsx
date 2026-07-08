@@ -54,6 +54,58 @@ type DropdownProps = {
   error?: string;
 };
 
+type FormFieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (val: string) => void;
+  error?: string;
+  keyboardType?: 'default' | 'numeric' | 'phone-pad';
+  prefix?: string;
+};
+
+function FormField({
+  label,
+  placeholder,
+  value,
+  onChangeText,
+  error,
+  keyboardType = 'default',
+  prefix,
+}: FormFieldProps) {
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          borderWidth: 1.5,
+          borderColor: error ? '#EF4444' : '#E5E7EB',
+          borderRadius: 12,
+          backgroundColor: '#fff',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 14,
+        }}
+      >
+        {prefix ? <Text style={{ color: '#6B7280', fontSize: 16, marginRight: 6 }}>{prefix}</Text> : null}
+        <TextInput
+          placeholder={placeholder}
+          placeholderTextColor="#9CA3AF"
+          keyboardType={keyboardType}
+          value={value}
+          onChangeText={onChangeText}
+          style={{ flex: 1, paddingVertical: 14, fontSize: 14, color: '#111827' }}
+        />
+      </View>
+      {error ? (
+        <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 function Dropdown({ label, value, options, onSelect, error }: DropdownProps) {
   const [open, setOpen] = useState(false);
 
