@@ -61,7 +61,7 @@ pm2 save
 echo "==> Health check"
 sleep 3
 curl -fsS -m 5 http://localhost:3000/health && echo
-curl -fsS -m 5 -o /dev/null -w "root via nginx :80 -> HTTP %{http_code}\n" http://localhost/ || true
+curl -fsS -m 5 -H "Host: paisa-mart.com" -o /dev/null -w "root via nginx :80 -> HTTP %{http_code}\n" http://localhost/ || true
 
 echo "==> Done. pm2 status:"
 pm2 list
