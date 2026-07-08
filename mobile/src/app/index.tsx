@@ -123,7 +123,7 @@ export default function LoginScreen() {
           {/* Top Section - Blue Background */}
           <LinearGradient
             colors={['#002561', '#003380']}
-            style={{ paddingBottom: 40, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+            style={{ paddingBottom: 28, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
           >
             <View className="px-6 pt-4">
               {/* Logo */}
@@ -140,7 +140,7 @@ export default function LoginScreen() {
               {/* Hero Text */}
               <Animated.View
                 entering={isWeb ? undefined : FadeInDown.delay(200).springify()}
-                className="mt-6"
+                className="mt-5"
               >
                 <Text className="text-white text-2xl font-bold leading-8">
                   Sell financial products{'\n'}and earn real money{'\n'}online!
@@ -150,7 +150,7 @@ export default function LoginScreen() {
               {/* Stats Row */}
               <Animated.View
                 entering={isWeb ? undefined : FadeInDown.delay(300).springify()}
-                className="flex-row mt-6 gap-6"
+                className="flex-row mt-5 gap-6"
               >
                 <View className="flex-row items-center">
                   <Users size={20} color="#FF8C00" />
@@ -181,7 +181,7 @@ export default function LoginScreen() {
           </LinearGradient>
 
           {/* Bottom Section - White Background */}
-          <View className="flex-1 px-6 -mt-6">
+          <View className="flex-1 px-6 mt-5">
             {/* Login Card */}
             <Animated.View
               entering={isWeb ? undefined : FadeInUp.delay(300).springify()}
@@ -229,7 +229,11 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {!!error && <Text className="text-red-500 text-sm mt-2">{error}</Text>}
+              {!!error && (
+                <Text className="text-red-600 text-sm mt-3 rounded-lg bg-red-50 px-3 py-2">
+                  {error}
+                </Text>
+              )}
 
               {profile ? (
                 <Pressable onPress={handleMpinLogin} className="mt-4">
