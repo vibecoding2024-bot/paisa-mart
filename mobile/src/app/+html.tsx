@@ -102,8 +102,8 @@ html, body {
   max-width: 100%;
 }
 
-/* ── MOBILE & TABLET: <1200px  –  Full-screen view ── */
-@media (max-width: 1199px) {
+/* ── Mobile: <768px  –  Full-screen view ── */
+@media (max-width: 767px) {
   html {
     background: #fff;
   }
@@ -141,9 +141,9 @@ html, body {
 #web-brand-header, #web-brand-footer { display: none; }
 
 /* ══════════════════════════════════════════
-   DESKTOP ONLY ≥ 1200px  –  Phone-in-frame layout
+   DESKTOP ≥ 768px  –  Phone-in-frame layout
 ══════════════════════════════════════════ */
-@media (min-width: 1200px) {
+@media (min-width: 768px) {
   html {
     height: 100%;
     background: linear-gradient(145deg, #0d0d1a 0%, #1a0a2e 35%, #0d1f3c 70%, #0d1a0d 100%);
@@ -306,8 +306,8 @@ html, body {
   }
 }
 
-/* ── 1400px+: slightly larger phone frame ── */
-@media (min-width: 1400px) {
+/* ── 1200px+: slightly larger phone frame ── */
+@media (min-width: 1200px) {
   #root {
     width: 430px !important;
     height: 932px !important;
