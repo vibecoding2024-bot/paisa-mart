@@ -98,13 +98,52 @@ html, body {
   height: 100%;
   margin: 0; padding: 0;
   background: #fff;
+  width: 100%;
+  max-width: 100%;
 }
+
+/* ── MOBILE & TABLET: <1200px  –  Full-screen view ── */
+@media (max-width: 1199px) {
+  html {
+    background: #fff;
+  }
+  body {
+    width: 100%;
+    max-width: 100%;
+    height: auto !important;
+    min-height: 100vh;
+    overflow: auto !important;
+    background: #fff !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  body::before,
+  body::after {
+    display: none !important;
+  }
+  #root {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 100vh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  #root::before {
+    display: none !important;
+  }
+  #web-brand-header,
+  #web-brand-footer {
+    display: none !important;
+  }
+}
+
 #web-brand-header, #web-brand-footer { display: none; }
 
 /* ══════════════════════════════════════════
-   DESKTOP ≥ 768px  –  Phone-in-frame layout
+   DESKTOP ONLY ≥ 1200px  –  Phone-in-frame layout
 ══════════════════════════════════════════ */
-@media (min-width: 768px) {
+@media (min-width: 1200px) {
   html {
     height: 100%;
     background: linear-gradient(145deg, #0d0d1a 0%, #1a0a2e 35%, #0d1f3c 70%, #0d1a0d 100%);
@@ -267,8 +306,8 @@ html, body {
   }
 }
 
-/* ── 1200px+: slightly larger phone ── */
-@media (min-width: 1200px) {
+/* ── 1400px+: slightly larger phone frame ── */
+@media (min-width: 1400px) {
   #root {
     width: 430px !important;
     height: 932px !important;

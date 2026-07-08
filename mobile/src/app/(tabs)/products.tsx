@@ -507,6 +507,10 @@ export default function ProductsScreen() {
         router.push('/personal-loans-details');
         return;
       }
+      if (category === 'vehicle-loans') {
+        router.push('/vehicle-loans-details');
+        return;
+      }
       // Health Insurance shows the partner list — partner card press starts the flow
       setSelectedCategory(category);
     }
@@ -554,6 +558,10 @@ export default function ProductsScreen() {
     // Personal Loans requires eligibility capture first
     if (catId === 'personal-loans') {
       router.push('/personal-loans-details');
+      return;
+    }
+    if (catId === 'vehicle-loans') {
+      router.push('/vehicle-loans-details');
       return;
     }
     // Health Insurance shows the partner list — partner card press starts the flow

@@ -20,6 +20,13 @@ export async function submitPersonalLoanLead(payload: PersonalLoanLeadPayload) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       phoneNumber: normalizePhone(payload.phoneNumber),
+      fullName: payload.full_name,
+      mobileNumber: payload.mobile_number,
+      dateOfBirth: payload.date_of_birth,
+      city: payload.city,
+      state: payload.state,
+      companyName: payload.company_name,
+      loanAmountRequired: payload.loan_amount_required,
       employmentType: payload.employment_type,
       creditScoreRange: payload.credit_score_range,
       monthlyIncome: payload.monthly_income,

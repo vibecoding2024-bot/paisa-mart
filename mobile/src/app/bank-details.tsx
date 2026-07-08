@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { View, Text, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -182,7 +182,7 @@ export default function BankDetailsScreen() {
                         </View>
                         <Text className="text-gray-500 text-sm">{account.accountHolderName}</Text>
                         <Text className="text-gray-400 text-xs mt-1">
-                          •••• •••• {account.accountNumber.slice(-4)}
+                          ΓÇóΓÇóΓÇóΓÇó ΓÇóΓÇóΓÇóΓÇó {account.accountNumber.slice(-4)}
                         </Text>
                       </View>
                     </View>

@@ -140,7 +140,10 @@ export default function LeadsScreen() {
     setShowActions(false);
   };
 
-  const renderLeadCard = ({ item: lead }: { item: Lead }) => (
+  const renderLeadCard = ({ item: lead }: { item: Lead }) => {
+    const loanAmount = lead.extraDetails?.['Loan Amount Required'];
+
+    return (
     <Pressable
       onPress={() => handleLeadPress(lead)}
       onLongPress={() => {
@@ -185,6 +188,17 @@ export default function LeadsScreen() {
         </View>
       </View>
 
+      {(lead.city || loanAmount) && (
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-slate-400 text-xs flex-1">
+            {lead.city ? `${lead.city}${lead.state ? `, ${lead.state}` : ''}` : ''}
+          </Text>
+          {loanAmount ? (
+            <Text className="text-slate-200 text-xs font-semibold">₹{loanAmount}</Text>
+          ) : null}
+        </View>
+      )}
+
       {/* Product & Provider */}
       <View className="flex-row items-center gap-2 mb-3">
         <View className="bg-slate-700 px-2 py-1 rounded">
@@ -222,7 +236,8 @@ export default function LeadsScreen() {
         )}
       </View>
     </Pressable>
-  );
+    );
+  };
 
   return (
     <View className="flex-1 bg-slate-900">

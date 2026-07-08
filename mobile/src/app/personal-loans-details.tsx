@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,9 +23,9 @@ import {
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
+import { useAdminStore } from '@/lib/admin-store';
 import { usePersonalLoanStore } from '@/lib/personal-loan-store';
 import { submitPersonalLoanLead } from '@/lib/personal-loan-api';
-import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const CREDIT_SCORE_OPTIONS = [
   { label: '300 – 500 (Poor)', value: '300-500' },
@@ -132,6 +133,46 @@ function Dropdown({ label, value, options, onSelect, placeholder, error }: Dropd
   );
 }
 
+type TextFieldProps = {
+  label: string;
+  placeholder: string;
+  value: string;
+  onChangeText: (val: string) => void;
+  error?: string;
+  keyboardType?: 'default' | 'numeric' | 'phone-pad';
+};
+
+function TextField({ label, placeholder, value, onChangeText, error, keyboardType = 'default' }: TextFieldProps) {
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          borderWidth: 1.5,
+          borderColor: error ? '#EF4444' : '#E5E7EB',
+          borderRadius: 12,
+          backgroundColor: '#fff',
+          paddingHorizontal: 14,
+        }}
+      >
+        <TextInput
+          placeholder={placeholder}
+          placeholderTextColor="#9CA3AF"
+          keyboardType={keyboardType}
+          value={value}
+          onChangeText={onChangeText}
+          style={{ paddingVertical: 14, fontSize: 14, color: '#111827' }}
+        />
+      </View>
+      {error ? (
+        <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text>
+      ) : null}
+    </View>
+  );
+}
+
 type NumericFieldProps = {
   label: string;
   placeholder: string;
@@ -211,8 +252,15 @@ function NumericField({
 export default function PersonalLoansDetailsScreen() {
   const router = useRouter();
   const setData = usePersonalLoanStore((s) => s.setData);
-  const profile = useUserProfileStore((s) => s.profile);
+  const addLead = useAdminStore((s) => s.addLead);
 
+  const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [loanAmountRequired, setLoanAmountRequired] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [creditScore, setCreditScore] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
@@ -233,6 +281,15 @@ export default function PersonalLoansDetailsScreen() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    if (!fullName.trim()) newErrors.fullName = 'Please enter full name';
+    if (!/^[6-9]\d{9}$/.test(mobileNumber)) newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
+    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
+    if (!city.trim()) newErrors.city = 'Please enter city';
+    if (!state.trim()) newErrors.state = 'Please enter state';
+    if (!companyName.trim()) newErrors.companyName = 'Please enter company name';
+    if (!loanAmountRequired || Number(loanAmountRequired) <= 0) {
+      newErrors.loanAmountRequired = 'Please enter loan amount required';
+    }
     if (!employmentType) newErrors.employmentType = 'Please select employment type';
     if (!monthlyIncome || monthlyIncome.trim() === '') {
       newErrors.monthlyIncome = 'Please enter monthly income';
@@ -259,27 +316,60 @@ export default function PersonalLoansDetailsScreen() {
     setSubmitError('');
     if (!validate() || isSubmitting) return;
 
-    const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) || '';
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      setSubmitError('Phone number is missing. Please complete your basic profile first.');
-      return;
-    }
-
+    const submittedAt = new Date().toISOString();
     const leadData = {
+      full_name: fullName.trim(),
+      mobile_number: mobileNumber,
+      date_of_birth: dateOfBirth.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      company_name: companyName.trim(),
+      loan_amount_required: loanAmountRequired,
       employment_type: employmentType,
       credit_score_range: creditScore || '',
       monthly_income: monthlyIncome,
       total_monthly_emi: monthlyEmi,
       total_outstanding_balance: outstandingBalance,
-      timestamp: new Date().toISOString(),
+      timestamp: submittedAt,
     };
 
     try {
       setIsSubmitting(true);
-      await submitPersonalLoanLead({ ...leadData, phoneNumber });
+      await submitPersonalLoanLead({ ...leadData, phoneNumber: mobileNumber });
       setData(leadData);
+      addLead({
+        userName: fullName.trim(),
+        mobile: mobileNumber,
+        email: '',
+        productType: 'personal-loans',
+        provider: 'Personal Loan',
+        stage: 'new',
+        outcome: 'pending',
+        priority: 'medium',
+        city: city.trim(),
+        state: state.trim(),
+        source: 'Paisa Mart',
+        consentGiven: true,
+        extraDetails: {
+          'Full Name': fullName.trim(),
+          'Mobile Number': mobileNumber,
+          'Date of Birth': dateOfBirth.trim(),
+          City: city.trim(),
+          State: state.trim(),
+          'Company Name': companyName.trim(),
+          'Employment Type': employmentType,
+          'Loan Amount Required': loanAmountRequired,
+          'Submission Date & Time': submittedAt,
+          'Lead Source': 'Paisa Mart',
+          Status: 'New',
+        },
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)');
+      Alert.alert(
+        'Application Submitted Successfully',
+        'Thank you for choosing Paisa Mart. Our team will review your request and contact you within the next few hours.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+      );
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not submit personal loan details');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -379,6 +469,81 @@ export default function PersonalLoansDetailsScreen() {
               <Text style={{ color: '#065F46', fontSize: 13, flex: 1, lineHeight: 19 }}>
                 Share your client's basic financial profile to find the best personal loan lenders.
               </Text>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(70).springify()}>
+              <TextField
+                label="Full Name"
+                placeholder="Enter full name"
+                value={fullName}
+                onChangeText={(val) => {
+                  setFullName(val);
+                  setErrors((e) => ({ ...e, fullName: '' }));
+                }}
+                error={errors.fullName}
+              />
+              <TextField
+                label="Mobile Number"
+                placeholder="Enter 10-digit mobile number"
+                value={mobileNumber}
+                keyboardType="phone-pad"
+                onChangeText={(val) => {
+                  setMobileNumber(val.replace(/[^0-9]/g, '').slice(0, 10));
+                  setErrors((e) => ({ ...e, mobileNumber: '' }));
+                }}
+                error={errors.mobileNumber}
+              />
+              <TextField
+                label="Date of Birth"
+                placeholder="DD/MM/YYYY"
+                value={dateOfBirth}
+                onChangeText={(val) => {
+                  setDateOfBirth(val);
+                  setErrors((e) => ({ ...e, dateOfBirth: '' }));
+                }}
+                error={errors.dateOfBirth}
+              />
+              <TextField
+                label="City"
+                placeholder="Enter city"
+                value={city}
+                onChangeText={(val) => {
+                  setCity(val);
+                  setErrors((e) => ({ ...e, city: '' }));
+                }}
+                error={errors.city}
+              />
+              <TextField
+                label="State"
+                placeholder="Enter state"
+                value={state}
+                onChangeText={(val) => {
+                  setState(val);
+                  setErrors((e) => ({ ...e, state: '' }));
+                }}
+                error={errors.state}
+              />
+              <TextField
+                label="Company Name"
+                placeholder="Enter current company name"
+                value={companyName}
+                onChangeText={(val) => {
+                  setCompanyName(val);
+                  setErrors((e) => ({ ...e, companyName: '' }));
+                }}
+                error={errors.companyName}
+              />
+              <NumericField
+                label="Loan Amount Required"
+                placeholder="Enter loan amount required"
+                prefix="₹"
+                value={loanAmountRequired}
+                onChangeText={(val) => {
+                  setLoanAmountRequired(val);
+                  setErrors((e) => ({ ...e, loanAmountRequired: '' }));
+                }}
+                error={errors.loanAmountRequired}
+              />
             </Animated.View>
 
             {/* Field A: Employment Type */}

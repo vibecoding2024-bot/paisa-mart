@@ -8,6 +8,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -15,9 +16,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, ChevronDown, ChevronUp, Briefcase, CheckCircle2 } from 'lucide-react-native';
 import Animated, { FadeInDown, ZoomIn } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
+import { useAdminStore } from '@/lib/admin-store';
 import { useBusinessLoanStore } from '@/lib/business-loan-store';
 import { submitBusinessLoanLead } from '@/lib/business-loan-api';
-import { useUserProfileStore } from '@/lib/user-profile-store';
 
 const BUSINESS_TYPES = [
   'Manufacturing Business',
@@ -142,10 +143,18 @@ function Dropdown({ label, value, options, onSelect, error }: DropdownProps) {
 export default function BusinessLoansDetailsScreen() {
   const router = useRouter();
   const setData = useBusinessLoanStore((s) => s.setData);
-  const profile = useUserProfileStore((s) => s.profile);
+  const addLead = useAdminStore((s) => s.addLead);
 
   const [businessType, setBusinessType] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [cibil, setCibil] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [monthlyIncome, setMonthlyIncome] = useState('');
   const [loanAmount, setLoanAmount] = useState('');
+  const [existingEmi, setExistingEmi] = useState('');
   const [loanPurpose, setLoanPurpose] = useState('');
   const [otherText, setOtherText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -155,11 +164,27 @@ export default function BusinessLoansDetailsScreen() {
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!businessType) newErrors.businessType = 'Please select a business type';
+    if (!fullName.trim()) newErrors.fullName = 'Please enter full name';
+    if (!/^[6-9]\d{9}$/.test(mobileNumber)) newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
+    if (!cibil.trim()) {
+      newErrors.cibil = 'Please enter CIBIL score';
+    } else if (Number(cibil) < 300 || Number(cibil) > 900) {
+      newErrors.cibil = 'CIBIL score must be between 300 and 900';
+    }
+    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
+    if (!city.trim()) newErrors.city = 'Please enter city';
+    if (!state.trim()) newErrors.state = 'Please enter state';
+    if (!monthlyIncome || monthlyIncome.trim() === '') {
+      newErrors.monthlyIncome = 'Please enter monthly income';
+    } else if (Number(monthlyIncome) <= 0) {
+      newErrors.monthlyIncome = 'Please enter a valid monthly income';
+    }
     if (!loanAmount || loanAmount.trim() === '') {
       newErrors.loanAmount = 'Please enter loan amount';
     } else if (isNaN(Number(loanAmount)) || Number(loanAmount) <= 0) {
       newErrors.loanAmount = 'Please enter a valid amount greater than 0';
     }
+    if (existingEmi === '') newErrors.existingEmi = 'Please enter existing EMI (enter 0 if none)';
     if (!loanPurpose) newErrors.loanPurpose = 'Please select a loan purpose';
     if (loanPurpose === 'Other' && !otherText.trim()) {
       newErrors.otherText = 'Please describe your loan purpose';
@@ -173,26 +198,66 @@ export default function BusinessLoansDetailsScreen() {
     setSubmitError('');
     if (!validate() || isSubmitting) return;
 
-    const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) || '';
-    if (!/^\d{10}$/.test(phoneNumber)) {
-      setSubmitError('Phone number is missing. Please complete your basic profile first.');
-      return;
-    }
-
+    const submittedAt = new Date().toISOString();
+    const cityState = `${city.trim()}, ${state.trim()}`;
     const leadData = {
       business_type: businessType,
+      full_name: fullName.trim(),
+      mobile_number: mobileNumber,
+      cibil,
+      date_of_birth: dateOfBirth.trim(),
+      city: city.trim(),
+      state: state.trim(),
+      city_state: cityState,
+      monthly_income: monthlyIncome,
       loan_amount_required: loanAmount,
+      existing_emi: existingEmi,
       loan_purpose: loanPurpose,
       loan_purpose_other_text: loanPurpose === 'Other' ? otherText : '',
-      timestamp: new Date().toISOString(),
+      timestamp: submittedAt,
     };
 
     try {
       setIsSubmitting(true);
-      await submitBusinessLoanLead({ ...leadData, phoneNumber });
+      await submitBusinessLoanLead({ ...leadData, phoneNumber: mobileNumber });
       setData(leadData);
+      addLead({
+        userName: fullName.trim(),
+        mobile: mobileNumber,
+        email: '',
+        productType: 'business-loans',
+        provider: 'Business Loan',
+        stage: 'new',
+        outcome: 'pending',
+        priority: 'medium',
+        city: city.trim(),
+        state: state.trim(),
+        source: 'Paisa Mart',
+        creditScore: Number(cibil),
+        consentGiven: true,
+        extraDetails: {
+          'Full Name': fullName.trim(),
+          'Mobile Number': mobileNumber,
+          'CIBIL Score': cibil,
+          'Date of Birth': dateOfBirth.trim(),
+          City: city.trim(),
+          State: state.trim(),
+          'Monthly Income': monthlyIncome,
+          'Loan Amount Required': loanAmount,
+          'Existing EMI': existingEmi,
+          'Business Type': businessType,
+          'Loan Purpose': loanPurpose === 'Other' ? otherText.trim() : loanPurpose,
+          'Submission Date & Time': submittedAt,
+          'Lead Source': 'Paisa Mart',
+          Status: 'New',
+        },
+      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      router.replace('/(tabs)');
+      Alert.alert(
+        'Application Submitted Successfully',
+        'Thank you for choosing Paisa Mart. Our team will review your request and contact you within the next few hours.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+      );
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not submit business loan details');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
@@ -380,6 +445,95 @@ export default function BusinessLoansDetailsScreen() {
                 ) : null}
               </Animated.View>
             )}
+
+            <Animated.View entering={FadeInDown.delay(240).springify()}>
+              <FormField
+                label="Full Name"
+                placeholder="Enter full name"
+                value={fullName}
+                onChangeText={(val) => {
+                  setFullName(val);
+                  setErrors((e) => ({ ...e, fullName: '' }));
+                }}
+                error={errors.fullName}
+              />
+              <FormField
+                label="Mobile Number"
+                placeholder="Enter 10-digit mobile number"
+                value={mobileNumber}
+                keyboardType="phone-pad"
+                onChangeText={(val) => {
+                  setMobileNumber(val.replace(/[^0-9]/g, '').slice(0, 10));
+                  setErrors((e) => ({ ...e, mobileNumber: '' }));
+                }}
+                error={errors.mobileNumber}
+              />
+              <FormField
+                label="CIBIL Score"
+                placeholder="Enter CIBIL score"
+                value={cibil}
+                keyboardType="numeric"
+                onChangeText={(val) => {
+                  setCibil(val.replace(/[^0-9]/g, '').slice(0, 3));
+                  setErrors((e) => ({ ...e, cibil: '' }));
+                }}
+                error={errors.cibil}
+              />
+              <FormField
+                label="Date of Birth"
+                placeholder="DD/MM/YYYY"
+                value={dateOfBirth}
+                onChangeText={(val) => {
+                  setDateOfBirth(val);
+                  setErrors((e) => ({ ...e, dateOfBirth: '' }));
+                }}
+                error={errors.dateOfBirth}
+              />
+              <FormField
+                label="City"
+                placeholder="Enter city"
+                value={city}
+                onChangeText={(val) => {
+                  setCity(val);
+                  setErrors((e) => ({ ...e, city: '' }));
+                }}
+                error={errors.city}
+              />
+              <FormField
+                label="State"
+                placeholder="Enter state"
+                value={state}
+                onChangeText={(val) => {
+                  setState(val);
+                  setErrors((e) => ({ ...e, state: '' }));
+                }}
+                error={errors.state}
+              />
+              <FormField
+                label="Monthly Income"
+                placeholder="Enter monthly income"
+                value={monthlyIncome}
+                keyboardType="numeric"
+                prefix="₹"
+                onChangeText={(val) => {
+                  setMonthlyIncome(val.replace(/[^0-9]/g, ''));
+                  setErrors((e) => ({ ...e, monthlyIncome: '' }));
+                }}
+                error={errors.monthlyIncome}
+              />
+              <FormField
+                label="Existing EMI"
+                placeholder="Enter existing EMI"
+                value={existingEmi}
+                keyboardType="numeric"
+                prefix="₹"
+                onChangeText={(val) => {
+                  setExistingEmi(val.replace(/[^0-9]/g, ''));
+                  setErrors((e) => ({ ...e, existingEmi: '' }));
+                }}
+                error={errors.existingEmi}
+              />
+            </Animated.View>
           </ScrollView>
 
           {/* Bottom Action Buttons */}
