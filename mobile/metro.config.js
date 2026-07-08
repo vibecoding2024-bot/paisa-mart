@@ -85,7 +85,6 @@ config.resolver = {
   },
   nodeModulesPaths: [
     mobileNodeModules,
-    path.resolve(__dirname, "../backend/node_modules"),
     rootNodeModules,
   ],
   // Only add shared folder resolution if it exists
@@ -116,11 +115,23 @@ config.resolver = {
     },
     nodeModulesPaths: [
       mobileNodeModules,
-      path.resolve(__dirname, "../backend/node_modules"),
       rootNodeModules,
     ],
   }),
   resolveRequest: (context, moduleName, platform) => {
+    const pinnedPackages = {
+      "react-dom": reactDomPath,
+      "react-native-web": reactNativeWebPath,
+      scheduler: schedulerPath,
+    };
+
+    for (const [packageName, packagePath] of Object.entries(pinnedPackages)) {
+      if (moduleName === packageName || moduleName.startsWith(`${packageName}/`)) {
+        const subpath = moduleName === packageName ? "" : moduleName.slice(packageName.length + 1);
+        return context.resolveRequest(context, path.join(packagePath, subpath), platform);
+      }
+    }
+
     // Handle @/shared/* imports explicitly
     // This is needed because:
     // 1. extraNodeModules alone doesn't handle subpath resolution
