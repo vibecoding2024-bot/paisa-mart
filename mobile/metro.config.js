@@ -3,7 +3,6 @@
 
 const { getDefaultConfig } = require("expo/metro-config");
 const { withNativeWind } = require("nativewind/metro");
-const { withVibecodeMetro } = require("@vibecodeapp/sdk/metro");
 const path = require("path");
 const fs = require("fs");
 
@@ -15,6 +14,22 @@ const sharedFolder = path.resolve(__dirname, "../shared");
 const sharedFolderExists = fs.existsSync(sharedFolder);
 const mobileNodeModules = path.resolve(__dirname, "node_modules");
 const rootNodeModules = path.resolve(__dirname, "../node_modules");
+const packageRoot = (packageName) =>
+  path.dirname(
+    require.resolve(`${packageName}/package.json`, {
+      paths: [mobileNodeModules, __dirname, rootNodeModules],
+    })
+  );
+const reactPath = packageRoot("react");
+const reactDomPath = packageRoot("react-dom");
+const reactNativePath = packageRoot("react-native");
+const reactNativeWebPath = packageRoot("react-native-web");
+const expoPath = packageRoot("expo");
+const schedulerPath = path.dirname(
+  require.resolve("scheduler/package.json", {
+    paths: [reactDomPath, mobileNodeModules, __dirname, rootNodeModules],
+  })
+);
 
 // DEBUG: Log metro.config.js version and shared folder status at startup
 console.log("[Metro Config] Version: 2025-02-03-v3-fix-dynamic-imports (source: workspace-mobile)");
@@ -31,7 +46,6 @@ config.resolver.useWatchman = false;
 // Configure asset and source extensions.
 const { assetExts, sourceExts } = config.resolver;
 
-// SVG transformer is configured by withVibecodeMetro
 config.transformer = {
   ...config.transformer,
   getTransformOptions: async () => ({
@@ -51,9 +65,12 @@ config.resolver = {
   disableHierarchicalLookup: true,
   extraNodeModules: {
     ...config.resolver.extraNodeModules,
-    react: path.join(mobileNodeModules, "react"),
-    "react-native": path.join(mobileNodeModules, "react-native"),
-    "expo": path.join(mobileNodeModules, "expo"),
+    react: reactPath,
+    "react-dom": reactDomPath,
+    "react-native": reactNativePath,
+    "react-native-web": reactNativeWebPath,
+    "expo": expoPath,
+    "scheduler": schedulerPath,
     "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
     "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
     "invariant": path.join(rootNodeModules, "invariant"),
@@ -68,7 +85,6 @@ config.resolver = {
   },
   nodeModulesPaths: [
     mobileNodeModules,
-    path.resolve(__dirname, "../backend/node_modules"),
     rootNodeModules,
   ],
   // Only add shared folder resolution if it exists
@@ -78,9 +94,12 @@ config.resolver = {
     unstable_enablePackageExports: true,
     extraNodeModules: {
       ...config.resolver.extraNodeModules,
-      react: path.join(mobileNodeModules, "react"),
-      "react-native": path.join(mobileNodeModules, "react-native"),
-      "expo": path.join(mobileNodeModules, "expo"),
+      react: reactPath,
+      "react-dom": reactDomPath,
+      "react-native": reactNativePath,
+      "react-native-web": reactNativeWebPath,
+      "expo": expoPath,
+      "scheduler": schedulerPath,
       "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
       "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
       "invariant": path.join(rootNodeModules, "invariant"),
@@ -96,11 +115,23 @@ config.resolver = {
     },
     nodeModulesPaths: [
       mobileNodeModules,
-      path.resolve(__dirname, "../backend/node_modules"),
       rootNodeModules,
     ],
   }),
   resolveRequest: (context, moduleName, platform) => {
+    const pinnedPackages = {
+      "react-dom": reactDomPath,
+      "react-native-web": reactNativeWebPath,
+      scheduler: schedulerPath,
+    };
+
+    for (const [packageName, packagePath] of Object.entries(pinnedPackages)) {
+      if (moduleName === packageName || moduleName.startsWith(`${packageName}/`)) {
+        const subpath = moduleName === packageName ? "" : moduleName.slice(packageName.length + 1);
+        return context.resolveRequest(context, path.join(packagePath, subpath), platform);
+      }
+    }
+
     // Handle @/shared/* imports explicitly
     // This is needed because:
     // 1. extraNodeModules alone doesn't handle subpath resolution
@@ -166,4 +197,4 @@ config.resolver = {
 };
 
 // Integrate NativeWind with the Metro configuration.
-module.exports = withNativeWind(withVibecodeMetro(config), { input: "./global.css" });
+module.exports = withNativeWind(config, { input: "./global.css" });
