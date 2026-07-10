@@ -5,16 +5,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 export interface PersonalLoanData {
   full_name: string;
   mobile_number: string;
+  cibil: string;
   date_of_birth: string;
   city: string;
   state: string;
   company_name: string;
-  loan_amount_required: string;
-  employment_type: string;
-  credit_score_range: string;
   monthly_income: string;
-  total_monthly_emi: string;
-  total_outstanding_balance: string;
+  loan_amount_required: string;
+  existing_emi: string;
+  employment_type: string;
   timestamp: string;
 }
 

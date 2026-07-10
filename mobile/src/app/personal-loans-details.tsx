@@ -15,8 +15,6 @@ import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
-  ChevronDown,
-  ChevronUp,
   UserCheck,
   CheckCircle2,
   AlertTriangle,
@@ -26,112 +24,6 @@ import * as Haptics from '@/lib/haptics';
 import { useAdminStore } from '@/lib/admin-store';
 import { usePersonalLoanStore } from '@/lib/personal-loan-store';
 import { submitPersonalLoanLead } from '@/lib/personal-loan-api';
-
-const CREDIT_SCORE_OPTIONS = [
-  { label: '300 – 500 (Poor)', value: '300-500' },
-  { label: '550 – 649 (Fair)', value: '550-649' },
-  { label: '650 – 749 (Good)', value: '650-749' },
-  { label: '750 – 799 (Very Good)', value: '750-799' },
-  { label: '800 – 900 (Excellent)', value: '800-900' },
-  { label: "I don't know my score", value: 'unknown' },
-];
-
-type DropdownProps = {
-  label: string;
-  value: string;
-  options: { label: string; value: string }[];
-  onSelect: (val: string) => void;
-  placeholder?: string;
-  error?: string;
-};
-
-function Dropdown({ label, value, options, onSelect, placeholder, error }: DropdownProps) {
-  const [open, setOpen] = useState(false);
-  const selectedLabel = options.find((o) => o.value === value)?.label ?? '';
-
-  return (
-    <View style={{ marginBottom: 20 }}>
-      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
-        {label}
-      </Text>
-      <Pressable
-        onPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          setOpen(!open);
-        }}
-        style={{
-          borderWidth: 1.5,
-          borderColor: error ? '#EF4444' : open ? '#002561' : '#E5E7EB',
-          borderRadius: 12,
-          paddingHorizontal: 14,
-          paddingVertical: 14,
-          backgroundColor: '#fff',
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text style={{ color: selectedLabel ? '#111827' : '#9CA3AF', fontSize: 14 }}>
-          {selectedLabel || placeholder || `Select ${label}`}
-        </Text>
-        {open ? <ChevronUp size={18} color="#6B7280" /> : <ChevronDown size={18} color="#6B7280" />}
-      </Pressable>
-      {error ? (
-        <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text>
-      ) : null}
-      {open && (
-        <Animated.View
-          entering={FadeInDown.duration(150)}
-          style={{
-            borderWidth: 1.5,
-            borderColor: '#E5E7EB',
-            borderRadius: 12,
-            backgroundColor: '#fff',
-            marginTop: 4,
-            overflow: 'hidden',
-            shadowColor: '#000',
-            shadowOpacity: 0.08,
-            shadowRadius: 8,
-            shadowOffset: { width: 0, height: 4 },
-            elevation: 4,
-          }}
-        >
-          {options.map((opt, idx) => (
-            <Pressable
-              key={idx}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                onSelect(opt.value);
-                setOpen(false);
-              }}
-              style={{
-                paddingHorizontal: 14,
-                paddingVertical: 13,
-                borderBottomWidth: idx < options.length - 1 ? 1 : 0,
-                borderBottomColor: '#F3F4F6',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                backgroundColor: value === opt.value ? '#EFF6FF' : '#fff',
-              }}
-            >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: value === opt.value ? '#002561' : '#374151',
-                  fontWeight: value === opt.value ? '600' : '400',
-                }}
-              >
-                {opt.label}
-              </Text>
-              {value === opt.value && <CheckCircle2 size={16} color="#002561" />}
-            </Pressable>
-          ))}
-        </Animated.View>
-      )}
-    </View>
-  );
-}
 
 type TextFieldProps = {
   label: string;
@@ -256,57 +148,46 @@ export default function PersonalLoansDetailsScreen() {
 
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
+  const [cibil, setCibil] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [companyName, setCompanyName] = useState('');
-  const [loanAmountRequired, setLoanAmountRequired] = useState('');
-  const [employmentType, setEmploymentType] = useState('');
-  const [creditScore, setCreditScore] = useState('');
   const [monthlyIncome, setMonthlyIncome] = useState('');
-  const [monthlyEmi, setMonthlyEmi] = useState('');
-  const [outstandingBalance, setOutstandingBalance] = useState('');
+  const [loanAmountRequired, setLoanAmountRequired] = useState('');
+  const [existingEmi, setExistingEmi] = useState('');
+  const [employmentType, setEmploymentType] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-
-  const emiWarning =
-    monthlyEmi &&
-    monthlyIncome &&
-    Number(monthlyEmi) > 0 &&
-    Number(monthlyIncome) > 0 &&
-    Number(monthlyEmi) >= Number(monthlyIncome)
-      ? 'Total EMI is equal to or exceeds monthly income. Loan approval may be difficult.'
-      : '';
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
     if (!fullName.trim()) newErrors.fullName = 'Please enter full name';
     if (!/^[6-9]\d{9}$/.test(mobileNumber)) newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
+    if (!cibil.trim()) {
+      newErrors.cibil = 'Please enter CIBIL score';
+    } else if (Number(cibil) < 300 || Number(cibil) > 900) {
+      newErrors.cibil = 'CIBIL score must be between 300 and 900';
+    }
     if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
     if (!city.trim()) newErrors.city = 'Please enter city';
     if (!state.trim()) newErrors.state = 'Please enter state';
     if (!companyName.trim()) newErrors.companyName = 'Please enter company name';
-    if (!loanAmountRequired || Number(loanAmountRequired) <= 0) {
-      newErrors.loanAmountRequired = 'Please enter loan amount required';
-    }
-    if (!employmentType) newErrors.employmentType = 'Please select employment type';
     if (!monthlyIncome || monthlyIncome.trim() === '') {
       newErrors.monthlyIncome = 'Please enter monthly income';
     } else if (Number(monthlyIncome) <= 0) {
       newErrors.monthlyIncome = 'Income must be greater than 0';
     }
-    if (monthlyEmi === '' || monthlyEmi === undefined) {
-      newErrors.monthlyEmi = 'Please enter total monthly EMI (enter 0 if none)';
-    } else if (Number(monthlyEmi) < 0) {
-      newErrors.monthlyEmi = 'EMI cannot be negative';
+    if (!loanAmountRequired || Number(loanAmountRequired) <= 0) {
+      newErrors.loanAmountRequired = 'Please enter loan amount required';
     }
-    if (outstandingBalance === '' || outstandingBalance === undefined) {
-      newErrors.outstandingBalance =
-        'Please enter total outstanding balance (enter 0 if none)';
-    } else if (Number(outstandingBalance) < 0) {
-      newErrors.outstandingBalance = 'Outstanding balance cannot be negative';
+    if (existingEmi === '' || existingEmi === undefined) {
+      newErrors.existingEmi = 'Please enter existing EMI (enter 0 if none)';
+    } else if (Number(existingEmi) < 0) {
+      newErrors.existingEmi = 'EMI cannot be negative';
     }
+    if (!employmentType) newErrors.employmentType = 'Please select employment type';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -320,16 +201,15 @@ export default function PersonalLoansDetailsScreen() {
     const leadData = {
       full_name: fullName.trim(),
       mobile_number: mobileNumber,
+      cibil,
       date_of_birth: dateOfBirth.trim(),
       city: city.trim(),
       state: state.trim(),
       company_name: companyName.trim(),
-      loan_amount_required: loanAmountRequired,
-      employment_type: employmentType,
-      credit_score_range: creditScore || '',
       monthly_income: monthlyIncome,
-      total_monthly_emi: monthlyEmi,
-      total_outstanding_balance: outstandingBalance,
+      loan_amount_required: loanAmountRequired,
+      existing_emi: existingEmi,
+      employment_type: employmentType,
       timestamp: submittedAt,
     };
 
@@ -353,12 +233,15 @@ export default function PersonalLoansDetailsScreen() {
         extraDetails: {
           'Full Name': fullName.trim(),
           'Mobile Number': mobileNumber,
+          'CIBIL Score': cibil,
           'Date of Birth': dateOfBirth.trim(),
           City: city.trim(),
           State: state.trim(),
           'Company Name': companyName.trim(),
-          'Employment Type': employmentType,
+          'Monthly Income': monthlyIncome,
           'Loan Amount Required': loanAmountRequired,
+          'Existing EMI': existingEmi,
+          'Employment Type': employmentType,
           'Submission Date & Time': submittedAt,
           'Lead Source': 'Paisa Mart',
           Status: 'New',
@@ -493,6 +376,16 @@ export default function PersonalLoansDetailsScreen() {
                 }}
                 error={errors.mobileNumber}
               />
+              <NumericField
+                label="CIBIL Score"
+                placeholder="Enter CIBIL score (300-900)"
+                value={cibil}
+                onChangeText={(val) => {
+                  setCibil(val.replace(/[^0-9]/g, '').slice(0, 3));
+                  setErrors((e) => ({ ...e, cibil: '' }));
+                }}
+                error={errors.cibil}
+              />
               <TextField
                 label="Date of Birth"
                 placeholder="DD/MM/YYYY"
@@ -534,6 +427,17 @@ export default function PersonalLoansDetailsScreen() {
                 error={errors.companyName}
               />
               <NumericField
+                label="Monthly Income"
+                placeholder="Enter monthly income"
+                prefix="₹"
+                value={monthlyIncome}
+                onChangeText={(val) => {
+                  setMonthlyIncome(val);
+                  setErrors((e) => ({ ...e, monthlyIncome: '' }));
+                }}
+                error={errors.monthlyIncome}
+              />
+              <NumericField
                 label="Loan Amount Required"
                 placeholder="Enter loan amount required"
                 prefix="₹"
@@ -544,9 +448,20 @@ export default function PersonalLoansDetailsScreen() {
                 }}
                 error={errors.loanAmountRequired}
               />
+              <NumericField
+                label="Existing EMI"
+                placeholder="Enter existing EMI (0 if none)"
+                prefix="₹"
+                value={existingEmi}
+                onChangeText={(val) => {
+                  setExistingEmi(val);
+                  setErrors((e) => ({ ...e, existingEmi: '' }));
+                }}
+                error={errors.existingEmi}
+              />
             </Animated.View>
 
-            {/* Field A: Employment Type */}
+            {/* Employment Type */}
             <Animated.View entering={FadeInDown.delay(80).springify()}>
               <Text
                 style={{
@@ -558,7 +473,7 @@ export default function PersonalLoansDetailsScreen() {
               >
                 Employment Type
               </Text>
-              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+              <View style={{ flexDirection: 'row', gap: 12, marginBottom: 4 }}>
                 {['Private', 'Government'].map((opt) => {
                   const selected = employmentType === opt;
                   return (
@@ -597,75 +512,10 @@ export default function PersonalLoansDetailsScreen() {
                 })}
               </View>
               {errors.employmentType ? (
-                <Text
-                  style={{ color: '#EF4444', fontSize: 12, marginTop: -14, marginBottom: 14 }}
-                >
+                <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 6, marginBottom: 14 }}>
                   {errors.employmentType}
                 </Text>
               ) : null}
-            </Animated.View>
-
-            {/* Field B: Credit Score Range */}
-            <Animated.View entering={FadeInDown.delay(120).springify()}>
-              <Dropdown
-                label="Credit Score Range"
-                placeholder="Select your credit score range"
-                value={creditScore}
-                options={CREDIT_SCORE_OPTIONS}
-                onSelect={(val) => setCreditScore(val)}
-              />
-              <View style={{ marginTop: -12, marginBottom: 16 }}>
-                <Text style={{ color: '#9CA3AF', fontSize: 12 }}>
-                  Optional — helps match the best lenders for your client.
-                </Text>
-              </View>
-            </Animated.View>
-
-            {/* Field C: Monthly Income */}
-            <Animated.View entering={FadeInDown.delay(160).springify()}>
-              <NumericField
-                label="Monthly Income"
-                placeholder="Enter monthly income"
-                prefix="₹"
-                value={monthlyIncome}
-                onChangeText={(val) => {
-                  setMonthlyIncome(val);
-                  setErrors((e) => ({ ...e, monthlyIncome: '' }));
-                }}
-                error={errors.monthlyIncome}
-              />
-            </Animated.View>
-
-            {/* Field D: Total Monthly EMI */}
-            <Animated.View entering={FadeInDown.delay(200).springify()}>
-              <NumericField
-                label="Total Monthly EMI"
-                placeholder="Enter total EMI amount"
-                prefix="₹"
-                value={monthlyEmi}
-                onChangeText={(val) => {
-                  setMonthlyEmi(val);
-                  setErrors((e) => ({ ...e, monthlyEmi: '' }));
-                }}
-                error={errors.monthlyEmi}
-                warning={emiWarning}
-              />
-            </Animated.View>
-
-            {/* Field E: Total Outstanding Loan Balance */}
-            <Animated.View entering={FadeInDown.delay(240).springify()}>
-              <NumericField
-                label="Total Outstanding Loan Amount"
-                placeholder="Enter total outstanding balance"
-                prefix="₹"
-                value={outstandingBalance}
-                onChangeText={(val) => {
-                  setOutstandingBalance(val);
-                  setErrors((e) => ({ ...e, outstandingBalance: '' }));
-                }}
-                hint="Total balance remaining across all active loans."
-                error={errors.outstandingBalance}
-              />
             </Animated.View>
           </ScrollView>
 

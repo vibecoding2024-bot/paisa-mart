@@ -2,11 +2,16 @@ import { Database } from "bun:sqlite";
 
 export type PersonalLoanLeadInput = {
   phoneNumber: string;
-  employmentType: string;
-  creditScoreRange?: string;
+  fullName?: string;
+  cibil?: string;
+  dateOfBirth?: string;
+  city?: string;
+  state?: string;
+  companyName?: string;
   monthlyIncome: string;
-  totalMonthlyEmi: string;
-  totalOutstandingBalance: string;
+  loanAmountRequired?: string;
+  existingEmi: string;
+  employmentType?: string;
   source?: string;
 };
 
@@ -25,11 +30,15 @@ let pgClientPromise: Promise<any> | null = null;
 sqlite?.run(`CREATE TABLE IF NOT EXISTS personal_loan_leads (
   id                         TEXT PRIMARY KEY,
   phoneNumber                TEXT NOT NULL,
-  employmentType             TEXT NOT NULL,
-  creditScoreRange           TEXT,
+  fullName                   TEXT,
+  cibil                      TEXT,
+  dateOfBirth                TEXT,
+  city                       TEXT,
+  state                      TEXT,
+  companyName                TEXT,
   monthlyIncome              TEXT NOT NULL,
-  totalMonthlyEmi            TEXT NOT NULL,
-  totalOutstandingBalance    TEXT NOT NULL,
+  loanAmountRequired         TEXT,
+  existingEmi                TEXT NOT NULL,
   source                     TEXT NOT NULL DEFAULT 'personal-loans-details',
   createdAt                  TEXT NOT NULL
 )`);
@@ -55,11 +64,8 @@ async function getPgClient() {
     CREATE TABLE IF NOT EXISTS personal_loan_leads (
       id                          BIGSERIAL PRIMARY KEY,
       phone_number                TEXT NOT NULL,
-      employment_type             TEXT NOT NULL,
-      credit_score_range          TEXT,
       monthly_income              TEXT NOT NULL,
-      total_monthly_emi           TEXT NOT NULL,
-      total_outstanding_balance   TEXT NOT NULL,
+      existing_emi                TEXT NOT NULL,
       source                      TEXT NOT NULL DEFAULT 'personal-loans-details',
       payload                     JSONB NOT NULL DEFAULT '{}'::jsonb,
       created_at                  TIMESTAMPTZ NOT NULL DEFAULT NOW()
@@ -72,7 +78,6 @@ export async function savePersonalLoanLead(input: PersonalLoanLeadInput): Promis
   const normalized: PersonalLoanLeadInput = {
     ...input,
     phoneNumber: normalizePhone(input.phoneNumber),
-    creditScoreRange: input.creditScoreRange?.trim() || "",
     source: input.source || "personal-loans-details",
   };
 
@@ -85,32 +90,23 @@ export async function savePersonalLoanLead(input: PersonalLoanLeadInput): Promis
     const rows = await sql`
       INSERT INTO personal_loan_leads (
         phone_number,
-        employment_type,
-        credit_score_range,
         monthly_income,
-        total_monthly_emi,
-        total_outstanding_balance,
+        existing_emi,
         source,
         payload
       )
       VALUES (
         ${normalized.phoneNumber},
-        ${normalized.employmentType},
-        ${normalized.creditScoreRange || null},
         ${normalized.monthlyIncome},
-        ${normalized.totalMonthlyEmi},
-        ${normalized.totalOutstandingBalance},
+        ${normalized.existingEmi},
         ${normalized.source},
         ${sql.json(normalized)}
       )
       RETURNING
         id::text,
         phone_number AS "phoneNumber",
-        employment_type AS "employmentType",
-        credit_score_range AS "creditScoreRange",
         monthly_income AS "monthlyIncome",
-        total_monthly_emi AS "totalMonthlyEmi",
-        total_outstanding_balance AS "totalOutstandingBalance",
+        existing_emi AS "existingEmi",
         source,
         created_at AS "createdAt"
     `;
@@ -121,17 +117,21 @@ export async function savePersonalLoanLead(input: PersonalLoanLeadInput): Promis
   const createdAt = now();
   sqlite!.run(
     `INSERT INTO personal_loan_leads (
-      id,phoneNumber,employmentType,creditScoreRange,monthlyIncome,
-      totalMonthlyEmi,totalOutstandingBalance,source,createdAt
-    ) VALUES (?,?,?,?,?,?,?,?,?)`,
+      id,phoneNumber,fullName,cibil,dateOfBirth,city,state,companyName,
+      monthlyIncome,loanAmountRequired,existingEmi,source,createdAt
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`,
     [
       id,
       normalized.phoneNumber,
-      normalized.employmentType,
-      normalized.creditScoreRange || null,
+      normalized.fullName || null,
+      normalized.cibil || null,
+      normalized.dateOfBirth || null,
+      normalized.city || null,
+      normalized.state || null,
+      normalized.companyName || null,
       normalized.monthlyIncome,
-      normalized.totalMonthlyEmi,
-      normalized.totalOutstandingBalance,
+      normalized.loanAmountRequired || null,
+      normalized.existingEmi,
       normalized.source,
       createdAt,
     ],
@@ -140,7 +140,6 @@ export async function savePersonalLoanLead(input: PersonalLoanLeadInput): Promis
   return {
     ...normalized,
     id,
-    creditScoreRange: normalized.creditScoreRange || "",
     createdAt,
   };
 }

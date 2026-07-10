@@ -6,11 +6,17 @@ const personalLoansRouter = new Hono();
 
 const leadSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/),
-  employmentType: z.enum(["Private", "Government"]),
-  creditScoreRange: z.string().optional().default(""),
+  fullName: z.string().trim().optional(),
+  mobileNumber: z.string().optional(),
+  cibil: z.string().regex(/^\d+$/).optional(),
+  dateOfBirth: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  companyName: z.string().optional(),
   monthlyIncome: z.string().regex(/^\d+$/),
-  totalMonthlyEmi: z.string().regex(/^\d+$/),
-  totalOutstandingBalance: z.string().regex(/^\d+$/),
+  loanAmountRequired: z.string().regex(/^\d+$/).optional(),
+  existingEmi: z.string().regex(/^\d+$/),
+  employmentType: z.enum(["Private", "Government"]).optional(),
   source: z.string().optional(),
 });
 
