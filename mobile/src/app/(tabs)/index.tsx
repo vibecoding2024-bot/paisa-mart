@@ -1,45 +1,79 @@
 import { useState } from 'react';
-import { View, Text, ScrollView, Share, Pressable } from 'react-native';
+import { View, Text, ScrollView, Share } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, TrendingUp, Users, Wallet, Lock, CreditCard } from 'lucide-react-native';
+import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight, Info, Headphones } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
+import { useFeatureFlags } from '@/lib/feature-flags';
 import { useNotificationStore } from '@/lib/notification-store';
 import { toast } from '@/lib/toast-store';
 import PressableScale from '@/components/PressableScale';
+import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
 
-interface BankProduct {
-  id: string;
-  title: string;
-  bank: string;
-  features: string[];
-  gradient: [string, string];
-}
-
-const BANK_PRODUCTS: BankProduct[] = [
-  {
-    id: 'kotak-savings-account',
-    title: 'Kotak 811',
-    bank: 'Kotak Mahindra Bank',
-    features: ['Zero balance account', 'Virtual debit card'],
-    gradient: ['#E0F2FE', '#F0FAFF'],
-  },
-  {
-    id: 'indusind-bank-business-savings-account',
-    title: 'Indus Delite: Zero Balance',
-    bank: 'IndusInd Bank',
-    features: ['Zero Balance Savings Account', 'Up to 5% cashback on debit card spends'],
-    gradient: ['#E0F2FE', '#F0FAFF'],
-  },
+const QUICK_ACTIONS = [
+  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
+  { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF', categoryId: 'bank-accounts' },
+  { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'home-loans' },
+  { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5', categoryId: 'personal-loans' },
+  { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2', categoryId: 'vehicle-loans' },
+  { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8', categoryId: 'business-loans' },
+  { icon: Zap, label: 'Insta Loans', color: '#F59E0B', bg: '#FFFBEB', categoryId: 'insta-loans' },
+  { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4', categoryId: 'health-insurance' },
+  { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF', categoryId: 'life-insurance' },
+  { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
+  { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
+  { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
+  { icon: Wallet, label: 'Cash on Credit Card', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'cash-cards', isScreen: true },
+  { icon: Smartphone, label: 'Recharge & Pay Bills', color: '#7C3AED', bg: '#F5F3FF', categoryId: 'recharge-bills', isScreen: true },
+  { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
   const getFirstName = useUserProfileStore((s) => s.getFirstName);
   const hasProfile = useUserProfileStore((s) => s.hasProfile);
+  const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
+  const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+
+  const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
+
+  const handleQuickAction = (categoryId: string, isScreen?: boolean) => {
+    if (categoryId === 'gold-loans' && !goldLoanEnabled) {
+      setComingSoonModule('gold-loans');
+      return;
+    }
+    if (categoryId === 'real-estate' && !realEstateEnabled) {
+      setComingSoonModule('real-estate');
+      return;
+    }
+    if (categoryId === 'business-loans') {
+      router.push('/business-loans-details');
+      return;
+    }
+    if (categoryId === 'personal-loans') {
+      router.push('/personal-loans-details');
+      return;
+    }
+    if (isScreen) {
+      router.push(`/${categoryId}`);
+    } else {
+      router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
+    }
+  };
+
+  const handleInvite = async () => {
+    try {
+      await Share.share({
+        message:
+          'Join me on Paisa Mart and start earning by selling financial products! Sign up with my referral and we both earn ₹500. 💰',
+      });
+    } catch {
+      toast.error('Could not open share sheet');
+    }
+  };
 
   const firstName = getFirstName();
   const timeBasedGreeting = getTimeBasedGreeting();
@@ -50,6 +84,7 @@ export default function HomeScreen() {
   return (
     <View className="flex-1 bg-gray-50">
       <SafeAreaView className="flex-1" edges={['top']}>
+        {/* Header */}
         <LinearGradient
           colors={['#002561', '#0A3D91', '#0A3D91']}
           start={{ x: 0, y: 0 }}
@@ -84,6 +119,7 @@ export default function HomeScreen() {
               </PressableScale>
             </View>
 
+            {/* Earnings Card */}
             <Animated.View entering={FadeInDown.delay(100).springify()}>
               <LinearGradient
                 colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
@@ -98,13 +134,16 @@ export default function HomeScreen() {
                       <Text className="text-green-400 text-xs ml-1 font-medium">Start selling to earn!</Text>
                     </View>
                   </View>
-                  <PressableScale haptic="medium" onPress={() => router.push('/(tabs)/earnings')}>
+                  <PressableScale
+                    haptic="medium"
+                    onPress={() => router.push('/(tabs)/earnings')}
+                  >
                     <LinearGradient
                       colors={['#FF8C00', '#FF6B00']}
                       style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, flexDirection: 'row', alignItems: 'center' }}
                     >
                       <Text className="text-white font-bold text-sm mr-1">Withdraw</Text>
-                      <ChevronRight size={16} color="#fff" />
+                      <ArrowUpRight size={16} color="#fff" />
                     </LinearGradient>
                   </PressableScale>
                 </View>
@@ -114,75 +153,167 @@ export default function HomeScreen() {
         </LinearGradient>
 
         <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-6">
-            <Text className="text-gray-900 font-bold text-lg mb-4">Featured Bank Accounts</Text>
-
-            {BANK_PRODUCTS.map((product, index) => (
-              <Animated.View
-                key={product.id}
-                entering={FadeInDown.delay(250 + index * 100).springify()}
-                className="mb-4"
-              >
-                <LinearGradient
-                  colors={product.gradient}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={{ borderRadius: 20, padding: 20, shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 12, elevation: 3 }}
-                >
-                  <View className="flex-row items-start justify-between mb-4">
-                    <View className="flex-1">
-                      <Text className="text-gray-900 font-bold text-base">{product.title}</Text>
-                      <Text className="text-gray-500 text-sm mt-0.5">{product.bank}</Text>
-                    </View>
-                    <View className="bg-white rounded-full p-2">
-                      <CreditCard size={20} color="#0A3D91" />
-                    </View>
-                  </View>
-
-                  <View className="mb-5">
-                    {product.features.map((feature, featureIndex) => (
-                      <View key={featureIndex} className="flex-row items-center mb-2.5">
-                        <View className="w-1.5 h-1.5 bg-blue-500 rounded-full mr-3" />
-                        <Text className="text-gray-700 text-sm flex-1">{feature}</Text>
-                      </View>
-                    ))}
-                  </View>
-
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/share-card', params: { productId: product.id } })}
-                    className="mb-4"
+          {/* Quick Actions */}
+          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-4">
+            <View
+              className="bg-white rounded-3xl p-4"
+              style={{ shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 3 }}
+            >
+              <View className="flex-row items-center justify-between mb-4">
+                <Text className="text-gray-900 font-bold text-base">Quick Actions</Text>
+                <PressableScale haptic="selection" onPress={() => router.push('/(tabs)/products')} className="flex-row items-center">
+                  <Text className="text-orange-500 text-xs font-semibold">See all</Text>
+                  <ChevronRight size={14} color="#FF8C00" />
+                </PressableScale>
+              </View>
+              <View className="flex-row flex-wrap justify-between">
+                {QUICK_ACTIONS.map((action, index) => (
+                  <PressableScale
+                    key={index}
+                    haptic="light"
+                    activeScale={0.9}
+                    className="items-center mb-4"
+                    style={{ width: '30%' }}
+                    onPress={() => handleQuickAction(action.categoryId, action.isScreen)}
                   >
-                    <View className="flex-row items-center">
-                      <Text className="text-blue-600 font-semibold text-sm">View all Details and Benefits</Text>
-                      <ChevronRight size={16} color="#2563EB" />
+                    <View
+                      className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
+                      style={{ backgroundColor: action.bg }}
+                    >
+                      <action.icon size={24} color={action.color} />
                     </View>
-                  </Pressable>
-
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/share-card', params: { productId: product.id } })}
-                    className="bg-blue-600 rounded-xl py-3 items-center justify-center"
-                  >
-                    <Text className="text-white font-bold text-base">Apply</Text>
-                  </Pressable>
-                </LinearGradient>
-              </Animated.View>
-            ))}
+                    <Text className="text-gray-600 text-xs text-center font-medium" numberOfLines={2}>{action.label}</Text>
+                  </PressableScale>
+                ))}
+              </View>
+            </View>
           </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(700).springify()} className="px-4 mt-2 mb-8">
+          {/* Stats Row */}
+          <Animated.View entering={FadeInDown.delay(300).springify()} className="flex-row px-4 mt-4 gap-3">
+            <PressableScale
+              haptic="light"
+              activeScale={0.97}
+              onPress={() => router.push('/(tabs)/products')}
+              className="flex-1 bg-white rounded-2xl p-4"
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+            >
+              <View className="w-9 h-9 bg-blue-50 rounded-xl items-center justify-center">
+                <Users size={18} color="#3B82F6" />
+              </View>
+              <Text className="text-gray-900 font-bold text-2xl mt-2.5">0</Text>
+              <Text className="text-gray-400 text-xs mt-0.5">My Customers</Text>
+            </PressableScale>
+            <PressableScale
+              haptic="light"
+              activeScale={0.97}
+              onPress={() => router.push('/(tabs)/earnings')}
+              className="flex-1 bg-white rounded-2xl p-4"
+              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+            >
+              <View className="w-9 h-9 bg-green-50 rounded-xl items-center justify-center">
+                <TrendingUp size={18} color="#10B981" />
+              </View>
+              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹0</Text>
+              <Text className="text-gray-400 text-xs mt-0.5">This Month</Text>
+            </PressableScale>
+          </Animated.View>
+
+          {/* Referral Banner */}
+          <Animated.View entering={FadeInDown.delay(400).springify()} className="px-4 mt-4">
+            <LinearGradient
+              colors={['#FF8C00', '#FF6B00']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={{ borderRadius: 22, padding: 18, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 4 }}
+            >
+              <View className="flex-row items-center justify-between">
+                <View className="flex-1 pr-3">
+                  <Text className="text-white font-extrabold text-lg">Refer & Earn ₹500</Text>
+                  <Text className="text-white/85 text-xs mt-1 leading-4">Invite friends and earn for every signup</Text>
+                  <PressableScale
+                    haptic="medium"
+                    onPress={handleInvite}
+                    className="bg-white mt-3 py-2.5 px-5 rounded-full self-start flex-row items-center"
+                  >
+                    <Text className="text-orange-600 font-bold text-sm">Invite Now</Text>
+                    <ChevronRight size={16} color="#EA580C" />
+                  </PressableScale>
+                </View>
+                <View className="w-16 h-16 bg-white/20 rounded-full items-center justify-center">
+                  <Gift size={34} color="#fff" />
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+
+          {/* Training Section */}
+          <Animated.View entering={FadeInDown.delay(500).springify()} className="px-4 mt-4 mb-2">
+            <Text className="text-gray-600 font-semibold text-sm mb-3">About & Support</Text>
+            <View className="flex-row gap-3">
+              <PressableScale
+                haptic="light"
+                activeScale={0.95}
+                onPress={() => router.push('/about-us')}
+                className="flex-1 bg-white rounded-xl p-4"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              >
+                <View className="w-10 h-10 bg-blue-50 rounded-lg items-center justify-center mb-2">
+                  <Info size={20} color="#0A3D91" />
+                </View>
+                <Text className="text-gray-900 font-bold text-sm">About Us</Text>
+                <Text className="text-gray-400 text-xs mt-1">Company info</Text>
+              </PressableScale>
+              <PressableScale
+                haptic="light"
+                activeScale={0.95}
+                onPress={() => router.push('/support')}
+                className="flex-1 bg-white rounded-xl p-4"
+                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              >
+                <View className="w-10 h-10 bg-green-50 rounded-lg items-center justify-center mb-2">
+                  <Headphones size={20} color="#16A34A" />
+                </View>
+                <Text className="text-gray-900 font-bold text-sm">Contact Us</Text>
+                <Text className="text-gray-400 text-xs mt-1">Get support</Text>
+              </PressableScale>
+            </View>
+          </Animated.View>
+
+          {/* Training Section */}
+          <Animated.View entering={FadeInDown.delay(700).springify()} className="px-4 mt-4 mb-8">
             <PressableScale
               haptic="light"
               activeScale={0.98}
-              onPress={() => router.push({ pathname: '/(tabs)/products', params: { category: 'bank-accounts' } })}
-              className="bg-white rounded-2xl p-4 flex-row items-center justify-center"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
+              onPress={() => router.push('/(tabs)/learn')}
             >
-              <Text className="text-gray-900 font-bold text-base">View All Bank Products</Text>
-              <ChevronRight size={18} color="#0A3D91" />
+              <LinearGradient
+                colors={['#EFF6FF', '#F5F3FF']}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center' }}
+              >
+                <LinearGradient
+                  colors={['#2563EB', '#1D4ED8']}
+                  style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
+                >
+                  <Star size={24} color="#fff" />
+                </LinearGradient>
+                <View className="flex-1">
+                  <Text className="text-gray-900 font-bold">Complete Training</Text>
+                  <Text className="text-gray-500 text-xs mt-0.5">Become a Certified Financial Advisor</Text>
+                </View>
+                <ChevronRight size={20} color="#3B82F6" />
+              </LinearGradient>
             </PressableScale>
           </Animated.View>
         </ScrollView>
       </SafeAreaView>
+      <ComingSoonModal
+        visible={comingSoonModule !== null}
+        module={comingSoonModule}
+        onClose={() => setComingSoonModule(null)}
+      />
     </View>
   );
 }
