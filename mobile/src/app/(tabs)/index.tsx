@@ -49,6 +49,10 @@ export default function HomeScreen() {
       setComingSoonModule('real-estate');
       return;
     }
+    if (categoryId === 'home-loans') {
+      router.push('/home-loans-details');
+      return;
+    }
     if (categoryId === 'business-loans') {
       router.push('/business-loans-details');
       return;

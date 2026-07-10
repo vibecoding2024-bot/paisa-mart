@@ -68,6 +68,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="travel/hotels" options={{ headerShown: false }} />
         <Stack.Screen name="travel/bus" options={{ headerShown: false }} />
         <Stack.Screen name="travel/train" options={{ headerShown: false }} />
+        <Stack.Screen name="home-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="business-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="personal-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="vehicle-loans-details" options={{ headerShown: false }} />

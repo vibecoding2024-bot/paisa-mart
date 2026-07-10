@@ -497,6 +497,11 @@ export default function ProductsScreen() {
         setComingSoonModule('real-estate');
         return;
       }
+      // Home Loans navigates to details screen first
+      if (category === 'home-loans') {
+        router.push('/home-loans-details');
+        return;
+      }
       // Business Loans navigates to details screen first
       if (category === 'business-loans') {
         router.push('/business-loans-details');
@@ -548,6 +553,11 @@ export default function ProductsScreen() {
     }
     if (catId === 'real-estate' && !realEstateEnabled) {
       setComingSoonModule('real-estate');
+      return;
+    }
+    // Home Loans requires details capture first
+    if (catId === 'home-loans') {
+      router.push('/home-loans-details');
       return;
     }
     // Business Loans requires details capture first

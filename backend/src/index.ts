@@ -12,6 +12,7 @@ import { authRouter } from "./routes/auth";
 import { kycRouter } from "./routes/kyc";
 import { personalLoansRouter } from "./routes/personal-loans";
 import { businessLoansRouter } from "./routes/business-loans";
+import { homeLoansRouter } from "./routes/home-loans";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
 
@@ -270,6 +271,7 @@ app.route("/api/users", usersRouter);
 app.route("/api/kyc", kycRouter);
 app.route("/api/personal-loans", personalLoansRouter);
 app.route("/api/business-loans", businessLoansRouter);
+app.route("/api/home-loans", homeLoansRouter);
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;
