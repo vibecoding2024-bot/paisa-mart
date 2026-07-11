@@ -13,9 +13,9 @@ const leadSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   companyName: z.string().optional(),
-  monthlyIncome: z.string().regex(/^\d+$/),
+  monthlyIncome: z.string().regex(/^\d+$/).optional(),
   loanAmountRequired: z.string().regex(/^\d+$/).optional(),
-  existingEmi: z.string().regex(/^\d+$/),
+  existingEmi: z.string().regex(/^\d+$/).optional(),
   employmentType: z.enum(["Private", "Government"]).optional(),
   source: z.string().optional(),
 });
