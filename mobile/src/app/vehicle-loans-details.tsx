@@ -545,7 +545,7 @@ export default function VehicleLoansDetailsScreen() {
           >
             <Pressable
               onPress={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || !vehicleType}
               style={{
                 borderRadius: 14,
                 overflow: 'hidden',

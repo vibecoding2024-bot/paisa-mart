@@ -7,7 +7,7 @@ const businessLoansRouter = new Hono();
 const leadSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/),
   businessType: z.string().trim().min(1),
-  loanAmountRequired: z.string().regex(/^\d+$/),
+  loanAmountRequired: z.string().optional(),
   loanPurpose: z.string().trim().min(1),
   loanPurposeOtherText: z.string().optional().default(""),
   source: z.string().optional(),
