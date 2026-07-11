@@ -96,6 +96,14 @@ function Field({
   );
 }
 
+const VEHICLE_ICONS: Record<string, string> = {
+  'Car': '🚗', 'Jeep': '🚙', 'Van': '🚐', 'Tata Ace': '🛻', 'Bolero': '🚙',
+  'Lorry / Truck': '🚛', 'Trailer / Container Vehicle': '🚚', 'Auto Rickshaw': '🛺',
+  'Taxi / Cab': '🚕', 'Bus': '🚌', 'Tempo Traveller': '🚐', 'Tractor': '🚜',
+  'JCB / Earthmover': '🏗️', 'Crane': '🏗️', 'Ambulance': '🚑', 'Fire Vehicle': '🚒',
+  'Heavy Truck': '🚛', 'Tipper': '🚚', 'Tanker': '⛽', 'Multi-Axle Vehicle': '🚛', 'Others': '🚘',
+};
+
 function VehicleDropdown({
   value,
   onSelect,
@@ -106,61 +114,107 @@ function VehicleDropdown({
   error?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState('');
+  const filtered = VEHICLE_TYPES.filter((t) => t.toLowerCase().includes(search.toLowerCase()));
+
   return (
     <View style={{ marginBottom: 20 }}>
       <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
-        Vehicle Type
+        Vehicle Type <Text style={{ color: '#EF4444' }}>*</Text>
       </Text>
       <Pressable
-        onPress={() => setOpen(true)}
+        onPress={() => { setSearch(''); setOpen(true); }}
         style={{
           borderWidth: 1.5,
-          borderColor: error ? '#EF4444' : '#E5E7EB',
+          borderColor: error ? '#EF4444' : value ? '#002561' : '#E5E7EB',
           borderRadius: 12,
-          backgroundColor: '#fff',
+          backgroundColor: value ? '#EFF6FF' : '#fff',
           flexDirection: 'row',
           alignItems: 'center',
           paddingHorizontal: 14,
-          paddingVertical: 14,
+          paddingVertical: 13,
           justifyContent: 'space-between',
         }}
       >
-        <Text style={{ fontSize: 14, color: value ? '#111827' : '#9CA3AF' }}>
-          {value || 'Select vehicle type'}
-        </Text>
-        <ChevronDown size={18} color="#6B7280" />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {value ? <Text style={{ fontSize: 18 }}>{VEHICLE_ICONS[value] ?? '🚘'}</Text> : null}
+          <Text style={{ fontSize: 14, color: value ? '#002561' : '#9CA3AF', fontWeight: value ? '600' : '400' }}>
+            {value || 'Select vehicle type'}
+          </Text>
+        </View>
+        <ChevronDown size={18} color={value ? '#002561' : '#9CA3AF'} />
       </Pressable>
       {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-          onPress={() => setOpen(false)}
-        >
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%' }}>
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
-              <Text style={{ fontWeight: '700', fontSize: 16, color: '#111827' }}>Select Vehicle Type</Text>
-            </View>
-            <ScrollView>
-              {VEHICLE_TYPES.map((type) => (
+
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={() => setOpen(false)} />
+        <View style={{
+          position: 'absolute', bottom: 0, left: 0, right: 0,
+          backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24,
+          maxHeight: '72%', paddingBottom: Platform.OS === 'ios' ? 32 : 16,
+        }}>
+          {/* Handle */}
+          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
+            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB' }} />
+          </View>
+          {/* Header */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 }}>
+            <Text style={{ fontWeight: '700', fontSize: 16, color: '#111827' }}>Select Vehicle Type</Text>
+            <Pressable onPress={() => setOpen(false)} style={{ padding: 4 }}>
+              <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>Cancel</Text>
+            </Pressable>
+          </View>
+          {/* Search */}
+          <View style={{
+            marginHorizontal: 16, marginBottom: 8,
+            flexDirection: 'row', alignItems: 'center',
+            backgroundColor: '#F3F4F6', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8,
+          }}>
+            <Text style={{ fontSize: 14, marginRight: 6 }}>🔍</Text>
+            <TextInput
+              placeholder="Search vehicle type..."
+              placeholderTextColor="#9CA3AF"
+              value={search}
+              onChangeText={setSearch}
+              style={{ flex: 1, fontSize: 14, color: '#111827' }}
+              autoCorrect={false}
+            />
+          </View>
+          {/* List */}
+          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            {filtered.map((type, i) => {
+              const selected = value === type;
+              return (
                 <Pressable
                   key={type}
-                  onPress={() => { onSelect(type); setOpen(false); }}
+                  onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onSelect(type); setOpen(false); }}
                   style={{
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    borderBottomWidth: 1,
-                    borderBottomColor: '#F9FAFB',
-                    backgroundColor: value === type ? '#EFF6FF' : '#fff',
+                    flexDirection: 'row', alignItems: 'center',
+                    paddingHorizontal: 16, paddingVertical: 12,
+                    backgroundColor: selected ? '#EFF6FF' : '#fff',
+                    borderBottomWidth: i < filtered.length - 1 ? 1 : 0,
+                    borderBottomColor: '#F3F4F6',
                   }}
                 >
-                  <Text style={{ fontSize: 14, color: value === type ? '#002561' : '#374151', fontWeight: value === type ? '600' : '400' }}>
+                  <View style={{
+                    width: 36, height: 36, borderRadius: 10,
+                    backgroundColor: selected ? '#DBEAFE' : '#F9FAFB',
+                    alignItems: 'center', justifyContent: 'center', marginRight: 12,
+                  }}>
+                    <Text style={{ fontSize: 18 }}>{VEHICLE_ICONS[type] ?? '🚘'}</Text>
+                  </View>
+                  <Text style={{ flex: 1, fontSize: 14, color: selected ? '#002561' : '#374151', fontWeight: selected ? '600' : '400' }}>
                     {type}
                   </Text>
+                  {selected ? <Text style={{ color: '#002561', fontSize: 16 }}>✓</Text> : null}
                 </Pressable>
-              ))}
-            </ScrollView>
-          </View>
-        </Pressable>
+              );
+            })}
+            {filtered.length === 0 ? (
+              <Text style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 14, paddingVertical: 24 }}>No results found</Text>
+            ) : null}
+          </ScrollView>
+        </View>
       </Modal>
     </View>
   );
