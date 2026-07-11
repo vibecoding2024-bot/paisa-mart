@@ -243,6 +243,46 @@ export default function ProfileScreen() {
             </View>
           </Animated.View>
 
+          {/* Payout Structure */}
+          <Animated.View entering={FadeInDown.delay(320).springify()} className="px-4 mt-4">
+            <View className="bg-white rounded-3xl overflow-hidden" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}>
+              <LinearGradient colors={['#002561', '#003380']} style={{ padding: 16, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Award size={18} color="#FFB800" />
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Payout Structure</Text>
+              </LinearGradient>
+              {/* Table Header */}
+              <View style={{ flexDirection: 'row', backgroundColor: '#F8FAFF', paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#E5E7EB' }}>
+                <Text style={{ width: 32, fontSize: 11, fontWeight: '700', color: '#6B7280' }}>S.No</Text>
+                <Text style={{ flex: 1, fontSize: 11, fontWeight: '700', color: '#6B7280' }}>Service</Text>
+                <Text style={{ width: 140, fontSize: 11, fontWeight: '700', color: '#6B7280', textAlign: 'right' }}>Payout / Commission</Text>
+              </View>
+              {[
+                { s: 1,  service: 'Credit Cards',       payout: 'Up to ₹3,000 per card' },
+                { s: 2,  service: 'Bank Accounts',      payout: 'Up to ₹1,000 per account' },
+                { s: 3,  service: 'Home Loans',         payout: 'Up to 1.5% of disbursed' },
+                { s: 4,  service: 'Personal Loans',     payout: 'Up to 2% of disbursed' },
+                { s: 5,  service: 'Vehicle Loans',      payout: 'Up to 2% of disbursed' },
+                { s: 6,  service: 'Business Loans',     payout: 'Up to 2% of disbursed' },
+                { s: 7,  service: 'Instant Loans',      payout: 'Up to 1.5% of disbursed' },
+                { s: 8,  service: 'Health Insurance',   payout: 'Up to 15% of premium' },
+                { s: 9,  service: 'Life Insurance',     payout: 'Up to 20% of premium' },
+                { s: 10, service: 'Motor Insurance',    payout: 'Up to 20% of premium' },
+                { s: 11, service: 'Gold Loans',         payout: '₹500 per ₹1L loan' },
+              ].map((row, i) => (
+                <View key={row.s} style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 10, backgroundColor: i % 2 === 0 ? '#fff' : '#F9FAFB', borderBottomWidth: i < 10 ? 1 : 0, borderBottomColor: '#F3F4F6' }}>
+                  <Text style={{ width: 32, fontSize: 12, color: '#9CA3AF', fontWeight: '600' }}>{row.s}</Text>
+                  <Text style={{ flex: 1, fontSize: 13, color: '#111827', fontWeight: '500' }}>{row.service}</Text>
+                  <Text style={{ width: 140, fontSize: 12, color: '#002561', fontWeight: '600', textAlign: 'right' }}>{row.payout}</Text>
+                </View>
+              ))}
+              <View style={{ padding: 12, backgroundColor: '#FFFBEB', borderTopWidth: 1, borderTopColor: '#FDE68A' }}>
+                <Text style={{ fontSize: 11, color: '#92400E', fontWeight: '600', marginBottom: 4 }}>Note:</Text>
+                <Text style={{ fontSize: 11, color: '#78350F', lineHeight: 16 }}>• Payouts subject to bank/NBFC/insurer approval and successful disbursement or policy issuance.{'
+'}• Actual commissions may vary by institution and product.</Text>
+              </View>
+            </View>
+          </Animated.View>
+
           {/* Admin Portal Access */}
           <Animated.View entering={FadeInDown.delay(350).springify()} className="px-4 mt-4">
             <PressableScale
