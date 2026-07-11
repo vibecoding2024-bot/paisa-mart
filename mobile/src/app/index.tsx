@@ -14,7 +14,7 @@ import Animated, {
   FadeInDown,
   FadeInUp,
 } from 'react-native-reanimated';
-import { Phone, ArrowRight, Users, Wallet, Award, Star, Info, Headphones } from 'lucide-react-native';
+import { Phone, ArrowRight, Award, Wallet, Info, Headphones } from 'lucide-react-native';
 import { sendOtp } from '@/lib/auth-api';
 import { useIncentiveStore } from '@/lib/incentive-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
@@ -147,36 +147,7 @@ export default function LoginScreen() {
                 </Text>
               </Animated.View>
 
-              {/* Stats Row */}
-              <Animated.View
-                entering={isWeb ? undefined : FadeInDown.delay(300).springify()}
-                className="flex-row mt-5 gap-6"
-              >
-                <View className="flex-row items-center">
-                  <Users size={20} color="#FF8C00" />
-                  <View className="ml-2">
-                    <Text className="text-white font-bold text-lg">40 Lakh+</Text>
-                    <Text className="text-white/70 text-xs">Partners</Text>
-                  </View>
-                </View>
-                <View className="flex-row items-center">
-                  <Wallet size={20} color="#FF8C00" />
-                  <View className="ml-2">
-                    <Text className="text-white font-bold text-lg">₹100 Cr+</Text>
-                    <Text className="text-white/70 text-xs">Earned</Text>
-                  </View>
-                </View>
-              </Animated.View>
 
-              {/* Rating */}
-              <Animated.View
-                entering={isWeb ? undefined : FadeInDown.delay(400).springify()}
-                className="flex-row items-center mt-4 bg-white/10 self-start px-3 py-1.5 rounded-full"
-              >
-                <Star size={14} color="#FFD700" fill="#FFD700" />
-                <Text className="text-white text-sm ml-1 font-medium">4.5</Text>
-                <Text className="text-white/70 text-xs ml-1">• 50K+ Reviews</Text>
-              </Animated.View>
             </View>
           </LinearGradient>
 
