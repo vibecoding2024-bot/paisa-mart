@@ -277,8 +277,8 @@ export default function ProfileScreen() {
               ))}
               <View style={{ padding: 12, backgroundColor: '#FFFBEB', borderTopWidth: 1, borderTopColor: '#FDE68A' }}>
                 <Text style={{ fontSize: 11, color: '#92400E', fontWeight: '600', marginBottom: 4 }}>Note:</Text>
-                <Text style={{ fontSize: 11, color: '#78350F', lineHeight: 16 }}>• Payouts subject to bank/NBFC/insurer approval and successful disbursement or policy issuance.{'
-'}• Actual commissions may vary by institution and product.</Text>
+                <Text style={{ fontSize: 11, color: '#78350F', lineHeight: 16 }}>{`• Payouts subject to bank/NBFC/insurer approval and successful disbursement or policy issuance.
+• Actual commissions may vary by institution and product.`}</Text>
               </View>
             </View>
           </Animated.View>
