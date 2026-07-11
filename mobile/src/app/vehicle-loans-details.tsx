@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -13,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Car, CheckCircle2, ChevronLeft } from 'lucide-react-native';
+import { Car, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import { useAdminStore } from '@/lib/admin-store';
@@ -91,6 +92,76 @@ function Field({
         />
       </View>
       {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
+    </View>
+  );
+}
+
+function VehicleDropdown({
+  value,
+  onSelect,
+  error,
+}: {
+  value: string;
+  onSelect: (val: string) => void;
+  error?: string;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <View style={{ marginBottom: 20 }}>
+      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>
+        Vehicle Type
+      </Text>
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={{
+          borderWidth: 1.5,
+          borderColor: error ? '#EF4444' : '#E5E7EB',
+          borderRadius: 12,
+          backgroundColor: '#fff',
+          flexDirection: 'row',
+          alignItems: 'center',
+          paddingHorizontal: 14,
+          paddingVertical: 14,
+          justifyContent: 'space-between',
+        }}
+      >
+        <Text style={{ fontSize: 14, color: value ? '#111827' : '#9CA3AF' }}>
+          {value || 'Select vehicle type'}
+        </Text>
+        <ChevronDown size={18} color="#6B7280" />
+      </Pressable>
+      {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+          onPress={() => setOpen(false)}
+        >
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '70%' }}>
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' }}>
+              <Text style={{ fontWeight: '700', fontSize: 16, color: '#111827' }}>Select Vehicle Type</Text>
+            </View>
+            <ScrollView>
+              {VEHICLE_TYPES.map((type) => (
+                <Pressable
+                  key={type}
+                  onPress={() => { onSelect(type); setOpen(false); }}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    borderBottomWidth: 1,
+                    borderBottomColor: '#F9FAFB',
+                    backgroundColor: value === type ? '#EFF6FF' : '#fff',
+                  }}
+                >
+                  <Text style={{ fontSize: 14, color: value === type ? '#002561' : '#374151', fontWeight: value === type ? '600' : '400' }}>
+                    {type}
+                  </Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
@@ -232,51 +303,18 @@ export default function VehicleLoansDetailsScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Animated.View entering={FadeInDown.delay(50).springify()}>
-              <Text style={{ color: '#111827', fontWeight: '700', fontSize: 18, marginBottom: 14 }}>
-                Select Vehicle Type
-              </Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 22 }}>
-                {VEHICLE_TYPES.map((type) => {
-                  const selected = vehicleType === type;
-                  return (
-                    <Pressable
-                      key={type}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setVehicleType(type);
-                        setErrors((e) => ({ ...e, vehicleType: '' }));
-                      }}
-                      style={{
-                        width: '48%',
-                        minHeight: 72,
-                        backgroundColor: selected ? '#EFF6FF' : '#fff',
-                        borderWidth: 1.5,
-                        borderColor: selected ? '#002561' : '#E5E7EB',
-                        borderRadius: 14,
-                        padding: 12,
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <Text style={{ color: selected ? '#002561' : '#374151', fontWeight: '600', flex: 1 }}>
-                          {type}
-                        </Text>
-                        {selected ? <CheckCircle2 size={18} color="#002561" /> : null}
-                      </View>
-                    </Pressable>
-                  );
-                })}
-              </View>
-              {errors.vehicleType ? (
-                <Text style={{ color: '#EF4444', fontSize: 12, marginTop: -16, marginBottom: 16 }}>
-                  {errors.vehicleType}
-                </Text>
-              ) : null}
+              <VehicleDropdown
+                value={vehicleType}
+                onSelect={(type) => {
+                  setVehicleType(type);
+                  setErrors((e) => ({ ...e, vehicleType: '' }));
+                }}
+                error={errors.vehicleType}
+              />
             </Animated.View>
 
             {vehicleType ? (
               <Animated.View entering={FadeInDown.delay(90).springify()}>
-                <Field label="Vehicle Type" placeholder="Vehicle type" value={vehicleType} onChangeText={() => {}} editable={false} />
                 <Field
                   label="Full Name"
                   placeholder="Enter full name"
