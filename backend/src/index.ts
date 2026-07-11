@@ -118,46 +118,7 @@ html,body{height:100%;margin:0;padding:0;background:#fff}
 }
 </style>`;
 
-const BRAND_HEADER = `
-<div id="web-brand-header">
-  <nav id="web-top-nav" aria-label="Paisa Mart website navigation">
-    <a class="web-nav-link" href="/">Home</a>
-    <a class="web-nav-link" href="/#company">Company</a>
-    <a class="web-nav-link" href="/#products-services">Products &amp; Services</a>
-    <a class="web-nav-link" href="/#solutions">Solutions</a>
-    <a class="web-nav-link" href="/#contact">Contact Us</a>
-    <a class="web-nav-link" href="/terms-and-conditions">Terms &amp; Conditions</a>
-  </nav>
-  <div id="web-logo-row">
-    <div id="web-logo-dot"></div>
-    <span id="web-logo-text">Paisa Mart</span>
-  </div>
-  <p id="web-tagline">India's #1 Financial Products Partner Platform</p>
-  <div id="web-stats-row">
-    <div class="web-stat"><span class="web-stat-value">40L+</span><span class="web-stat-label">Partners</span></div>
-    <div class="web-stat-div"></div>
-    <div class="web-stat"><span class="web-stat-value">&#8377;100Cr+</span><span class="web-stat-label">Earned</span></div>
-    <div class="web-stat-div"></div>
-    <div class="web-stat"><span class="web-stat-value">4.5&#9733;</span><span class="web-stat-label">Rating</span></div>
-  </div>
-  <div id="web-info-grid" aria-label="Website information">
-    <section class="web-info-card" id="home">
-      <h3>Home</h3>
-      <p>Paisa Mart helps individuals and businesses discover and apply for trusted financial products in one place.</p>
-      <p>Start from the app to compare options, submit details quickly, and track progress with guided support.</p>
-    </section>
-    <section class="web-info-card" id="products-services">
-      <h3>Products &amp; Services</h3>
-      <p>Credit cards, savings accounts, loans, and insurance from leading banks and NBFC partners.</p>
-      <p>Agent onboarding, assisted sales workflows, payout visibility, and multilingual support tools for faster conversions.</p>
-    </section>
-    <section class="web-info-card" id="contact">
-      <h3>Contact Us</h3>
-      <p>Need help with onboarding, partner support, or enterprise solutions? Reach our team through the app help section.</p>
-      <p>For business inquiries, use the Contact Us option in the app and our team will connect with you.</p>
-    </section>
-  </div>
-</div>`;
+const BRAND_HEADER = `<div id="web-brand-header"></div>`;
 
 const BRAND_FOOTER = `
 <div id="web-brand-footer">
