@@ -9,18 +9,17 @@ import {
   Platform,
   ActivityIndicator,
   Alert,
-  Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import {
   ChevronLeft,
-  ChevronDown,
   UserCheck,
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react-native';
+import { ModalDropdown } from '@/components/ModalDropdown';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import { useAdminStore } from '@/lib/admin-store';
@@ -152,52 +151,6 @@ const INDIAN_STATES = [
   'Andaman & Nicobar Islands', 'Chandigarh', 'Dadra & Nagar Haveli and Daman & Diu',
   'Delhi', 'Jammu & Kashmir', 'Ladakh', 'Lakshadweep', 'Puducherry',
 ];
-
-function StateDropdown({ value, onSelect, error }: { value: string; onSelect: (v: string) => void; error?: string }) {
-  const [open, setOpen] = useState(false);
-  const [search, setSearch] = useState('');
-  const filtered = INDIAN_STATES.filter((s) => s.toLowerCase().includes(search.toLowerCase()));
-  return (
-    <View style={{ marginBottom: 20 }}>
-      <Text style={{ color: '#374151', fontWeight: '600', fontSize: 14, marginBottom: 8 }}>State</Text>
-      <Pressable
-        onPress={() => { setSearch(''); setOpen(true); }}
-        style={{ borderWidth: 1.5, borderColor: error ? '#EF4444' : value ? '#002561' : '#E5E7EB', borderRadius: 12, backgroundColor: value ? '#EFF6FF' : '#fff', flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 13, justifyContent: 'space-between' }}
-      >
-        <Text style={{ fontSize: 14, color: value ? '#002561' : '#9CA3AF', fontWeight: value ? '600' : '400' }}>{value || 'Select state'}</Text>
-        <ChevronDown size={18} color={value ? '#002561' : '#9CA3AF'} />
-      </Pressable>
-      {error ? <Text style={{ color: '#EF4444', fontSize: 12, marginTop: 4 }}>{error}</Text> : null}
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={() => setOpen(false)} />
-        <View style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, maxHeight: '72%', paddingBottom: Platform.OS === 'ios' ? 32 : 16 }}>
-          <View style={{ alignItems: 'center', paddingTop: 10, paddingBottom: 4 }}>
-            <View style={{ width: 36, height: 4, borderRadius: 2, backgroundColor: '#E5E7EB' }} />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10 }}>
-            <Text style={{ fontWeight: '700', fontSize: 16, color: '#111827' }}>Select State</Text>
-            <Pressable onPress={() => setOpen(false)} style={{ padding: 4 }}><Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>Cancel</Text></Pressable>
-          </View>
-          <View style={{ marginHorizontal: 16, marginBottom: 8, flexDirection: 'row', alignItems: 'center', backgroundColor: '#F3F4F6', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8 }}>
-            <Text style={{ fontSize: 14, marginRight: 6 }}>🔍</Text>
-            <TextInput placeholder="Search state..." placeholderTextColor="#9CA3AF" value={search} onChangeText={setSearch} style={{ flex: 1, fontSize: 14, color: '#111827' }} autoCorrect={false} />
-          </View>
-          <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-            {filtered.map((s, i) => (
-              <Pressable key={s} onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onSelect(s); setOpen(false); }}
-                style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 13, backgroundColor: value === s ? '#EFF6FF' : '#fff', borderBottomWidth: i < filtered.length - 1 ? 1 : 0, borderBottomColor: '#F3F4F6' }}
-              >
-                <Text style={{ flex: 1, fontSize: 14, color: value === s ? '#002561' : '#374151', fontWeight: value === s ? '600' : '400' }}>{s}</Text>
-                {value === s ? <Text style={{ color: '#002561', fontSize: 16 }}>✓</Text> : null}
-              </Pressable>
-            ))}
-            {filtered.length === 0 ? <Text style={{ textAlign: 'center', color: '#9CA3AF', fontSize: 14, paddingVertical: 24 }}>No results found</Text> : null}
-          </ScrollView>
-        </View>
-      </Modal>
-    </View>
-  );
-}
 
 export default function PersonalLoansDetailsScreen() {
   const router = useRouter();
@@ -464,10 +417,13 @@ export default function PersonalLoansDetailsScreen() {
                 }}
                 error={errors.city}
               />
-              <StateDropdown
+              <ModalDropdown
+                label="State"
                 value={state}
+                options={INDIAN_STATES}
                 onSelect={(val) => { setState(val); setErrors((e) => ({ ...e, state: '' })); }}
                 error={errors.state}
+                placeholder="Select state"
               />
               <TextField
                 label="Company Name"
