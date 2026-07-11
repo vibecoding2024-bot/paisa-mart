@@ -46,6 +46,7 @@ export default function OTPScreen() {
   const [resendMessage, setResendMessage] = useState('');
   const [error, setError] = useState('');
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const resendInFlightRef = useRef(false);
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
@@ -182,14 +183,14 @@ export default function OTPScreen() {
   };
 
   const handleResend = async () => {
-    if (resendTimer > 0 || isResending) return;
+    if (resendTimer > 0 || resendInFlightRef.current) return;
 
+    resendInFlightRef.current = true;
     setError('');
     setResendMessage('');
     setIsResending(true);
     try {
       if (!phone) throw new Error('Mobile number is missing');
-      startOtpLoginFlow();
       const result = await sendOtp(phone, Platform.OS === 'web' ? 'web' : 'mobile');
       setReqId(result.reqId);
       setResendTimer(30);
@@ -201,6 +202,7 @@ export default function OTPScreen() {
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Unable to resend OTP');
     } finally {
+      resendInFlightRef.current = false;
       setIsResending(false);
     }
   };
