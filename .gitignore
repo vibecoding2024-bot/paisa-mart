@@ -1,5 +1,7 @@
 .env
-.env.production
+.env.*
 backend/.env
-backend/.env.production
+backend/.env.*
+mobile/.env
+mobile/.env.*
 node_modules
