@@ -12,7 +12,7 @@ import { toast } from '@/lib/toast-store';
 const QUICK_AMOUNTS = [500, 1000, 2000, 5000, 10000];
 
 const PAYMENT_METHODS = [
-  { id: 'card', label: 'Credit / Debit Card', sub: 'Visa, Mastercard, RuPay' },
+  { id: 'card', label: 'Credit Card', sub: 'Visa, Mastercard, RuPay' },
   { id: 'upi', label: 'UPI', sub: 'Google Pay, PhonePe, Paytm' },
   { id: 'netbanking', label: 'Net Banking', sub: 'All major banks' },
 ];
