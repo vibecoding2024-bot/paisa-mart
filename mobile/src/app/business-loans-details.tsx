@@ -256,8 +256,8 @@ export default function BusinessLoansDetailsScreen() {
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
-        'Application Submitted Successfully',
-        'Thank you for choosing Paisa Mart. Our team will review your request and contact you within the next few hours.',
+        'Application Submitted! 🎉',
+        'Our Banking Executive will reach you to further process your loan.',
         [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
       );
     } catch (error) {
