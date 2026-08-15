@@ -102,14 +102,14 @@ export default function DashboardScreen() {
   const router = useRouter();
   const leads = useAdminStore(s => s.leads);
   const whatsappLeads = useWhatsAppLeadsStore(s => s.leads);
-  const newWhatsAppLeads = useWhatsAppLeadsStore(s => s.getLeadsByStatus('New'));
   const openPlotsLeads = useOpenPlotsLeadsStore(s => s.leads);
-  const newOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getLeadsByStatus('New'));
-  const highPriorityOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getHighPriorityLeads());
   const vehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.leads);
-  const newVehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.getLeadsByStatus('New'));
   const utilityTransactions = useUtilityTransactionStore(s => s.transactions);
   const healthInsuranceApps = useHealthInsuranceStore(s => s.applications);
+  const newWhatsAppLeads = whatsappLeads.filter(lead => lead.status === 'New');
+  const newOpenPlotsLeads = openPlotsLeads.filter(lead => lead.status === 'New');
+  const highPriorityOpenPlotsLeads = openPlotsLeads.filter(lead => lead.priority === 'High');
+  const newVehicleInsuranceLeads = vehicleInsuranceLeads.filter(lead => lead.status === 'New');
   const newHealthInsuranceApps = healthInsuranceApps.filter(a => a.status === 'New');
   const motorInsuranceApps = useMotorInsuranceStore(s => s.applications);
   const newMotorInsuranceApps = motorInsuranceApps.filter(a => a.status === 'New');
