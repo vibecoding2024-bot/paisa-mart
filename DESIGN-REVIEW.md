@@ -26,8 +26,8 @@ Open `artifacts/preview.html` in this worktree. Screenshots show the built appli
 
 ## Deployment status
 
-Nothing has been pushed to GitHub or deployed to AWS. Backend code, SSL, DNS, and server settings are unchanged.
+The approved source and verified frontend package are maintained on branch `design/fintech-refresh` in the independent `paisa-mart-approved` checkout. GitHub main and the original working folder are preserved. Production publication is pending execution of the prepared deployment command on EC2. See `deployment/README.md` for backup, verification and rollback details.
 
-Local dependencies are reused through `node_modules` junctions, which are not source changes. A fresh checkout should install the existing dependencies with Bun.
+The design worktree reused local dependencies through `node_modules` junctions. The independent approved checkout has its own Git history and contains no dependency junctions or environment credentials. A fresh source build should install the existing dependencies with Bun. The packaged release does not require an on-server build.
 
-For a later deployment, use this branch as the base, preserve production environment configuration and the existing API/database, and verify authenticated access to the intended Sydney EC2 instance before publishing. Do not deploy the older original working directory or replace its unrelated edits.
+The frontend deployment script validates the intended Sydney instance, preserves the running API and existing downloads, and performs an automatic rollback if its HTTPS checks fail. Five offline deployment checks passed, including rollback and preservation of backend files. The final package passed 14 browser checks, including full-width desktop rendering with the existing server compatibility marker. Do not run the legacy root deploy.sh for this release.
