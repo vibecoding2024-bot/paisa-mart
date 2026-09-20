@@ -1,36 +1,171 @@
-import { useState } from 'react';
-import { View, Text, ScrollView, Share } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Bell, ChevronRight, CreditCard, Landmark, Shield, TrendingUp, Users, Wallet, Star, Gift, Zap, Home, Car, Briefcase, Heart, UserCheck, Gem, Building2, Umbrella, Smartphone, Plane, ArrowUpRight, Info, Headphones } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
-import { useUserProfileStore, getTimeBasedGreeting } from '@/lib/user-profile-store';
-import { useFeatureFlags } from '@/lib/feature-flags';
-import { useNotificationStore } from '@/lib/notification-store';
-import { toast } from '@/lib/toast-store';
-import PressableScale from '@/components/PressableScale';
-import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
+import { useState } from "react";
+import { View, Share, useWindowDimensions } from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Bell,
+  ChevronRight,
+  CreditCard,
+  Landmark,
+  Shield,
+  TrendingUp,
+  Users,
+  Wallet,
+  Star,
+  Gift,
+  Zap,
+  Home,
+  Car,
+  Briefcase,
+  Heart,
+  UserCheck,
+  Gem,
+  Building2,
+  Umbrella,
+  Smartphone,
+  Plane,
+  ArrowUpRight,
+  Info,
+  Headphones,
+} from "lucide-react-native";
+import { Search, ArrowRight, BookOpen } from "lucide-react-native";
+import {
+  Page,
+  BrandMark,
+  Typography as Text,
+  Surface,
+  SectionHeading,
+  Reveal,
+  IconBadge,
+  palette,
+} from "@/components/brand";
+import { useRouter } from "expo-router";
+import {
+  useUserProfileStore,
+  getTimeBasedGreeting,
+} from "@/lib/user-profile-store";
+import { useFeatureFlags } from "@/lib/feature-flags";
+import { useNotificationStore } from "@/lib/notification-store";
+import { toast } from "@/lib/toast-store";
+import PressableScale from "@/components/PressableScale";
+import ComingSoonModal, {
+  type ComingSoonModule,
+} from "@/components/ComingSoonModal";
 
 const QUICK_ACTIONS = [
-  { icon: CreditCard, label: 'Credit Cards', color: '#3B82F6', bg: '#EFF6FF', categoryId: 'credit-cards' },
-  { icon: Landmark, label: 'Bank Accounts', color: '#06B6D4', bg: '#ECFEFF', categoryId: 'bank-accounts' },
-  { icon: Home, label: 'Home Loans', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'home-loans' },
-  { icon: UserCheck, label: 'Personal Loans', color: '#10B981', bg: '#ECFDF5', categoryId: 'personal-loans' },
-  { icon: Car, label: 'Vehicle Loans', color: '#EF4444', bg: '#FEF2F2', categoryId: 'vehicle-loans' },
-  { icon: Briefcase, label: 'Business Loans', color: '#EC4899', bg: '#FDF2F8', categoryId: 'business-loans' },
-  { icon: Zap, label: 'Insta Loans', color: '#F59E0B', bg: '#FFFBEB', categoryId: 'insta-loans' },
-  { icon: Heart, label: 'Health Insurance', color: '#22C55E', bg: '#F0FDF4', categoryId: 'health-insurance' },
-  { icon: Shield, label: 'Life Insurance', color: '#6366F1', bg: '#EEF2FF', categoryId: 'life-insurance' },
-  { icon: Umbrella, label: 'Motor Insurance', color: '#0EA5E9', bg: '#F0F9FF', categoryId: 'motor-insurance' },
-  { icon: Gem, label: 'Gold Loans', color: '#EAB308', bg: '#FEFCE8', categoryId: 'gold-loans' },
-  { icon: Building2, label: 'Real Estate', color: '#64748B', bg: '#F8FAFC', categoryId: 'real-estate' },
-  { icon: Wallet, label: 'Cash on Credit Card', color: '#8B5CF6', bg: '#F5F3FF', categoryId: 'cash-cards', isScreen: true },
-  { icon: Smartphone, label: 'Recharge & Pay Bills', color: '#7C3AED', bg: '#F5F3FF', categoryId: 'recharge-bills', isScreen: true },
-  { icon: Plane, label: 'Travel & Tickets', color: '#DC2626', bg: '#FEF2F2', categoryId: 'travel-tickets', isScreen: true },
+  {
+    icon: CreditCard,
+    label: "Credit Cards",
+    color: "#3B82F6",
+    bg: "#EFF6FF",
+    categoryId: "credit-cards",
+  },
+  {
+    icon: Landmark,
+    label: "Bank Accounts",
+    color: "#06B6D4",
+    bg: "#ECFEFF",
+    categoryId: "bank-accounts",
+  },
+  {
+    icon: Home,
+    label: "Home Loans",
+    color: "#8B5CF6",
+    bg: "#F5F3FF",
+    categoryId: "home-loans",
+  },
+  {
+    icon: UserCheck,
+    label: "Personal Loans",
+    color: "#10B981",
+    bg: "#ECFDF5",
+    categoryId: "personal-loans",
+  },
+  {
+    icon: Car,
+    label: "Vehicle Loans",
+    color: "#EF4444",
+    bg: "#FEF2F2",
+    categoryId: "vehicle-loans",
+  },
+  {
+    icon: Briefcase,
+    label: "Business Loans",
+    color: "#EC4899",
+    bg: "#FDF2F8",
+    categoryId: "business-loans",
+  },
+  {
+    icon: Zap,
+    label: "Insta Loans",
+    color: "#F59E0B",
+    bg: "#FFFBEB",
+    categoryId: "insta-loans",
+  },
+  {
+    icon: Heart,
+    label: "Health Insurance",
+    color: "#22C55E",
+    bg: "#F0FDF4",
+    categoryId: "health-insurance",
+  },
+  {
+    icon: Shield,
+    label: "Life Insurance",
+    color: "#6366F1",
+    bg: "#EEF2FF",
+    categoryId: "life-insurance",
+  },
+  {
+    icon: Umbrella,
+    label: "Motor Insurance",
+    color: "#0EA5E9",
+    bg: "#F0F9FF",
+    categoryId: "motor-insurance",
+  },
+  {
+    icon: Gem,
+    label: "Gold Loans",
+    color: "#EAB308",
+    bg: "#FEFCE8",
+    categoryId: "gold-loans",
+  },
+  {
+    icon: Building2,
+    label: "Real Estate",
+    color: "#64748B",
+    bg: "#F8FAFC",
+    categoryId: "real-estate",
+  },
+  {
+    icon: Wallet,
+    label: "Cash on Credit Card",
+    color: "#8B5CF6",
+    bg: "#F5F3FF",
+    categoryId: "cash-cards",
+    isScreen: true,
+  },
+  {
+    icon: Smartphone,
+    label: "Recharge & Pay Bills",
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+    categoryId: "recharge-bills",
+    isScreen: true,
+  },
+  {
+    icon: Plane,
+    label: "Travel & Tickets",
+    color: "#DC2626",
+    bg: "#FEF2F2",
+    categoryId: "travel-tickets",
+    isScreen: true,
+  },
 ];
 
 export default function HomeScreen() {
+  const { width } = useWindowDimensions();
+  const wide = width >= 760;
+  const columns = wide ? 6 : width < 370 ? 3 : 4;
   const router = useRouter();
   const getFirstName = useUserProfileStore((s) => s.getFirstName);
   const hasProfile = useUserProfileStore((s) => s.hasProfile);
@@ -38,33 +173,37 @@ export default function HomeScreen() {
   const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
-  const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
+  const [comingSoonModule, setComingSoonModule] =
+    useState<ComingSoonModule | null>(null);
 
   const handleQuickAction = (categoryId: string, isScreen?: boolean) => {
-    if (categoryId === 'gold-loans' && !goldLoanEnabled) {
-      setComingSoonModule('gold-loans');
+    if (categoryId === "gold-loans" && !goldLoanEnabled) {
+      setComingSoonModule("gold-loans");
       return;
     }
-    if (categoryId === 'real-estate' && !realEstateEnabled) {
-      setComingSoonModule('real-estate');
+    if (categoryId === "real-estate" && !realEstateEnabled) {
+      setComingSoonModule("real-estate");
       return;
     }
-    if (categoryId === 'home-loans') {
-      router.push('/home-loans-details');
+    if (categoryId === "home-loans") {
+      router.push("/home-loans-details");
       return;
     }
-    if (categoryId === 'business-loans') {
-      router.push('/business-loans-details');
+    if (categoryId === "business-loans") {
+      router.push("/business-loans-details");
       return;
     }
-    if (categoryId === 'personal-loans') {
-      router.push('/personal-loans-details');
+    if (categoryId === "personal-loans") {
+      router.push("/personal-loans-details");
       return;
     }
     if (isScreen) {
       router.push(`/${categoryId}`);
     } else {
-      router.push({ pathname: '/(tabs)/products', params: { category: categoryId } });
+      router.push({
+        pathname: "/(tabs)/products",
+        params: { category: categoryId },
+      });
     }
   };
 
@@ -72,252 +211,488 @@ export default function HomeScreen() {
     try {
       await Share.share({
         message:
-          'Join me on Paisa Mart and start earning by selling financial products! Sign up with my referral and we both earn ₹500. 💰',
+          "Join me on Paisa Mart and start earning by selling financial products! Sign up with my referral and we both earn ₹500. 💰",
       });
     } catch {
-      toast.error('Could not open share sheet');
+      toast.error("Could not open share sheet");
     }
   };
 
   const firstName = getFirstName();
   const timeBasedGreeting = getTimeBasedGreeting();
-  const greetingLine = hasProfile() && firstName ? timeBasedGreeting : 'Welcome to';
-  const nameLine = hasProfile() && firstName ? firstName : 'Paisa Mart';
-  const avatarLetter = firstName ? firstName.charAt(0).toUpperCase() : 'P';
+  const greetingLine =
+    hasProfile() && firstName ? timeBasedGreeting : "Welcome to";
+  const nameLine = hasProfile() && firstName ? firstName : "Paisa Mart";
+  const avatarLetter = firstName ? firstName.charAt(0).toUpperCase() : "P";
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Header */}
-        <LinearGradient
-          colors={['#002561', '#0A3D91', '#0A3D91']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: 26, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
+    <>
+      <Page>
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: 28,
+          }}
         >
-          <View className="px-4 pt-2">
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center">
-                <LinearGradient
-                  colors={['#FF8C00', '#FF6B00']}
-                  style={{ width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
-                >
-                  <Text className="text-white font-bold text-lg">{avatarLetter}</Text>
-                </LinearGradient>
-                <View>
-                  <Text className="text-white/60 text-xs">{greetingLine}</Text>
-                  <Text className="text-white font-bold text-lg">{nameLine}</Text>
-                </View>
-              </View>
-              <PressableScale
-                haptic="light"
-                onPress={() => router.push('/notifications')}
-                className="w-11 h-11 bg-white/10 rounded-full items-center justify-center"
+          <BrandMark />
+          <View style={{ flexDirection: "row", gap: 10 }}>
+            <PressableScale
+              accessibilityLabel="Notifications"
+              onPress={() => router.push("/notifications")}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 16,
+                backgroundColor: "#fff",
+                borderWidth: 1,
+                borderColor: palette.line,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Bell size={20} color={palette.ink} />
+              {unreadCount > 0 && (
+                <View
+                  style={{
+                    position: "absolute",
+                    right: 8,
+                    top: 7,
+                    width: 8,
+                    height: 8,
+                    borderRadius: 4,
+                    backgroundColor: "#E88F45",
+                    borderWidth: 2,
+                    borderColor: "#fff",
+                  }}
+                />
+              )}
+            </PressableScale>
+            <PressableScale
+              accessibilityLabel="My profile"
+              onPress={() => router.push("/(tabs)/profile")}
+              style={{
+                width: 44,
+                height: 44,
+                borderRadius: 16,
+                backgroundColor: "#DFEEE9",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Text
+                style={{ color: palette.teal, fontWeight: "800", fontSize: 17 }}
               >
-                <Bell size={20} color="#fff" />
-                {unreadCount > 0 && (
-                  <View className="absolute -top-0.5 -right-0.5 bg-orange-500 rounded-full min-w-[18px] h-[18px] items-center justify-center px-1 border-2 border-[#0A3D91]">
-                    <Text className="text-white text-[10px] font-bold">{unreadCount}</Text>
-                  </View>
-                )}
-              </PressableScale>
-            </View>
-
-            {/* Earnings Card */}
-            <Animated.View entering={FadeInDown.delay(100).springify()}>
-              <LinearGradient
-                colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
-                style={{ borderRadius: 22, padding: 18, marginTop: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}
-              >
-                <View className="flex-row justify-between items-start">
-                  <View>
-                    <Text className="text-white/60 text-xs font-medium">Total Earnings</Text>
-                    <Text className="text-white font-extrabold text-3xl mt-1">₹0</Text>
-                    <View className="flex-row items-center mt-1.5">
-                      <TrendingUp size={13} color="#4ADE80" />
-                      <Text className="text-green-400 text-xs ml-1 font-medium">Start selling to earn!</Text>
-                    </View>
-                  </View>
-                  <PressableScale
-                    haptic="medium"
-                    onPress={() => router.push('/(tabs)/earnings')}
-                  >
-                    <LinearGradient
-                      colors={['#FF8C00', '#FF6B00']}
-                      style={{ paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, flexDirection: 'row', alignItems: 'center' }}
-                    >
-                      <Text className="text-white font-bold text-sm mr-1">Withdraw</Text>
-                      <ArrowUpRight size={16} color="#fff" />
-                    </LinearGradient>
-                  </PressableScale>
-                </View>
-              </LinearGradient>
-            </Animated.View>
+                {avatarLetter}
+              </Text>
+            </PressableScale>
           </View>
-        </LinearGradient>
-
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* Quick Actions */}
-          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-4">
+        </View>
+        <View style={{ marginBottom: 22 }}>
+          <Text style={{ color: palette.muted, fontSize: 12, marginBottom: 5 }}>
+            {greetingLine}
+          </Text>
+          <Text
+            accessibilityRole="header"
+            style={{ fontSize: 28, fontWeight: "800", letterSpacing: -0.8 }}
+          >
+            {nameLine}
+            <Text style={{ color: palette.teal, fontSize: 28 }}>.</Text> Let's
+            grow.
+          </Text>
+        </View>
+        <Reveal>
+          <LinearGradient
+            colors={["#102F48", "#194D69"]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={{
+              borderRadius: 26,
+              padding: wide ? 30 : 24,
+              overflow: "hidden",
+              marginBottom: 20,
+            }}
+          >
             <View
-              className="bg-white rounded-3xl p-4"
-              style={{ shadowColor: '#0A3D91', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.08, shadowRadius: 16, elevation: 3 }}
+              pointerEvents="none"
+              style={{
+                position: "absolute",
+                right: -44,
+                top: -66,
+                width: 230,
+                height: 230,
+                borderRadius: 115,
+                borderColor: "#ffffff0D",
+                borderWidth: 38,
+              }}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 12,
+              }}
             >
-              <View className="flex-row items-center justify-between mb-4">
-                <Text className="text-gray-900 font-bold text-base">Quick Actions</Text>
-                <PressableScale haptic="selection" onPress={() => router.push('/(tabs)/products')} className="flex-row items-center">
-                  <Text className="text-orange-500 text-xs font-semibold">See all</Text>
-                  <ChevronRight size={14} color="#FF8C00" />
-                </PressableScale>
-              </View>
-              <View className="flex-row flex-wrap justify-between">
-                {QUICK_ACTIONS.map((action, index) => (
-                  <PressableScale
-                    key={index}
-                    haptic="light"
-                    activeScale={0.9}
-                    className="items-center mb-4"
-                    style={{ width: '30%' }}
-                    onPress={() => handleQuickAction(action.categoryId, action.isScreen)}
-                  >
-                    <View
-                      className="w-14 h-14 rounded-2xl items-center justify-center mb-1.5"
-                      style={{ backgroundColor: action.bg }}
-                    >
-                      <action.icon size={24} color={action.color} />
-                    </View>
-                    <Text className="text-gray-600 text-xs text-center font-medium" numberOfLines={2}>{action.label}</Text>
-                  </PressableScale>
-                ))}
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Stats Row */}
-          <Animated.View entering={FadeInDown.delay(300).springify()} className="flex-row px-4 mt-4 gap-3">
-            <PressableScale
-              haptic="light"
-              activeScale={0.97}
-              onPress={() => router.push('/(tabs)/products')}
-              className="flex-1 bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
-            >
-              <View className="w-9 h-9 bg-blue-50 rounded-xl items-center justify-center">
-                <Users size={18} color="#3B82F6" />
-              </View>
-              <Text className="text-gray-900 font-bold text-2xl mt-2.5">0</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">My Customers</Text>
-            </PressableScale>
-            <PressableScale
-              haptic="light"
-              activeScale={0.97}
-              onPress={() => router.push('/(tabs)/earnings')}
-              className="flex-1 bg-white rounded-2xl p-4"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
-            >
-              <View className="w-9 h-9 bg-green-50 rounded-xl items-center justify-center">
-                <TrendingUp size={18} color="#10B981" />
-              </View>
-              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹0</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">This Month</Text>
-            </PressableScale>
-          </Animated.View>
-
-          {/* Referral Banner */}
-          <Animated.View entering={FadeInDown.delay(400).springify()} className="px-4 mt-4">
-            <LinearGradient
-              colors={['#FF8C00', '#FF6B00']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={{ borderRadius: 22, padding: 18, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 14, elevation: 4 }}
-            >
-              <View className="flex-row items-center justify-between">
-                <View className="flex-1 pr-3">
-                  <Text className="text-white font-extrabold text-lg">Refer & Earn ₹500</Text>
-                  <Text className="text-white/85 text-xs mt-1 leading-4">Invite friends and earn for every signup</Text>
-                  <PressableScale
-                    haptic="medium"
-                    onPress={handleInvite}
-                    className="bg-white mt-3 py-2.5 px-5 rounded-full self-start flex-row items-center"
-                  >
-                    <Text className="text-orange-600 font-bold text-sm">Invite Now</Text>
-                    <ChevronRight size={16} color="#EA580C" />
-                  </PressableScale>
-                </View>
-                <View className="w-16 h-16 bg-white/20 rounded-full items-center justify-center">
-                  <Gift size={34} color="#fff" />
-                </View>
-              </View>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* Training Section */}
-          <Animated.View entering={FadeInDown.delay(500).springify()} className="px-4 mt-4 mb-2">
-            <Text className="text-gray-600 font-semibold text-sm mb-3">About & Support</Text>
-            <View className="flex-row gap-3">
-              <PressableScale
-                haptic="light"
-                activeScale={0.95}
-                onPress={() => router.push('/about-us')}
-                className="flex-1 bg-white rounded-xl p-4"
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
-              >
-                <View className="w-10 h-10 bg-blue-50 rounded-lg items-center justify-center mb-2">
-                  <Info size={20} color="#0A3D91" />
-                </View>
-                <Text className="text-gray-900 font-bold text-sm">About Us</Text>
-                <Text className="text-gray-400 text-xs mt-1">Company info</Text>
-              </PressableScale>
-              <PressableScale
-                haptic="light"
-                activeScale={0.95}
-                onPress={() => router.push('/support')}
-                className="flex-1 bg-white rounded-xl p-4"
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}
-              >
-                <View className="w-10 h-10 bg-green-50 rounded-lg items-center justify-center mb-2">
-                  <Headphones size={20} color="#16A34A" />
-                </View>
-                <Text className="text-gray-900 font-bold text-sm">Contact Us</Text>
-                <Text className="text-gray-400 text-xs mt-1">Get support</Text>
-              </PressableScale>
-            </View>
-          </Animated.View>
-
-          {/* Training Section */}
-          <Animated.View entering={FadeInDown.delay(700).springify()} className="px-4 mt-4 mb-8">
-            <PressableScale
-              haptic="light"
-              activeScale={0.98}
-              onPress={() => router.push('/(tabs)/learn')}
-            >
-              <LinearGradient
-                colors={['#EFF6FF', '#F5F3FF']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={{ borderRadius: 22, padding: 16, flexDirection: 'row', alignItems: 'center' }}
-              >
-                <LinearGradient
-                  colors={['#2563EB', '#1D4ED8']}
-                  style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: "#C6DAE7", fontSize: 12 }}>
+                  Your total earnings
+                </Text>
+                <Text
+                  style={{
+                    fontSize: 40,
+                    lineHeight: 52,
+                    color: "#fff",
+                    fontWeight: "800",
+                    letterSpacing: -1.4,
+                    marginTop: 5,
+                  }}
                 >
-                  <Star size={24} color="#fff" />
-                </LinearGradient>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-bold">Complete Training</Text>
-                  <Text className="text-gray-500 text-xs mt-0.5">Become a Certified Financial Advisor</Text>
-                </View>
-                <ChevronRight size={20} color="#3B82F6" />
-              </LinearGradient>
+                  ₹0
+                  <Text
+                    style={{
+                      fontSize: 22,
+                      color: "#AFC9D8",
+                      fontWeight: "400",
+                    }}
+                  >
+                    .00
+                  </Text>
+                </Text>
+              </View>
+              <PressableScale
+                onPress={() => router.push("/(tabs)/earnings")}
+                style={{
+                  backgroundColor: palette.mint,
+                  minHeight: 46,
+                  paddingHorizontal: 17,
+                  borderRadius: 15,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                }}
+              >
+                <Text style={{ fontWeight: "700", fontSize: 12 }}>
+                  Earnings
+                </Text>
+                <ArrowUpRight size={17} color={palette.ink} />
+              </PressableScale>
+            </View>
+            <View
+              style={{
+                marginTop: 18,
+                paddingTop: 17,
+                borderTopWidth: 1,
+                borderTopColor: "#ffffff1C",
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              <TrendingUp size={16} color={palette.mint} />
+              <Text style={{ color: "#D2E3ED", fontSize: 11, flex: 1 }}>
+                Your next opportunity is a tap away.
+              </Text>
+            </View>
+          </LinearGradient>
+        </Reveal>
+        <PressableScale
+          accessibilityLabel="Search financial products"
+          onPress={() => router.push("/(tabs)/products")}
+          style={{
+            backgroundColor: "#fff",
+            borderColor: palette.line,
+            borderWidth: 1,
+            minHeight: 54,
+            borderRadius: 17,
+            flexDirection: "row",
+            alignItems: "center",
+            paddingHorizontal: 17,
+            gap: 10,
+            marginBottom: 26,
+          }}
+        >
+          <Search size={19} color={palette.muted} />
+          <Text style={{ color: palette.muted, fontSize: 12, flex: 1 }}>
+            Find cards, loans, insurance & more
+          </Text>
+          <ArrowRight size={16} color={palette.blue} />
+        </PressableScale>
+        <Reveal delay={70}>
+          <Surface style={{ padding: wide ? 26 : 18, marginBottom: 24 }}>
+            <SectionHeading
+              title="Explore & earn"
+              action="View all"
+              onPress={() => router.push("/(tabs)/products")}
+            />
+            <View
+              style={{
+                flexDirection: "row",
+                flexWrap: "wrap",
+                marginHorizontal: -4,
+              }}
+            >
+              {QUICK_ACTIONS.filter((action) => !action.isScreen).map(
+                (action, index) => (
+                  <PressableScale
+                    key={action.categoryId}
+                    onPress={() => handleQuickAction(action.categoryId)}
+                    style={{
+                      width: `${100 / columns}%`,
+                      alignItems: "center",
+                      paddingHorizontal: 4,
+                      paddingVertical: 13,
+                      gap: 9,
+                    }}
+                  >
+                    <IconBadge
+                      icon={action.icon}
+                      size={49}
+                      color={
+                        index % 3 === 1
+                          ? palette.teal
+                          : index % 3 === 2
+                            ? "#9F682A"
+                            : palette.blue
+                      }
+                      background={
+                        index % 3 === 1
+                          ? "#EAF6F1"
+                          : index % 3 === 2
+                            ? "#FCF3E6"
+                            : "#ECF2FE"
+                      }
+                    />
+                    <Text
+                      style={{
+                        textAlign: "center",
+                        fontWeight: "600",
+                        fontSize: 11,
+                        lineHeight: 16,
+                        minHeight: 32,
+                      }}
+                    >
+                      {action.label}
+                    </Text>
+                  </PressableScale>
+                ),
+              )}
+            </View>
+          </Surface>
+        </Reveal>
+        <SectionHeading
+          title="Everyday essentials"
+          detail="A little more convenience, every day."
+        />
+        <View style={{ flexDirection: "row", gap: 10, marginBottom: 26 }}>
+          {QUICK_ACTIONS.filter((action) => action.isScreen).map((action) => (
+            <PressableScale
+              key={action.categoryId}
+              onPress={() => handleQuickAction(action.categoryId, true)}
+              style={{
+                flex: 1,
+                paddingVertical: 20,
+                paddingHorizontal: 8,
+                borderRadius: 21,
+                backgroundColor: "#fff",
+                borderWidth: 1,
+                borderColor: palette.line,
+                alignItems: "center",
+                gap: 12,
+              }}
+            >
+              <action.icon size={25} color={palette.blue} strokeWidth={1.7} />
+              <Text
+                style={{
+                  textAlign: "center",
+                  fontSize: 11,
+                  lineHeight: 17,
+                  fontWeight: "600",
+                }}
+              >
+                {action.label}
+              </Text>
             </PressableScale>
-          </Animated.View>
-        </ScrollView>
-      </SafeAreaView>
+          ))}
+        </View>
+        <Reveal
+          delay={120}
+          style={{ flexDirection: wide ? "row" : "column", gap: 16 }}
+        >
+          <View style={{ flex: 1 }}>
+            <PressableScale
+              onPress={handleInvite}
+              style={{
+                backgroundColor: "#E6F3EC",
+                borderRadius: 24,
+                padding: 23,
+                flex: 1,
+                borderWidth: 1,
+                borderColor: "#D5EBDD",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 18,
+                }}
+              >
+                <IconBadge
+                  icon={Gift}
+                  background="#D2EBDD"
+                  color={palette.teal}
+                  size={42}
+                />
+                <ArrowUpRight size={20} color={palette.teal} />
+              </View>
+              <Text
+                style={{
+                  color: palette.teal,
+                  fontSize: 10,
+                  letterSpacing: 1.8,
+                  fontWeight: "700",
+                }}
+              >
+                BETTER, TOGETHER
+              </Text>
+              <Text
+                style={{
+                  fontSize: 22,
+                  letterSpacing: -0.6,
+                  fontWeight: "800",
+                  marginTop: 7,
+                }}
+              >
+                Refer & earn ₹500
+              </Text>
+              <Text
+                style={{
+                  color: "#547464",
+                  fontSize: 12,
+                  lineHeight: 20,
+                  marginTop: 7,
+                }}
+              >
+                Invite friends to start their journey.
+              </Text>
+              <Text
+                style={{
+                  color: palette.teal,
+                  fontWeight: "700",
+                  fontSize: 12,
+                  marginTop: 18,
+                }}
+              >
+                Invite a friend →
+              </Text>
+            </PressableScale>
+          </View>
+          <View style={{ flex: 1 }}>
+            <PressableScale
+              onPress={() => router.push("/(tabs)/learn")}
+              style={{
+                backgroundColor: "#EBF0FC",
+                borderRadius: 24,
+                padding: 23,
+                flex: 1,
+                borderWidth: 1,
+                borderColor: "#DCE5FA",
+              }}
+            >
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: 18,
+                }}
+              >
+                <IconBadge icon={BookOpen} size={42} background="#DBE5FC" />
+                <ArrowUpRight size={20} color={palette.blue} />
+              </View>
+              <Text
+                style={{
+                  color: palette.blue,
+                  fontSize: 10,
+                  letterSpacing: 1.8,
+                  fontWeight: "700",
+                }}
+              >
+                INVEST IN YOURSELF
+              </Text>
+              <Text
+                style={{
+                  fontSize: 22,
+                  letterSpacing: -0.6,
+                  fontWeight: "800",
+                  marginTop: 7,
+                }}
+              >
+                Learn. Build. Grow.
+              </Text>
+              <Text
+                style={{
+                  color: palette.muted,
+                  fontSize: 12,
+                  lineHeight: 20,
+                  marginTop: 7,
+                }}
+              >
+                Make your next conversation count.
+              </Text>
+              <Text
+                style={{
+                  color: palette.blue,
+                  fontWeight: "700",
+                  fontSize: 12,
+                  marginTop: 18,
+                }}
+              >
+                Explore learning →
+              </Text>
+            </PressableScale>
+          </View>
+        </Reveal>
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "center",
+            gap: 24,
+            marginTop: 22,
+          }}
+        >
+          <PressableScale
+            onPress={() => router.push("/about-us")}
+            style={{ minHeight: 44, justifyContent: "center" }}
+          >
+            <Text style={{ fontSize: 11, color: palette.muted }}>
+              About Paisa Mart
+            </Text>
+          </PressableScale>
+          <PressableScale
+            onPress={() => router.push("/support")}
+            style={{
+              minHeight: 44,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            <Headphones size={14} color={palette.muted} />
+            <Text style={{ fontSize: 11, color: palette.muted }}>
+              Here to help
+            </Text>
+          </PressableScale>
+        </View>
+      </Page>
       <ComingSoonModal
         visible={comingSoonModule !== null}
         module={comingSoonModule}
         onClose={() => setComingSoonModule(null)}
       />
-    </View>
+    </>
   );
 }
