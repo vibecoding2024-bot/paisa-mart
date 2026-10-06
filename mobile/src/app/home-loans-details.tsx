@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import BirthDatePicker from '@/components/BirthDatePicker';
+import { parseBirthDate } from '@/lib/birth-date';
 import {
   View,
   Text,
@@ -8,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,7 +18,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Home } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useAdminStore } from '@/lib/admin-store';
 import { useHomeLoanStore } from '@/lib/home-loan-store';
 import { submitHomeLoanLead } from '@/lib/home-loan-api';
 import { ModalDropdown } from '@/components/ModalDropdown';
@@ -90,7 +91,6 @@ function Field({ label, placeholder, value, onChangeText, error, keyboardType = 
 export default function HomeLoansDetailsScreen() {
   const router = useRouter();
   const setData = useHomeLoanStore((s) => s.setData);
-  const addLead = useAdminStore((s) => s.addLead);
 
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -103,7 +103,9 @@ export default function HomeLoansDetailsScreen() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [showConfirmationDetails, setShowConfirmationDetails] = useState<boolean>(false);
+  const submitting = useRef<boolean>(false);
   const [submitError, setSubmitError] = useState('');
 
   const validate = () => {
@@ -115,7 +117,7 @@ export default function HomeLoansDetailsScreen() {
     } else if (Number(cibil) < 300 || Number(cibil) > 900) {
       e.cibil = 'CIBIL score must be between 300 and 900';
     }
-    if (!dateOfBirth.trim()) e.dateOfBirth = 'Please enter date of birth';
+    if (!parseBirthDate(dateOfBirth)) e.dateOfBirth = 'Please select a valid date of birth from the calendar';
     if (!monthlyIncome || Number(monthlyIncome) <= 0) e.monthlyIncome = 'Please enter monthly income';
     if (existingEmi === '') e.existingEmi = 'Please enter existing EMI (enter 0 if none)';
     if (!loanAmount || Number(loanAmount) <= 0) e.loanAmount = 'Please enter loan amount required';
@@ -126,73 +128,48 @@ export default function HomeLoansDetailsScreen() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSubmitError('');
-    if (!validate() || isSubmitting) return;
-
-    const submittedAt = new Date().toISOString();
-    const leadData = {
-      full_name: fullName.trim(),
-      mobile_number: mobileNumber,
-      cibil,
-      date_of_birth: dateOfBirth.trim(),
-      monthly_income: monthlyIncome,
-      existing_emi: existingEmi,
-      loan_amount_required: loanAmount,
-      loan_type: loanType,
-      city: city.trim(),
-      state,
-      timestamp: submittedAt,
-    };
-
-    try {
-      setIsSubmitting(true);
-      await submitHomeLoanLead({ ...leadData, phoneNumber: mobileNumber });
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const leadData = { full_name: fullName.trim(), mobile_number: mobileNumber, cibil, date_of_birth: dateOfBirth, monthly_income: monthlyIncome, existing_emi: existingEmi, loan_amount_required: loanAmount, loan_type: loanType, city: city.trim(), state, timestamp: new Date().toISOString() };
+      const saved = await submitHomeLoanLead({ ...leadData, phoneNumber: mobileNumber });
+      if (!saved?.id) throw new Error('Confirmation was not received. Please contact support before submitting again.');
+      return { saved, leadData };
+    },
+    onSuccess: ({ saved, leadData }) => {
+      setConfirmation(saved.referenceNumber || ('HL-' + saved.id));
       setData(leadData);
-      addLead({
-        userName: fullName.trim(),
-        mobile: mobileNumber,
-        email: '',
-        productType: 'home-loans',
-        provider: 'Home Loan',
-        stage: 'new',
-        outcome: 'pending',
-        priority: 'medium',
-        city: city.trim(),
-        state,
-        source: 'Paisa Mart',
-        creditScore: Number(cibil),
-        consentGiven: true,
-        extraDetails: {
-          'Full Name': fullName.trim(),
-          'Mobile Number': mobileNumber,
-          'CIBIL Score': cibil,
-          'Date of Birth': dateOfBirth.trim(),
-          'Monthly Income': monthlyIncome,
-          'Existing EMI': existingEmi,
-          'Loan Amount Required': loanAmount,
-          'Loan Type': loanType,
-          City: city.trim(),
-          State: state,
-          'Submission Date & Time': submittedAt,
-          'Lead Source': 'Paisa Mart',
-          Status: 'New',
-        },
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Application Submitted! 🎉',
-        'Our Banking Executive will reach you to further process your loan.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-      );
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Could not submit home loan details');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setIsSubmitting(false);
-    }
+      setSubmitError('');
+    },
+    onError: error => setSubmitError(error instanceof Error ? error.message : 'Could not submit your application. Please try again.'),
+    onSettled: () => { submitting.current = false; },
+    retry: false,
+  });
+  const isSubmitting = mutation.isPending;
+  const handleSubmit = () => {
+    if (submitting.current || confirmation || !validate()) return;
+    submitting.current = true;
+    setSubmitError('');
+    mutation.mutate();
   };
+
+  if (confirmation) return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 48 }}>
+        <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 20 }}>
+          <Text style={{ color: '#16A34A', fontSize: 18, fontWeight: '700' }}>✓ Lead received</Text>
+          <Text style={{ color: '#002561', fontSize: 26, fontWeight: '700', marginTop: 16 }}>Details submitted successfully</Text>
+          <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24, marginTop: 12 }}>We have received your home loan details. Our team will contact you shortly.</Text>
+          <View style={{ backgroundColor: '#F1F5F9', padding: 16, borderRadius: 12, marginVertical: 24 }}>
+            <Text style={{ color: '#64748B', marginBottom: 8 }}>Your confirmation number</Text>
+            <Text selectable style={{ color: '#002561', fontWeight: '700', fontSize: 18 }}>{confirmation}</Text>
+          </View>
+          {showConfirmationDetails && <Text style={{ color: '#475569', lineHeight: 24, marginBottom: 20 }}>{fullName}{'\n'}{mobileNumber}{'\n'}{loanType}{'\n'}Loan amount: ₹{Number(loanAmount).toLocaleString('en-IN')}{'\n'}{city}, {state}</Text>}
+          <Pressable onPress={() => setShowConfirmationDetails(v => !v)} style={{ backgroundColor: '#002561', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 12 }}><Text style={{ color: '#fff', fontWeight: '700' }}>{showConfirmationDetails ? 'Hide details' : 'View confirmation'}</Text></Pressable>
+          <Pressable onPress={() => router.replace('/(tabs)')} style={{ borderColor: '#CBD5E1', borderWidth: 1, borderRadius: 12, padding: 16, alignItems: 'center' }}><Text style={{ color: '#002561', fontWeight: '700' }}>Back to home</Text></Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
@@ -255,13 +232,7 @@ export default function HomeLoansDetailsScreen() {
                 onChangeText={(v) => { setCibil(v.replace(/[^0-9]/g, '').slice(0, 3)); setErrors((e) => ({ ...e, cibil: '' })); }}
                 error={errors.cibil}
               />
-              <Field
-                label="Date of Birth"
-                placeholder="DD/MM/YYYY"
-                value={dateOfBirth}
-                onChangeText={(v) => { setDateOfBirth(v); setErrors((e) => ({ ...e, dateOfBirth: '' })); }}
-                error={errors.dateOfBirth}
-              />
+              <BirthDatePicker value={dateOfBirth} onChange={(value) => { setDateOfBirth(value); setErrors(current => ({ ...current, dateOfBirth: '' })); }} error={errors.dateOfBirth} />
               <Field
                 label="Monthly Income"
                 placeholder="Enter monthly income"

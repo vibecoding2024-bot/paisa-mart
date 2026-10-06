@@ -20,7 +20,7 @@ export type HomeLoanLeadRow = HomeLoanLeadInput & {
 };
 
 const dbUrl = process.env.HOME_LOANS_DATABASE_URL ?? process.env.DATABASE_URL ?? process.env.POSTGRES_URL;
-const sqlite = dbUrl ? null : new Database(process.env.LEADS_DB ?? process.env.TXN_DB ?? "payments.db");
+export const sqlite = dbUrl ? null : new Database(process.env.LEADS_DB ?? process.env.TXN_DB ?? "payments.db");
 const dynamicImport = new Function("specifier", "return import(specifier)") as (specifier: string) => Promise<any>;
 let pgClientPromise: Promise<any> | null = null;
 
@@ -45,7 +45,7 @@ function normalizePhone(p: string): string {
 }
 function now() { return new Date().toISOString(); }
 
-async function getPgClient() {
+export async function getPgClient() {
   if (!dbUrl) return null;
   if (!pgClientPromise) {
     pgClientPromise = dynamicImport("postgres").then((mod) => {
@@ -68,6 +68,15 @@ async function getPgClient() {
     )
   `;
   return sql;
+}
+
+export async function listHomeLoanLeads(): Promise<HomeLoanLeadRow[]> {
+  const sql = await getPgClient();
+  if (sql) {
+    const rows = await sql`SELECT id::text, payload, phone_number AS "phoneNumber", monthly_income AS "monthlyIncome", existing_emi AS "existingEmi", loan_amount_required AS "loanAmountRequired", loan_type AS "loanType", created_at AS "createdAt" FROM home_loan_leads ORDER BY created_at DESC`;
+    return rows.map((row: any) => ({ ...row.payload, ...row, payload: undefined }));
+  }
+  return sqlite!.query('SELECT * FROM home_loan_leads ORDER BY createdAt DESC').all() as HomeLoanLeadRow[];
 }
 
 export async function saveHomeLoanLead(input: HomeLoanLeadInput): Promise<HomeLoanLeadRow> {
@@ -116,7 +125,7 @@ export async function saveHomeLoanLead(input: HomeLoanLeadInput): Promise<HomeLo
       id, normalized.phoneNumber, normalized.fullName || null, normalized.cibil || null,
       normalized.dateOfBirth || null, normalized.monthlyIncome, normalized.existingEmi,
       normalized.loanAmountRequired, normalized.loanType, normalized.city || null,
-      normalized.state || null, normalized.source, createdAt,
+      normalized.state || null, normalized.source || 'home-loans-details', createdAt,
     ],
   );
 
