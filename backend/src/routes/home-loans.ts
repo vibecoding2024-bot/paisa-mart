@@ -1,5 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { customerPhone } from "../lib/customer-token";
+import { customerApplications } from "../lib/home-loan-pipeline";
 import { saveHomeLoanLead } from "../lib/home-loan-lead-store";
 
 const homeLoansRouter = new Hono();
@@ -42,6 +44,14 @@ homeLoansRouter.post("/leads", async (c) => {
     console.error("[HOME LOAN LEAD] save failed", error);
     return c.json({ success: false, message: "Could not save home loan details" }, 500);
   }
+});
+
+homeLoansRouter.get('/applications', async c => {
+  c.header('Cache-Control', 'no-store');
+  const phone = customerPhone(c.req.header('authorization'));
+  if (!phone) return c.json({ success: false, message: 'Please sign in again to view your applications.' }, 401);
+  try { return c.json({ success: true, data: await customerApplications(phone) }); }
+  catch { return c.json({ success: false, message: 'Could not load application status.' }, 500); }
 });
 
 export { homeLoansRouter };

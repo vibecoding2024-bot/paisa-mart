@@ -165,6 +165,7 @@ export default function HomeLoansDetailsScreen() {
           </View>
           {showConfirmationDetails && <Text style={{ color: '#475569', lineHeight: 24, marginBottom: 20 }}>{fullName}{'\n'}{mobileNumber}{'\n'}{loanType}{'\n'}Loan amount: ₹{Number(loanAmount).toLocaleString('en-IN')}{'\n'}{city}, {state}</Text>}
           <Pressable onPress={() => setShowConfirmationDetails(v => !v)} style={{ backgroundColor: '#002561', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 12 }}><Text style={{ color: '#fff', fontWeight: '700' }}>{showConfirmationDetails ? 'Hide details' : 'View confirmation'}</Text></Pressable>
+          <Pressable onPress={() => router.push('/home-loan-applications')} style={{ padding: 16, alignItems: 'center' }}><Text style={{ color: '#002561', fontWeight: '700' }}>View application status</Text></Pressable>
           <Pressable onPress={() => router.replace('/(tabs)')} style={{ borderColor: '#CBD5E1', borderWidth: 1, borderRadius: 12, padding: 16, alignItems: 'center' }}><Text style={{ color: '#002561', fontWeight: '700' }}>Back to home</Text></Pressable>
         </View>
       </ScrollView>

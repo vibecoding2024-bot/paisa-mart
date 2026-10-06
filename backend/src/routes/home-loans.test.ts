@@ -5,6 +5,9 @@ import { join } from 'node:path';
 
 process.env.LEADS_DB = join(mkdtempSync(join(tmpdir(), 'paisa-pipeline-')), 'test.db');
 process.env.HOME_LOANS_DATABASE_URL = '';
+process.env.DATABASE_URL = '';
+process.env.POSTGRES_URL = '';
+process.env.AUTH_TOKEN_SECRET = 'isolated-customer-test-secret';
 process.env.HOME_LOAN_ADMIN_PASSWORD = 'test-password-only';
 process.env.HOME_LOAN_ADMIN_TOKEN_SECRET = 'test-secret-for-isolated-tests-only';
 const { homeLoansRouter } = await import('./home-loans');
@@ -55,4 +58,31 @@ test('submission, protected pipeline, all stages, totals, edits and optimistic c
   expect((await adminRouter.request('/home-loans/' + saved.id, { method: 'PATCH', ...json({ stage: 'unknown', version, loanAmountRequired: '0' }, token) })).status).toBe(400);
   expect((await adminRouter.request('/home-loans/missing', { method: 'PATCH', ...json({ stage: 'new', version: 0, loanAmountRequired: '100' }, token) })).status).toBe(404);
   expect((await adminRouter.request('/home-loans?page=-1', { headers })).status).toBe(400);
+});
+
+
+test('customer status is signed, scoped to verified phone, private, and reflects admin updates', async () => {
+  const { createHmac } = await import('node:crypto');
+  const token = (sub: string, exp = Math.floor(Date.now()/1000)+300) => {
+    const data = Buffer.from(JSON.stringify({alg:'HS256',typ:'JWT'})).toString('base64url')+'.'+Buffer.from(JSON.stringify({sub,exp})).toString('base64url');
+    return data+'.'+createHmac('sha256',process.env.AUTH_TOKEN_SECRET!).update(data).digest('base64url');
+  };
+  const customer = token('+919123456789');
+  const headers = {Authorization:'Bearer '+customer};
+  const saved = (await readJson(await homeLoansRouter.request('/leads', {method:'POST',...json({...application,phoneNumber:'9123456789'})}))).data;
+  expect((await homeLoansRouter.request('/applications')).status).toBe(401);
+  expect((await homeLoansRouter.request('/applications',{headers:{Authorization:'Bearer '+customer+'tampered'}})).status).toBe(401);
+  expect((await homeLoansRouter.request('/applications',{headers:{Authorization:'Bearer '+token('+919123456789',1)}})).status).toBe(401);
+  const {updatePipeline} = await import('../lib/home-loan-pipeline');
+  await updatePipeline(saved.id,{stage:'sanctioned',version:0,loanAmountRequired:'2500000',note:'PRIVATE ADMIN NOTE'},'test-admin');
+  const response = await homeLoansRouter.request('/applications',{headers});
+  const body = await readJson(response);
+  expect(response.headers.get('cache-control')).toBe('no-store');
+  expect(body.data).toHaveLength(1);
+  expect(body.data[0].stage).toBe('sanctioned');
+  expect(body.data[0].referenceNumber).toBe('HL-'+saved.id);
+  expect(JSON.stringify(body)).not.toContain('PRIVATE ADMIN NOTE');
+  expect(body.data[0].phoneNumber).toBeUndefined();
+  const other = await readJson(await homeLoansRouter.request('/applications',{headers:{Authorization:'Bearer '+token('+919999999999')}}));
+  expect(other.data).toHaveLength(0);
 });

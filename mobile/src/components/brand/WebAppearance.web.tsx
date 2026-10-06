@@ -3,7 +3,8 @@
 export default function WebAppearance() {
   return (
     <style>{`
-      html,body,#root{background:#F4F7FA}
+      html,body,#root{height:100%;width:100%;margin:0;background:#F4F7FA}
+      #root{display:flex;flex:1;min-height:0}
       *{-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
       button,[role="button"],a{cursor:pointer;touch-action:manipulation}
       :focus-visible{outline:3px solid #1261E8;outline-offset:3px}
