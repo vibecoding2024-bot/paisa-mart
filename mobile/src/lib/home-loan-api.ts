@@ -1,9 +1,9 @@
 import type { HomeLoanData } from './home-loan-store';
 
 const BACKEND_URL =
+  process.env.EXPO_PUBLIC_API_URL ||
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_API_URL ||
   'https://paisa-mart.com';
 
 type HomeLoanLeadPayload = HomeLoanData & { phoneNumber: string };
@@ -13,7 +13,11 @@ function normalizePhone(phoneNumber: string): string {
 }
 
 export async function submitHomeLoanLead(payload: HomeLoanLeadPayload) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30000);
+  try {
   const response = await fetch(`${BACKEND_URL.replace(/\/$/, '')}/api/home-loans/leads`, {
+    signal: controller.signal,
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -36,4 +40,10 @@ export async function submitHomeLoanLead(payload: HomeLoanLeadPayload) {
     throw new Error(body.message || 'Could not submit home loan details');
   }
   return body.data;
+  } catch (error) {
+    if (controller.signal.aborted) throw new Error('The connection timed out. Your application may have been received. Please contact support before submitting again.');
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }

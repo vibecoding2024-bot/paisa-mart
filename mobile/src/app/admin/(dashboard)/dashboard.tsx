@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import HomeLoanPipelineSummary from '@/components/HomeLoanPipelineSummary';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -213,6 +214,7 @@ export default function DashboardScreen() {
           <Text className="text-slate-400 mb-4">Real-time metrics and insights</Text>
         </Animated.View>
 
+        <HomeLoanPipelineSummary />
         {/* Key Metrics Row */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <ScrollView keyboardShouldPersistTaps="handled"

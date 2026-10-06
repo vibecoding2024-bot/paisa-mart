@@ -5,17 +5,23 @@ import { saveHomeLoanLead } from "../lib/home-loan-lead-store";
 const homeLoansRouter = new Hono();
 
 const leadSchema = z.object({
-  phoneNumber: z.string().regex(/^\d{10}$/),
-  fullName: z.string().trim().optional(),
+  phoneNumber: z.string().regex(/^[6-9]\d{9}$/),
+  fullName: z.string().trim().max(120).optional(),
   cibil: z.string().regex(/^\d+$/).optional(),
-  dateOfBirth: z.string().optional(),
-  monthlyIncome: z.string().regex(/^\d+$/),
-  existingEmi: z.string().regex(/^\d+$/),
-  loanAmountRequired: z.string().regex(/^\d+$/),
+  dateOfBirth: z.string().refine(value => {
+    const match = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
+    if (!match) return false;
+    const day = Number(match[1]), month = Number(match[2]), year = Number(match[3]);
+    const date = new Date(year, month - 1, day);
+    return year >= 1900 && date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day && date <= new Date();
+  }, 'Select a valid date of birth').optional(),
+  monthlyIncome: z.string().regex(/^[1-9]\d{0,11}$/),
+  existingEmi: z.string().regex(/^\d{1,12}$/),
+  loanAmountRequired: z.string().regex(/^[1-9]\d{0,11}$/),
   loanType: z.string().trim().min(1),
-  city: z.string().optional(),
-  state: z.string().optional(),
-  source: z.string().optional(),
+  city: z.string().max(120).optional(),
+  state: z.string().max(120).optional(),
+  source: z.string().max(120).optional(),
 });
 
 homeLoansRouter.post("/leads", async (c) => {
@@ -31,7 +37,7 @@ homeLoansRouter.post("/leads", async (c) => {
 
   try {
     const lead = await saveHomeLoanLead(parsed.data);
-    return c.json({ success: true, data: lead });
+    return c.json({ success: true, data: { ...lead, referenceNumber: `HL-${lead.id}` } });
   } catch (error) {
     console.error("[HOME LOAN LEAD] save failed", error);
     return c.json({ success: false, message: "Could not save home loan details" }, 500);
