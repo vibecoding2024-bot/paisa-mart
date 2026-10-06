@@ -5,3 +5,7 @@ backend/.env.*
 mobile/.env
 mobile/.env.*
 node_modules
+
+.preview/
+
+__pycache__/

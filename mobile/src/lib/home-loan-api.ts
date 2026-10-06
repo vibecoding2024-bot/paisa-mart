@@ -1,3 +1,6 @@
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import type { HomeLoanData } from './home-loan-store';
 
 const BACKEND_URL =
@@ -46,4 +49,16 @@ export async function submitHomeLoanLead(payload: HomeLoanLeadPayload) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+export type CustomerApplication = { referenceNumber: string; stage: import('./home-loan-stages').HomeLoanStage; loanAmountRequired: string; loanType: string; createdAt: string };
+export async function fetchCustomerApplications(): Promise<CustomerApplication[]> {
+  const token = Platform.OS === 'web'
+    ? await AsyncStorage.getItem('paisa_mart_auth_token')
+    : await SecureStore.getItemAsync('paisa_mart_auth_token');
+  if (!token) throw new Error('Please sign in again to view your applications.');
+  const response = await fetch(BACKEND_URL.replace(/\/$/, '') + '/api/home-loans/applications', { headers: { Authorization: 'Bearer ' + token } });
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok || !body.success || !Array.isArray(body.data)) throw new Error(body.message || 'Application status is unavailable. Please contact support.');
+  return body.data;
 }

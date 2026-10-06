@@ -55,3 +55,20 @@ export async function updatePipeline(id: string, input: { stage: HomeLoanStage; 
     })();
   }
 }
+
+// Expose only the verified customer's records, without private admin notes or other leads.
+export async function customerApplications(phone: string) {
+  const sql = await getPgClient();
+  let workflow: Workflow[] = [];
+  if (sql) {
+    const exists = await sql`SELECT to_regclass('home_loan_workflow') AS name`;
+    if (exists[0]?.name) workflow = await sql`SELECT * FROM home_loan_workflow`;
+  } else if (sqlite!.query("SELECT name FROM sqlite_master WHERE type='table' AND name='home_loan_workflow'").get()) {
+    workflow = sqlite!.query('SELECT * FROM home_loan_workflow').all() as Workflow[];
+  }
+  const byId = new Map(workflow.map(row => [row.lead_id, row]));
+  return (await listHomeLoanLeads()).filter(lead => lead.phoneNumber === phone).map(lead => ({
+    referenceNumber: `HL-${lead.id}`, stage: byId.get(lead.id)?.stage ?? 'new',
+    loanAmountRequired: lead.loanAmountRequired, loanType: lead.loanType, createdAt: lead.createdAt,
+  }));
+}
