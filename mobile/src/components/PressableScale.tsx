@@ -1,19 +1,20 @@
-import { forwardRef } from 'react';
-import { Pressable, PressableProps, ViewStyle, StyleProp } from 'react-native';
+import { forwardRef } from "react";
+import { Pressable, PressableProps, ViewStyle, StyleProp } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-} from 'react-native-reanimated';
-import * as Haptics from '@/lib/haptics';
+  ReduceMotion,
+} from "react-native-reanimated";
+import * as Haptics from "@/lib/haptics";
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
-type HapticStyle = 'light' | 'medium' | 'heavy' | 'selection' | 'none';
+type HapticStyle = "light" | "medium" | "heavy" | "selection" | "none";
 
 interface PressableScaleProps extends PressableProps {
-  /** How far the element scales down while pressed. Default 0.96 */
+  /** How far the element scales down while pressed. Default 0.98 */
   activeScale?: number;
   /** Haptic feedback fired on press-in. Default 'light' */
   haptic?: HapticStyle;
@@ -25,8 +26,24 @@ interface PressableScaleProps extends PressableProps {
  * A drop-in Pressable that scales + dims slightly while pressed and fires a
  * haptic tap. Gives every button across the app a consistent, buttery feel.
  */
-const PressableScale = forwardRef<React.ElementRef<typeof Pressable>, PressableScaleProps>(
-  ({ activeScale = 0.96, haptic = 'light', onPressIn, onPress, style, children, ...rest }, ref) => {
+const PressableScale = forwardRef<
+  React.ElementRef<typeof Pressable>,
+  PressableScaleProps
+>(
+  (
+    {
+      activeScale = 0.98,
+      haptic = "light",
+      onPressIn,
+      onPressOut,
+      onPress,
+      style,
+      children,
+      disabled,
+      ...rest
+    },
+    ref,
+  ) => {
     const scale = useSharedValue(1);
     const opacity = useSharedValue(1);
 
@@ -36,8 +53,8 @@ const PressableScale = forwardRef<React.ElementRef<typeof Pressable>, PressableS
     }));
 
     const fireHaptic = () => {
-      if (haptic === 'none') return;
-      if (haptic === 'selection') {
+      if (haptic === "none") return;
+      if (haptic === "selection") {
         Haptics.selectionAsync();
       } else {
         const map = {
@@ -51,27 +68,47 @@ const PressableScale = forwardRef<React.ElementRef<typeof Pressable>, PressableS
 
     return (
       <AnimatedPressable
+        {...rest}
         ref={ref}
-        style={[animatedStyle, style]}
+        accessibilityRole={rest.accessibilityRole ?? "button"}
+        disabled={disabled}
+        style={[style, animatedStyle]}
         onPressIn={(e) => {
-          scale.value = withSpring(activeScale, { damping: 18, stiffness: 320 });
-          opacity.value = withTiming(0.92, { duration: 80 });
+          if (disabled) return;
+          scale.value = withSpring(activeScale, {
+            damping: 24,
+            stiffness: 360,
+            mass: 0.6,
+            reduceMotion: ReduceMotion.System,
+          });
+          opacity.value = withTiming(0.94, {
+            duration: 80,
+            reduceMotion: ReduceMotion.System,
+          });
           fireHaptic();
           onPressIn?.(e);
         }}
-        onPressOut={() => {
-          scale.value = withSpring(1, { damping: 15, stiffness: 280 });
-          opacity.value = withTiming(1, { duration: 120 });
+        onPressOut={(e) => {
+          scale.value = withSpring(1, {
+            damping: 24,
+            stiffness: 360,
+            mass: 0.6,
+            reduceMotion: ReduceMotion.System,
+          });
+          opacity.value = withTiming(1, {
+            duration: 120,
+            reduceMotion: ReduceMotion.System,
+          });
+          onPressOut?.(e);
         }}
         onPress={onPress}
-        {...rest}
       >
         {children}
       </AnimatedPressable>
     );
-  }
+  },
 );
 
-PressableScale.displayName = 'PressableScale';
+PressableScale.displayName = "PressableScale";
 
 export default PressableScale;

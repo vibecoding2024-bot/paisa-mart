@@ -1,14 +1,46 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
-import { View, Text, ScrollView, TextInput, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Search, ChevronRight, CreditCard, Landmark, Shield, Home, Car, Briefcase, Zap, Heart, UserCheck, Gem, Building2, Umbrella, X, SearchX } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useProductStore } from '@/lib/product-store';
-import { useFeatureFlags } from '@/lib/feature-flags';
-import PressableScale from '@/components/PressableScale';
-import ComingSoonModal, { type ComingSoonModule } from '@/components/ComingSoonModal';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  View,
+  ScrollView,
+  TextInput,
+  Linking,
+  useWindowDimensions,
+} from "react-native";
+import {
+  Page,
+  ScreenHeader,
+  Typography as Text,
+  Surface,
+  IconBadge,
+  palette,
+} from "@/components/brand";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Search,
+  ChevronRight,
+  CreditCard,
+  Landmark,
+  Shield,
+  Home,
+  Car,
+  Briefcase,
+  Zap,
+  Heart,
+  UserCheck,
+  Gem,
+  Building2,
+  Umbrella,
+  X,
+  SearchX,
+} from "lucide-react-native";
+import Animated, { FadeInDown } from "react-native-reanimated";
+import { useLocalSearchParams, useRouter } from "expo-router";
+import { useProductStore } from "@/lib/product-store";
+import { useFeatureFlags } from "@/lib/feature-flags";
+import PressableScale from "@/components/PressableScale";
+import ComingSoonModal, {
+  type ComingSoonModule,
+} from "@/components/ComingSoonModal";
 
 const CATEGORIES = [
   { id: 'credit-cards', icon: CreditCard, label: 'Credit Cards', color: '#3B82F6' },
@@ -475,45 +507,48 @@ const BANK_ACCOUNT_CARD_DETAILS: Record<string, {
 };
 
 export default function ProductsScreen() {
+  const { width } = useWindowDimensions();
+  const wide = width >= 760;
   const router = useRouter();
   const { category } = useLocalSearchParams<{ category?: string }>();
-  const [selectedCategory, setSelectedCategory] = useState('credit-cards');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState("credit-cards");
+  const [searchQuery, setSearchQuery] = useState("");
   const categoryData = CATEGORY_DATA[selectedCategory];
   const products = useProductStore((s) => s.products);
   const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
   const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
-  const [comingSoonModule, setComingSoonModule] = useState<ComingSoonModule | null>(null);
+  const [comingSoonModule, setComingSoonModule] =
+    useState<ComingSoonModule | null>(null);
 
   // Set category from navigation params
   useEffect(() => {
-    if (category && CATEGORIES.some(c => c.id === category)) {
+    if (category && CATEGORIES.some((c) => c.id === category)) {
       // If navigating to a coming-soon category, show modal instead
-      if (category === 'gold-loans' && !goldLoanEnabled) {
-        setComingSoonModule('gold-loans');
+      if (category === "gold-loans" && !goldLoanEnabled) {
+        setComingSoonModule("gold-loans");
         return;
       }
-      if (category === 'real-estate' && !realEstateEnabled) {
-        setComingSoonModule('real-estate');
+      if (category === "real-estate" && !realEstateEnabled) {
+        setComingSoonModule("real-estate");
         return;
       }
       // Home Loans navigates to details screen first
-      if (category === 'home-loans') {
-        router.push('/home-loans-details');
+      if (category === "home-loans") {
+        router.push("/home-loans-details");
         return;
       }
       // Business Loans navigates to details screen first
-      if (category === 'business-loans') {
-        router.push('/business-loans-details');
+      if (category === "business-loans") {
+        router.push("/business-loans-details");
         return;
       }
       // Personal Loans navigates to eligibility screen first
-      if (category === 'personal-loans') {
-        router.push('/personal-loans-details');
+      if (category === "personal-loans") {
+        router.push("/personal-loans-details");
         return;
       }
-      if (category === 'vehicle-loans') {
-        router.push('/vehicle-loans-details');
+      if (category === "vehicle-loans") {
+        router.push("/vehicle-loans-details");
         return;
       }
       // Health Insurance shows the partner list — partner card press starts the flow
@@ -521,7 +556,9 @@ export default function ProductsScreen() {
     }
   }, [category]);
 
-  const selectedCategoryInfo = CATEGORIES.find(c => c.id === selectedCategory);
+  const selectedCategoryInfo = CATEGORIES.find(
+    (c) => c.id === selectedCategory,
+  );
 
   // Filter the current category's partners by the search query
   const filteredSections = useMemo(() => {
@@ -534,7 +571,7 @@ export default function ProductsScreen() {
         partners: section.partners.filter(
           (p) =>
             p.name.toLowerCase().includes(q) ||
-            (p.tag ? p.tag.toLowerCase().includes(q) : false)
+            (p.tag ? p.tag.toLowerCase().includes(q) : false),
         ),
       }))
       .filter((section) => section.partners.length > 0);
@@ -543,35 +580,35 @@ export default function ProductsScreen() {
   const hasResults = filteredSections.length > 0;
   const visibleBankAccountPartners = useMemo(
     () => filteredSections.flatMap((section) => section.partners),
-    [filteredSections]
+    [filteredSections],
   );
 
   const handleCategoryPress = (catId: string) => {
-    if (catId === 'gold-loans' && !goldLoanEnabled) {
-      setComingSoonModule('gold-loans');
+    if (catId === "gold-loans" && !goldLoanEnabled) {
+      setComingSoonModule("gold-loans");
       return;
     }
-    if (catId === 'real-estate' && !realEstateEnabled) {
-      setComingSoonModule('real-estate');
+    if (catId === "real-estate" && !realEstateEnabled) {
+      setComingSoonModule("real-estate");
       return;
     }
     // Home Loans requires details capture first
-    if (catId === 'home-loans') {
-      router.push('/home-loans-details');
+    if (catId === "home-loans") {
+      router.push("/home-loans-details");
       return;
     }
     // Business Loans requires details capture first
-    if (catId === 'business-loans') {
-      router.push('/business-loans-details');
+    if (catId === "business-loans") {
+      router.push("/business-loans-details");
       return;
     }
     // Personal Loans requires eligibility capture first
-    if (catId === 'personal-loans') {
-      router.push('/personal-loans-details');
+    if (catId === "personal-loans") {
+      router.push("/personal-loans-details");
       return;
     }
-    if (catId === 'vehicle-loans') {
-      router.push('/vehicle-loans-details');
+    if (catId === "vehicle-loans") {
+      router.push("/vehicle-loans-details");
       return;
     }
     // Health Insurance shows the partner list — partner card press starts the flow
@@ -579,339 +616,504 @@ export default function ProductsScreen() {
   };
 
   // Navigate to share card screen or Open Plots flow or Vehicle Insurance flow
-  const handleProductPress = useCallback((partner: Partner, categoryId: string) => {
-    // Block access if category is coming soon
-    if (categoryId === 'gold-loans' && !goldLoanEnabled) {
-      setComingSoonModule('gold-loans');
-      return;
-    }
-    if (categoryId === 'real-estate' && !realEstateEnabled) {
-      setComingSoonModule('real-estate');
-      return;
-    }
+  const handleProductPress = useCallback(
+    (partner: Partner, categoryId: string) => {
+      // Block access if category is coming soon
+      if (categoryId === "gold-loans" && !goldLoanEnabled) {
+        setComingSoonModule("gold-loans");
+        return;
+      }
+      if (categoryId === "real-estate" && !realEstateEnabled) {
+        setComingSoonModule("real-estate");
+        return;
+      }
 
-    // Special handling for Open Plots in Real Estate
-    if (categoryId === 'real-estate' && partner.name === 'Open Plots') {
-      router.push('/open-plots');
-      return;
-    }
+      // Special handling for Open Plots in Real Estate
+      if (categoryId === "real-estate" && partner.name === "Open Plots") {
+        router.push("/open-plots");
+        return;
+      }
 
-    // Special handling for Vehicle Insurance Quote button in Motor Insurance
-    if (categoryId === 'motor-insurance' && partner.name === 'Get Vehicle Insurance Quote') {
-      router.push('/vehicle-insurance');
-      return;
-    }
+      // Special handling for Vehicle Insurance Quote button in Motor Insurance
+      if (
+        categoryId === "motor-insurance" &&
+        partner.name === "Get Vehicle Insurance Quote"
+      ) {
+        router.push("/vehicle-insurance");
+        return;
+      }
 
-    // All other Motor Insurance partner cards open the details form
-    if (categoryId === 'motor-insurance') {
-      router.push({
-        pathname: '/motor-insurance-details',
-        params: { insurer: partner.name },
-      });
-      return;
-    }
+      // All other Motor Insurance partner cards open the details form
+      if (categoryId === "motor-insurance") {
+        router.push({
+          pathname: "/motor-insurance-details",
+          params: { insurer: partner.name },
+        });
+        return;
+      }
 
-    // Health Insurance partners always open the 2-step flow with the chosen insurer
-    if (categoryId === 'health-insurance') {
-      router.push({
-        pathname: '/health-insurance-members',
-        params: { insurer: partner.name },
-      });
-      return;
-    }
+      // Health Insurance partners always open the 2-step flow with the chosen insurer
+      if (categoryId === "health-insurance") {
+        router.push({
+          pathname: "/health-insurance-members",
+          params: { insurer: partner.name },
+        });
+        return;
+      }
 
-    // Life Insurance partners open the life insurance details form
-    if (categoryId === 'life-insurance') {
-      router.push({
-        pathname: '/life-insurance-details',
-        params: { insurer: partner.name },
-      });
-      return;
-    }
+      // Life Insurance partners open the life insurance details form
+      if (categoryId === "life-insurance") {
+        router.push({
+          pathname: "/life-insurance-details",
+          params: { insurer: partner.name },
+        });
+        return;
+      }
 
-    // Check if product exists in store, otherwise create a temporary product ID
-    const productId = partner.id || getProductId(partner.name, categoryId);
+      // Check if product exists in store, otherwise create a temporary product ID
+      const productId = partner.id || getProductId(partner.name, categoryId);
 
-    // Check if the product exists in the store
-    const existingProduct = products.find(p => p.id === productId);
+      // Check if the product exists in the store
+      const existingProduct = products.find((p) => p.id === productId);
 
-    if (existingProduct) {
-      router.push({ pathname: '/share-card', params: { productId } });
-    } else {
-      // For products not in the store, create a dynamic ID based on name and category
-      // This will show a fallback in the share card screen
-      router.push({
-        pathname: '/share-card',
-        params: {
-          productId,
-          partnerName: partner.name,
-          category: categoryId,
-          commission: partner.commission,
-          tag: partner.tag,
-        }
-      });
-    }
-  }, [router, products, goldLoanEnabled, realEstateEnabled]);
+      if (existingProduct) {
+        router.push({ pathname: "/share-card", params: { productId } });
+      } else {
+        // For products not in the store, create a dynamic ID based on name and category
+        // This will show a fallback in the share card screen
+        router.push({
+          pathname: "/share-card",
+          params: {
+            productId,
+            partnerName: partner.name,
+            category: categoryId,
+            commission: partner.commission,
+            tag: partner.tag,
+          },
+        });
+      }
+    },
+    [router, products, goldLoanEnabled, realEstateEnabled],
+  );
 
-  const handleApplyPress = useCallback((partner: Partner, categoryId: string) => {
-    const productId = partner.id || getProductId(partner.name, categoryId);
-    const existingProduct = products.find(p => p.id === productId);
+  const handleApplyPress = useCallback(
+    (partner: Partner, categoryId: string) => {
+      const productId = partner.id || getProductId(partner.name, categoryId);
+      const existingProduct = products.find((p) => p.id === productId);
 
-    if (categoryId === 'bank-accounts' && existingProduct?.applicationUrl) {
-      Linking.openURL(existingProduct.applicationUrl);
-      return;
-    }
+      if (categoryId === "bank-accounts" && existingProduct?.applicationUrl) {
+        Linking.openURL(existingProduct.applicationUrl);
+        return;
+      }
 
-    handleProductPress(partner, categoryId);
-  }, [handleProductPress, products]);
+      handleProductPress(partner, categoryId);
+    },
+    [handleProductPress, products],
+  );
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Header */}
-        <LinearGradient
-          colors={['#002561', '#0A3D91']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: 16, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
+    <>
+      <Page>
+        <ScreenHeader
+          eyebrow="Discover your next opportunity"
+          title="Made for every ambition."
+          subtitle="Find the right financial product for your customer."
+          icon={Landmark}
+        />
+        <View
+          style={{
+            backgroundColor: "#fff",
+            borderWidth: 1,
+            borderColor: palette.line,
+            borderRadius: 17,
+            paddingHorizontal: 16,
+            flexDirection: "row",
+            alignItems: "center",
+            marginBottom: 20,
+          }}
         >
-          <View className="px-4 pt-2">
-            <Text className="text-white text-xl font-bold">Products</Text>
-            <Text className="text-white/60 text-sm mt-1">Browse financial products to sell</Text>
-
-            {/* Search Bar */}
-            <View className="bg-white/10 rounded-2xl px-4 py-1 mt-4 flex-row items-center border border-white/10">
-              <Search size={20} color="#fff" />
-              <TextInput
-                className="flex-1 ml-3 text-white py-2.5"
-                placeholder="Search banks, NBFCs, insurers..."
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                returnKeyType="search"
-              />
-              {searchQuery.length > 0 && (
-                <PressableScale haptic="light" onPress={() => setSearchQuery('')} className="w-7 h-7 bg-white/15 rounded-full items-center justify-center">
-                  <X size={15} color="#fff" />
-                </PressableScale>
-              )}
-            </View>
-          </View>
-        </LinearGradient>
-
-        {/* Category Tabs */}
-        <View className="bg-white border-b border-gray-100">
-          <ScrollView keyboardShouldPersistTaps="handled"
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            className="py-3"
-            contentContainerStyle={{ paddingHorizontal: 12 }}
-            style={{ flexGrow: 0 }}
-          >
-            {CATEGORIES.map((cat) => {
-              const isSelected = selectedCategory === cat.id;
-              return (
-                <PressableScale
-                  key={cat.id}
-                  haptic="selection"
-                  activeScale={0.94}
-                  onPress={() => handleCategoryPress(cat.id)}
-                  className={`flex-row items-center px-4 py-2 rounded-full mr-2 ${
-                    isSelected ? 'bg-orange-500' : 'bg-gray-100'
-                  }`}
-                >
-                  <cat.icon size={16} color={isSelected ? '#fff' : cat.color} />
-                  <Text
-                    className={`ml-2 text-sm font-medium ${
-                      isSelected ? 'text-white' : 'text-gray-600'
-                    }`}
-                  >
-                    {cat.label}
-                  </Text>
-                </PressableScale>
-              );
-            })}
-          </ScrollView>
+          <Search size={20} color={palette.muted} />
+          <TextInput
+            accessibilityLabel="Search products"
+            style={{
+              flex: 1,
+              minWidth: 0,
+              paddingHorizontal: 12,
+              height: 54,
+              fontSize: 14,
+              fontFamily: "Jakarta",
+              color: palette.ink,
+            }}
+            placeholder="Search banks, lenders, insurers…"
+            placeholderTextColor={palette.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+          />
+          {!!searchQuery && (
+            <PressableScale
+              accessibilityLabel="Clear search"
+              onPress={() => setSearchQuery("")}
+              style={{
+                width: 44,
+                height: 44,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <X size={18} color={palette.muted} />
+            </PressableScale>
+          )}
         </View>
-
-        {/* Products List */}
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-          <Animated.View
-            entering={FadeInDown.delay(100).springify()}
-            className="px-4 mt-4"
-          >
-            {!hasResults && (
-              <View className="items-center justify-center mt-16">
-                <View className="w-20 h-20 bg-gray-100 rounded-full items-center justify-center mb-4">
-                  <SearchX size={32} color="#9CA3AF" />
-                </View>
-                <Text className="text-gray-800 font-semibold text-base">No matches found</Text>
-                <Text className="text-gray-400 text-sm mt-1 text-center px-8">
-                  Try a different search or pick another category above.
-                </Text>
-              </View>
-            )}
-            {selectedCategory === 'bank-accounts' && hasResults ? (
-              <View className="mb-6">
-                <View className="flex-row items-center mb-3">
-                  <View
-                    className="w-1 h-5 rounded-full mr-2"
-                    style={{ backgroundColor: selectedCategoryInfo?.color }}
-                  />
-                  <Text className="text-gray-800 font-semibold">Savings Accounts</Text>
-                  <View className="bg-gray-200 px-2 py-0.5 rounded-full ml-2">
-                    <Text className="text-gray-500 text-xs">{visibleBankAccountPartners.length}</Text>
-                  </View>
-                </View>
-
-                {visibleBankAccountPartners.map((partner, partnerIndex) => {
-                  const card = BANK_ACCOUNT_CARD_DETAILS[partner.id || ''];
-                  if (!card) return null;
-
-                  return (
-                    <Animated.View
-                      key={partner.id || partnerIndex}
-                      entering={FadeInDown.delay(150 + partnerIndex * 80).springify()}
-                      className="mb-4"
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ flexGrow: 0, marginBottom: 25 }}
+          contentContainerStyle={{ gap: 8, paddingBottom: 4 }}
+        >
+          {CATEGORIES.map((cat) => (
+            <PressableScale
+              key={cat.id}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: selectedCategory === cat.id }}
+              onPress={() => handleCategoryPress(cat.id)}
+              style={{
+                minHeight: 45,
+                paddingHorizontal: 17,
+                borderRadius: 14,
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 8,
+                backgroundColor:
+                  selectedCategory === cat.id ? palette.navy : "#fff",
+                borderWidth: 1,
+                borderColor:
+                  selectedCategory === cat.id ? palette.navy : palette.line,
+              }}
+            >
+              <cat.icon
+                size={16}
+                color={
+                  selectedCategory === cat.id ? palette.mint : palette.muted
+                }
+              />
+              <Text
+                style={{
+                  fontSize: 12,
+                  fontWeight: "600",
+                  color: selectedCategory === cat.id ? "#fff" : palette.muted,
+                }}
+              >
+                {cat.label}
+              </Text>
+            </PressableScale>
+          ))}
+        </ScrollView>
+        {!hasResults && (
+          <Surface style={{ alignItems: "center", paddingVertical: 44 }}>
+            <IconBadge icon={SearchX} size={60} />
+            <Text style={{ fontSize: 19, fontWeight: "700", marginTop: 20 }}>
+              No matches yet
+            </Text>
+            <Text
+              style={{
+                color: palette.muted,
+                textAlign: "center",
+                fontSize: 13,
+                lineHeight: 21,
+                marginTop: 9,
+              }}
+            >
+              Try a different name, or explore another category.
+            </Text>
+            <PressableScale
+              onPress={() => setSearchQuery("")}
+              style={{ minHeight: 44, justifyContent: "center", marginTop: 14 }}
+            >
+              <Text style={{ color: palette.blue, fontWeight: "700" }}>
+                Clear search
+              </Text>
+            </PressableScale>
+          </Surface>
+        )}
+        {selectedCategory === "bank-accounts" && hasResults ? (
+          <>
+            <Text style={{ fontSize: 18, fontWeight: "800", marginBottom: 17 }}>
+              Savings accounts{" "}
+              <Text style={{ color: palette.muted, fontSize: 12 }}>
+                · {visibleBankAccountPartners.length} options
+              </Text>
+            </Text>
+            <View
+              style={{
+                flexDirection: wide ? "row" : "column",
+                gap: 16,
+                flexWrap: "wrap",
+              }}
+            >
+              {visibleBankAccountPartners.map((partner, i) => {
+                const card = BANK_ACCOUNT_CARD_DETAILS[partner.id || ""];
+                if (!card) return null;
+                return (
+                  <Surface
+                    key={partner.id}
+                    style={{ width: wide ? "48.8%" : "100%", padding: 23 }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        marginBottom: 22,
+                      }}
                     >
-                      <LinearGradient
-                        colors={['#E0F2FE', '#FFFFFF']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
+                      <IconBadge
+                        icon={Landmark}
+                        background={i % 2 ? "#ECF6F1" : "#EAF1FF"}
+                        color={i % 2 ? palette.teal : palette.blue}
+                      />
+                      <Text
                         style={{
-                          borderRadius: 20,
-                          padding: 18,
-                          borderWidth: 1,
-                          borderColor: '#D1D5DB',
-                          shadowColor: '#000',
-                          shadowOffset: { width: 0, height: 2 },
-                          shadowOpacity: 0.06,
-                          shadowRadius: 8,
-                          elevation: 2,
+                          color: palette.muted,
+                          fontSize: 12,
+                          fontWeight: "700",
                         }}
                       >
-                        <View className="flex-row items-start justify-between mb-8">
-                          <Text className="text-gray-900 font-bold text-xl flex-1 pr-3">{card.title}</Text>
-                          <Text
-                            className={`font-extrabold text-lg ${
-                              partner.id === 'kotak-savings-account' ? 'text-slate-700' : 'text-red-800 italic'
-                            }`}
-                          >
-                            {card.logo}
-                          </Text>
-                        </View>
-
-                        <View className="mb-5">
-                          {card.benefits.map((benefit, benefitIndex) => (
-                            <View key={benefitIndex} className="flex-row items-center mb-3">
-                              <View className="w-8 h-8 rounded-full bg-white/80 items-center justify-center mr-3 border border-slate-200">
-                                <Text className="text-slate-600 text-base">{benefitIndex === 0 ? '₹' : '↗'}</Text>
-                              </View>
-                              <Text className="text-gray-900 text-base font-medium flex-1">{benefit}</Text>
-                            </View>
-                          ))}
-                        </View>
-
-                        <PressableScale
-                          haptic="light"
-                          activeScale={0.98}
-                          onPress={() => handleProductPress(partner, selectedCategory)}
-                          className="self-start mb-5"
-                        >
-                          <View className="flex-row items-center">
-                            <Text className="text-blue-600 font-semibold text-base">View all Details and Benefits</Text>
-                            <ChevronRight size={20} color="#2563EB" />
-                          </View>
-                        </PressableScale>
-
-                        <View className="flex-row items-center justify-end">
-                          <PressableScale
-                            haptic="medium"
-                            activeScale={0.96}
-                            onPress={() => handleApplyPress(partner, selectedCategory)}
-                          >
-                            <View className="bg-blue-600 rounded-xl px-8 py-3">
-                              <Text className="text-white font-bold text-lg">Apply</Text>
-                            </View>
-                          </PressableScale>
-                        </View>
-                      </LinearGradient>
-                    </Animated.View>
-                  );
-                })}
-              </View>
-            ) : (
-            filteredSections.map((section, sectionIndex) => (
-              <View key={sectionIndex} className="mb-6">
-                <View className="flex-row items-center mb-3">
-                  <View
-                    className="w-1 h-5 rounded-full mr-2"
-                    style={{ backgroundColor: selectedCategoryInfo?.color }}
-                  />
-                  <Text className="text-gray-800 font-semibold">{section.title}</Text>
-                  <View className="bg-gray-200 px-2 py-0.5 rounded-full ml-2">
-                    <Text className="text-gray-500 text-xs">{section.partners.length}</Text>
-                  </View>
-                </View>
-
-                {section.partners.map((partner, partnerIndex) => {
-                  const tagColors = getTagColor(partner.tag || '');
-                  return (
-                    <PressableScale
-                      key={partnerIndex}
-                      haptic="light"
-                      activeScale={0.98}
-                      onPress={() => handleProductPress(partner, selectedCategory)}
-                      className="bg-white rounded-2xl p-4 mb-2 flex-row items-center"
+                        {card.logo}
+                      </Text>
+                    </View>
+                    <Text
                       style={{
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 4,
-                        elevation: 2,
+                        fontSize: 21,
+                        lineHeight: 29,
+                        fontWeight: "800",
+                        letterSpacing: -0.6,
+                      }}
+                    >
+                      {card.title}
+                    </Text>
+                    <Text
+                      style={{
+                        color: palette.muted,
+                        fontSize: 12,
+                        marginTop: 5,
+                        marginBottom: 19,
+                      }}
+                    >
+                      {partner.name}
+                    </Text>
+                    {card.benefits.map((benefit, j) => (
+                      <View
+                        key={j}
+                        style={{
+                          flexDirection: "row",
+                          gap: 9,
+                          marginBottom: 11,
+                          alignItems: "flex-start",
+                        }}
+                      >
+                        <Text
+                          style={{ color: palette.teal, fontWeight: "700" }}
+                        >
+                          ✓
+                        </Text>
+                        <Text style={{ fontSize: 13, lineHeight: 20, flex: 1 }}>
+                          {benefit}
+                        </Text>
+                      </View>
+                    ))}
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        gap: 12,
+                        marginTop: 16,
+                        paddingTop: 17,
+                        borderTopWidth: 1,
+                        borderColor: palette.line,
+                      }}
+                    >
+                      <PressableScale
+                        onPress={() =>
+                          handleProductPress(partner, selectedCategory)
+                        }
+                        style={{
+                          flex: 1,
+                          minHeight: 48,
+                          borderRadius: 13,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: "#F1F5FA",
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: palette.blue,
+                            fontSize: 12,
+                            fontWeight: "700",
+                          }}
+                        >
+                          View benefits
+                        </Text>
+                      </PressableScale>
+                      <PressableScale
+                        onPress={() =>
+                          handleApplyPress(partner, selectedCategory)
+                        }
+                        style={{
+                          flex: 1,
+                          minHeight: 48,
+                          borderRadius: 13,
+                          justifyContent: "center",
+                          alignItems: "center",
+                          backgroundColor: palette.blue,
+                        }}
+                      >
+                        <Text
+                          style={{
+                            color: "#fff",
+                            fontSize: 12,
+                            fontWeight: "700",
+                          }}
+                        >
+                          Apply now
+                        </Text>
+                      </PressableScale>
+                    </View>
+                  </Surface>
+                );
+              })}
+            </View>
+          </>
+        ) : (
+          filteredSections.map((section) => (
+            <View key={section.title} style={{ marginBottom: 26 }}>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 9,
+                  marginBottom: 15,
+                }}
+              >
+                <Text
+                  style={{
+                    flex: 1,
+                    fontSize: 17,
+                    fontWeight: "800",
+                    letterSpacing: -0.3,
+                  }}
+                >
+                  {section.title}
+                </Text>
+                <Text style={{ color: palette.muted, fontSize: 11 }}>
+                  {section.partners.length} options
+                </Text>
+              </View>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+                {section.partners.map((partner, i) => (
+                  <PressableScale
+                    key={partner.id || partner.name}
+                    onPress={() =>
+                      handleProductPress(partner, selectedCategory)
+                    }
+                    style={{
+                      width: wide ? "48.8%" : "100%",
+                      backgroundColor: "#fff",
+                      padding: 18,
+                      borderWidth: 1,
+                      borderColor: palette.line,
+                      borderRadius: 20,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        gap: 13,
                       }}
                     >
                       <View
-                        className="w-11 h-11 rounded-xl items-center justify-center mr-3"
-                        style={{ backgroundColor: selectedCategoryInfo?.color + '15' }}
+                        style={{
+                          width: 43,
+                          height: 43,
+                          borderRadius: 14,
+                          backgroundColor: i % 2 ? "#EAF5EF" : "#EDF2FC",
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
                       >
-                        <Text className="font-bold text-base" style={{ color: selectedCategoryInfo?.color }}>
+                        <Text
+                          style={{
+                            fontWeight: "800",
+                            fontSize: 18,
+                            color: i % 2 ? palette.teal : palette.blue,
+                          }}
+                        >
                           {partner.name.charAt(0)}
                         </Text>
                       </View>
-                      <View className="flex-1">
-                        <Text className="text-gray-800 font-medium text-sm">{partner.name}</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text
+                          style={{
+                            fontWeight: "700",
+                            fontSize: 13,
+                            lineHeight: 20,
+                          }}
+                        >
+                          {partner.name}
+                        </Text>
                         {partner.tag && (
-                          <View
-                            className="self-start px-2 py-0.5 rounded-full mt-1"
-                            style={{ backgroundColor: tagColors.bg }}
+                          <Text
+                            style={{
+                              color: palette.muted,
+                              fontSize: 11,
+                              marginTop: 3,
+                            }}
                           >
-                            <Text className="text-xs font-medium" style={{ color: tagColors.text }}>
-                              {partner.tag}
-                            </Text>
-                          </View>
+                            {partner.tag}
+                          </Text>
                         )}
                       </View>
-                      <View className="items-end mr-2">
-                        <Text className="text-green-600 font-bold text-sm">{partner.commission}</Text>
-                        <Text className="text-gray-400 text-xs">commission</Text>
+                      <ChevronRight size={17} color={palette.muted} />
+                    </View>
+                    {partner.commission && (
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          borderTopWidth: 1,
+                          borderColor: palette.line,
+                          marginTop: 16,
+                          paddingTop: 13,
+                        }}
+                      >
+                        <Text style={{ color: palette.muted, fontSize: 11 }}>
+                          Potential commission
+                        </Text>
+                        <Text
+                          style={{
+                            color: palette.teal,
+                            fontWeight: "700",
+                            fontSize: 12,
+                          }}
+                        >
+                          {partner.commission}
+                        </Text>
                       </View>
-                    </PressableScale>
-                  );
-                })}
+                    )}
+                  </PressableScale>
+                ))}
               </View>
-            ))
-            )}
-          </Animated.View>
-
-          <View className="h-6" />
-        </ScrollView>
-      </SafeAreaView>
+            </View>
+          ))
+        )}
+      </Page>
       <ComingSoonModal
         visible={comingSoonModule !== null}
         module={comingSoonModule}
         onClose={() => setComingSoonModule(null)}
       />
-    </View>
+    </>
   );
 }

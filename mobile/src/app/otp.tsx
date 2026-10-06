@@ -1,15 +1,21 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   View,
-  Text,
   TextInput,
-  Pressable,
+  ScrollView,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+} from "react-native";
+import {
+  BrandMark,
+  Surface,
+  Typography as Text,
+  ActionButton,
+  palette,
+} from "@/components/brand";
+import PressableScale from "@/components/PressableScale";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import Animated, {
   FadeInDown,
   FadeInUp,
@@ -17,34 +23,47 @@ import Animated, {
   useSharedValue,
   withTiming,
   withSequence,
-} from 'react-native-reanimated';
-import { ArrowLeft, CheckCircle, RefreshCw } from 'lucide-react-native';
-import * as Haptics from '@/lib/haptics';
-import { useIncentiveStore } from '@/lib/incentive-store';
-import { useUserProfileStore } from '@/lib/user-profile-store';
-import { getAuthSecurityConfig } from '@/lib/auth-security';
-import { fetchUserProfile } from '@/lib/user-profile-api';
-import { saveAuthToken, sendOtp, verifyOtp as verifyOtpRequest } from '@/lib/auth-api';
-import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
-import { cancelOtpLoginFlow, finishOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
+  ReduceMotion,
+} from "react-native-reanimated";
+import { ArrowLeft, CheckCircle, RefreshCw } from "lucide-react-native";
+import * as Haptics from "@/lib/haptics";
+import { useIncentiveStore } from "@/lib/incentive-store";
+import { useUserProfileStore } from "@/lib/user-profile-store";
+import { getAuthSecurityConfig } from "@/lib/auth-security";
+import { fetchUserProfile } from "@/lib/user-profile-api";
+import {
+  saveAuthToken,
+  sendOtp,
+  verifyOtp as verifyOtpRequest,
+} from "@/lib/auth-api";
+import { getPostAuthRoute, normalizeKycStatus } from "@/lib/onboarding-flow";
+import {
+  cancelOtpLoginFlow,
+  finishOtpLoginFlow,
+  startOtpLoginFlow,
+} from "@/lib/auth-flow";
 
 const OTP_LENGTH = 6;
 
 export default function OTPScreen() {
-  const { phone, reqId: initialReqId, next } = useLocalSearchParams<{
+  const {
+    phone,
+    reqId: initialReqId,
+    next,
+  } = useLocalSearchParams<{
     phone: string;
     reqId?: string;
     next?: string;
   }>();
-  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(''));
+  const [otp, setOtp] = useState<string[]>(Array(OTP_LENGTH).fill(""));
   const [activeIndex, setActiveIndex] = useState(0);
   const [isVerifying, setIsVerifying] = useState(false);
   const [isVerified, setIsVerified] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [reqId, setReqId] = useState(initialReqId);
   const [resendTimer, setResendTimer] = useState(30);
-  const [resendMessage, setResendMessage] = useState('');
-  const [error, setError] = useState('');
+  const [resendMessage, setResendMessage] = useState("");
+  const [error, setError] = useState("");
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const resendInFlightRef = useRef(false);
   const router = useRouter();
@@ -74,18 +93,18 @@ export default function OTPScreen() {
 
   const triggerShake = () => {
     shakeValue.value = withSequence(
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(-10, { duration: 50 }),
-      withTiming(10, { duration: 50 }),
-      withTiming(0, { duration: 50 })
+      withTiming(-10, { duration: 50, reduceMotion: ReduceMotion.System }),
+      withTiming(10, { duration: 50, reduceMotion: ReduceMotion.System }),
+      withTiming(-10, { duration: 50, reduceMotion: ReduceMotion.System }),
+      withTiming(10, { duration: 50, reduceMotion: ReduceMotion.System }),
+      withTiming(0, { duration: 50, reduceMotion: ReduceMotion.System }),
     );
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
   };
 
   const handleOtpChange = (value: string, index: number) => {
     if (value.length > 1) {
-      const pastedOtp = value.slice(0, OTP_LENGTH).split('');
+      const pastedOtp = value.slice(0, OTP_LENGTH).split("");
       const newOtp = [...otp];
       pastedOtp.forEach((digit, i) => {
         if (index + i < OTP_LENGTH) {
@@ -110,29 +129,37 @@ export default function OTPScreen() {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
   };
 
-  const handleKeyPress = (e: { nativeEvent: { key: string } }, index: number) => {
-    if (e?.nativeEvent?.key === 'Backspace' && !otp[index] && index > 0) {
+  const handleKeyPress = (
+    e: { nativeEvent: { key: string } },
+    index: number,
+  ) => {
+    if (e?.nativeEvent?.key === "Backspace" && !otp[index] && index > 0) {
       setActiveIndex(index - 1);
       inputRefs.current[index - 1]?.focus();
       const newOtp = [...otp];
-      newOtp[index - 1] = '';
+      newOtp[index - 1] = "";
       setOtp(newOtp);
     }
   };
 
   const handleManualVerify = () => {
-    const fullOtp = otp.join('');
+    const fullOtp = otp.join("");
     if (fullOtp.length !== OTP_LENGTH || isVerifying || isVerified) return;
     verifyOtp(fullOtp);
   };
 
   const verifyOtp = async (otpValue: string) => {
     setIsVerifying(true);
-    setError('');
+    setError("");
     try {
-      if (!phone) throw new Error('Mobile number is missing');
+      if (!phone) throw new Error("Mobile number is missing");
       startOtpLoginFlow();
-      const result = await verifyOtpRequest(phone, otpValue, Platform.OS === 'web' ? 'web' : 'mobile', reqId);
+      const result = await verifyOtpRequest(
+        phone,
+        otpValue,
+        Platform.OS === "web" ? "web" : "mobile",
+        reqId,
+      );
       await saveAuthToken(result.token);
       setIsVerified(true);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -145,38 +172,43 @@ export default function OTPScreen() {
             setProfile(serverProfile);
             setKYCStatus(serverProfile.phoneNumber, kycStatus);
 
-            const targetRoute = next || getPostAuthRoute(serverProfile, kycStatus);
+            const targetRoute =
+              next || getPostAuthRoute(serverProfile, kycStatus);
             const config = await getAuthSecurityConfig();
             router.replace(
               config.hasMpin
                 ? targetRoute
-                : { pathname: '/mpin-setup', params: { next: targetRoute } }
+                : { pathname: "/mpin-setup", params: { next: targetRoute } },
             );
             finishOtpLoginFlow();
             return;
           }
         } catch (error) {
-          console.warn('Profile lookup failed, falling back to local profile', error);
+          console.warn(
+            "Profile lookup failed, falling back to local profile",
+            error,
+          );
         }
 
         if (profile?.phoneNumber === phone) {
-          const targetRoute = next || getPostAuthRoute(profile, userKYC?.status);
+          const targetRoute =
+            next || getPostAuthRoute(profile, userKYC?.status);
           const config = await getAuthSecurityConfig();
           router.replace(
             config.hasMpin
               ? targetRoute
-              : { pathname: '/mpin-setup', params: { next: targetRoute } }
+              : { pathname: "/mpin-setup", params: { next: targetRoute } },
           );
           finishOtpLoginFlow();
           return;
         }
 
         finishOtpLoginFlow();
-        router.replace({ pathname: '/basic-info', params: { phone } });
+        router.replace({ pathname: "/basic-info", params: { phone } });
       }, 1000);
     } catch (e) {
       cancelOtpLoginFlow();
-      setError(e instanceof Error ? e.message : 'OTP verification failed');
+      setError(e instanceof Error ? e.message : "OTP verification failed");
       triggerShake();
       setIsVerifying(false);
     }
@@ -186,194 +218,273 @@ export default function OTPScreen() {
     if (resendTimer > 0 || resendInFlightRef.current) return;
 
     resendInFlightRef.current = true;
-    setError('');
-    setResendMessage('');
+    setError("");
+    setResendMessage("");
     setIsResending(true);
     try {
-      if (!phone) throw new Error('Mobile number is missing');
-      const result = await sendOtp(phone, Platform.OS === 'web' ? 'web' : 'mobile');
+      if (!phone) throw new Error("Mobile number is missing");
+      const result = await sendOtp(
+        phone,
+        Platform.OS === "web" ? "web" : "mobile",
+      );
       setReqId(result.reqId);
       setResendTimer(30);
-      setOtp(Array(OTP_LENGTH).fill(''));
+      setOtp(Array(OTP_LENGTH).fill(""));
       setActiveIndex(0);
-      setResendMessage('OTP resent successfully');
+      setResendMessage("OTP resent successfully");
       inputRefs.current[0]?.focus();
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Unable to resend OTP');
+      setError(e instanceof Error ? e.message : "Unable to resend OTP");
     } finally {
       resendInFlightRef.current = false;
       setIsResending(false);
     }
   };
 
-  const maskedPhone = phone ? `+91 ${phone.slice(0, 2)}****${phone.slice(-2)}` : '+91 ******';
+  const maskedPhone = phone
+    ? `+91 ${phone.slice(0, 2)}****${phone.slice(-2)}`
+    : "+91 ******";
 
   return (
-    <View className="flex-1 bg-white">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
+    <SafeAreaView
+      edges={["top", "bottom"]}
+      style={{ flex: 1, backgroundColor: palette.canvas }}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            padding: 20,
+          }}
         >
-          {/* Header */}
-          <LinearGradient
-            colors={['#002561', '#003380']}
-            style={{ paddingBottom: 30, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
-          >
-            <View className="px-6 pt-4">
-              <Animated.View
-                entering={FadeInDown.delay(100).springify()}
-                className="flex-row items-center"
-              >
-                <Pressable
-                  onPress={() => router.back()}
-                  className="w-10 h-10 rounded-full bg-white/10 items-center justify-center mr-4"
-                >
-                  <ArrowLeft size={20} color="#fff" />
-                </Pressable>
-                <Text className="text-white text-xl font-semibold">Verify OTP</Text>
-              </Animated.View>
-            </View>
-          </LinearGradient>
-
-          <View className="flex-1 px-6">
-            {/* OTP Card */}
-            <Animated.View
-              entering={FadeInUp.delay(200).springify()}
-              className="bg-white rounded-2xl p-5 -mt-4 shadow-lg"
+          <View style={{ width: "100%", maxWidth: 460, alignSelf: "center" }}>
+            <View
               style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 12,
-                elevation: 8,
+                flexDirection: "row",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: 30,
               }}
             >
-              <Text className="text-gray-800 text-lg font-semibold mb-1">
-                Enter Verification Code
+              <PressableScale
+                accessibilityLabel="Back to sign in"
+                onPress={() => router.back()}
+                style={{
+                  width: 44,
+                  height: 44,
+                  borderRadius: 14,
+                  backgroundColor: "#fff",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <ArrowLeft size={20} color={palette.ink} />
+              </PressableScale>
+              <BrandMark />
+            </View>
+            <Surface style={{ padding: 22 }}>
+              <Text
+                style={{
+                  color: palette.teal,
+                  fontSize: 10,
+                  letterSpacing: 2,
+                  fontWeight: "700",
+                }}
+              >
+                ONE LAST STEP
               </Text>
-              <Text className="text-gray-500 text-sm mb-1">
-                We've sent a 6-digit code to
+              <Text
+                accessibilityRole="header"
+                style={{
+                  fontSize: 27,
+                  fontWeight: "800",
+                  letterSpacing: -0.8,
+                  marginTop: 13,
+                }}
+              >
+                Let's make it official.
               </Text>
-              <Text className="text-orange-500 font-semibold mb-6">
+              <Text
+                style={{
+                  color: palette.muted,
+                  fontSize: 13,
+                  lineHeight: 22,
+                  marginTop: 12,
+                }}
+              >
+                Enter the 6-digit code sent to
+              </Text>
+              <Text style={{ fontSize: 14, fontWeight: "700", marginTop: 3 }}>
                 {maskedPhone}
               </Text>
-
-              {/* OTP Input */}
-              <Animated.View style={shakeStyle}>
-                <View className="flex-row justify-between">
-                  {Array(OTP_LENGTH)
-                    .fill(0)
-                    .map((_, index) => (
-                      <View
-                        key={index}
-                        className={`w-12 h-14 rounded-xl border-2 items-center justify-center ${
-                          isVerified
-                            ? 'border-green-500 bg-green-50'
-                            : activeIndex === index
-                            ? 'border-orange-500 bg-orange-50'
-                            : otp[index]
-                            ? 'border-gray-300 bg-gray-50'
-                            : 'border-gray-200 bg-gray-50'
-                        }`}
-                      >
-                        <TextInput
-                          ref={(ref) => {
-                            inputRefs.current[index] = ref;
-                          }}
-                          className="text-2xl font-bold text-gray-800 text-center w-full h-full"
-                          keyboardType="number-pad"
-                          maxLength={index === 0 ? OTP_LENGTH : 1}
-                          value={otp[index]}
-                          onChangeText={(value) => handleOtpChange(value, index)}
-                          onKeyPress={(e) => handleKeyPress(e, index)}
-                          onFocus={() => setActiveIndex(index)}
-                          editable={!isVerifying && !isVerified}
-                          selectTextOnFocus
-                        />
-                      </View>
-                    ))}
-                </View>
+              <Animated.View
+                style={[
+                  shakeStyle,
+                  { marginTop: 27, flexDirection: "row", gap: 6 },
+                ]}
+              >
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref) => {
+                      inputRefs.current[index] = ref;
+                    }}
+                    accessibilityLabel={`OTP digit ${index + 1}`}
+                    style={{
+                      flex: 1,
+                      minWidth: 0,
+                      height: 55,
+                      textAlign: "center",
+                      borderRadius: 12,
+                      borderWidth: 1.5,
+                      borderColor: isVerified
+                        ? palette.teal
+                        : activeIndex === index
+                          ? palette.blue
+                          : "#DDE6EF",
+                      backgroundColor: isVerified
+                        ? "#EDF8F1"
+                        : activeIndex === index
+                          ? "#F2F6FF"
+                          : "#F8FAFC",
+                      fontFamily: "JakartaBold",
+                      fontSize: 22,
+                      color: palette.ink,
+                    }}
+                    keyboardType="number-pad"
+                    maxLength={index === 0 ? OTP_LENGTH : 1}
+                    value={digit}
+                    onChangeText={(value) => handleOtpChange(value, index)}
+                    onKeyPress={(event) => handleKeyPress(event, index)}
+                    onFocus={() => setActiveIndex(index)}
+                    editable={!isVerifying && !isVerified}
+                    selectTextOnFocus
+                    textContentType={index === 0 ? "oneTimeCode" : "none"}
+                    autoComplete={index === 0 ? "sms-otp" : "off"}
+                  />
+                ))}
               </Animated.View>
-
-              {/* Status */}
-              <View className="mt-6 items-center">
-                {isVerifying && !isVerified && (
-                  <View className="flex-row items-center">
-                    <RefreshCw size={20} color="#FF8C00" />
-                    <Text className="text-gray-600 ml-2">Verifying...</Text>
-                  </View>
-                )}
-                {isVerified && (
-                  <Animated.View
-                    entering={FadeInUp.springify()}
-                    className="flex-row items-center"
+              {!!error && (
+                <Text
+                  accessibilityRole="alert"
+                  style={{
+                    color: "#C93636",
+                    fontSize: 12,
+                    lineHeight: 19,
+                    marginTop: 14,
+                  }}
+                >
+                  {error}
+                </Text>
+              )}
+              {isVerified && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 8,
+                    marginTop: 16,
+                  }}
+                >
+                  <CheckCircle size={18} color={palette.teal} />
+                  <Text
+                    style={{
+                      color: palette.teal,
+                      fontWeight: "700",
+                      fontSize: 12,
+                    }}
                   >
-                    <CheckCircle size={24} color="#22C55E" />
-                    <Text className="text-green-500 ml-2 font-semibold">
-                      Verified Successfully!
-                    </Text>
-                  </Animated.View>
-                )}
+                    Verified. You're all set.
+                  </Text>
+                </View>
+              )}
+              <View style={{ marginTop: 23 }}>
+                <ActionButton
+                  label={
+                    isVerifying
+                      ? "Verifying…"
+                      : isVerified
+                        ? "Verified"
+                        : "Verify & continue"
+                  }
+                  onPress={handleManualVerify}
+                  loading={isVerifying}
+                  disabled={otp.join("").length !== OTP_LENGTH || isVerified}
+                />
               </View>
-
-              {!!error && <Text className="text-red-500 text-sm text-center mt-3">{error}</Text>}
-
-              <Pressable
-                onPress={handleManualVerify}
-                disabled={otp.join('').length !== OTP_LENGTH || isVerifying || isVerified}
-                className={`mt-5 rounded-xl py-4 items-center ${
-                  otp.join('').length === OTP_LENGTH && !isVerifying && !isVerified ? 'bg-orange-500' : 'bg-gray-300'
-                }`}
+              <Text
+                style={{
+                  color: palette.muted,
+                  textAlign: "center",
+                  fontSize: 12,
+                  marginTop: 25,
+                }}
+              >
+                Didn't receive your code?
+              </Text>
+              <PressableScale
+                onPress={handleResend}
+                disabled={resendTimer > 0 || isResending}
+                style={{
+                  minHeight: 48,
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
               >
                 <Text
-                  className={`font-bold text-base ${
-                    otp.join('').length === OTP_LENGTH && !isVerifying && !isVerified ? 'text-white' : 'text-gray-500'
-                  }`}
+                  style={{
+                    color:
+                      resendTimer > 0 || isResending
+                        ? palette.muted
+                        : palette.blue,
+                    fontSize: 13,
+                    fontWeight: "700",
+                  }}
                 >
-                  {isVerifying ? 'Verifying...' : 'Submit OTP'}
+                  {isResending
+                    ? "Sending…"
+                    : resendTimer > 0
+                      ? `Resend in ${resendTimer}s`
+                      : "Resend OTP"}
                 </Text>
-              </Pressable>
-
-              {/* Resend */}
-              <View className="mt-6 items-center">
-                <Text className="text-gray-500 text-sm">
-                  Didn't receive the code?
-                </Text>
-                <Pressable
-                  onPress={handleResend}
-                  disabled={resendTimer > 0 || isResending}
-                  className="mt-2"
+              </PressableScale>
+              {!!resendMessage && !error && (
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={{
+                    color: palette.teal,
+                    fontSize: 12,
+                    textAlign: "center",
+                  }}
                 >
-                  <Text
-                    className={`text-base font-semibold ${
-                      resendTimer > 0 || isResending ? 'text-gray-400' : 'text-orange-500'
-                    }`}
-                  >
-                    {isResending ? 'Sending...' : resendTimer > 0 ? `Resend in ${resendTimer}s` : 'Resend OTP'}
-                  </Text>
-                </Pressable>
-                {!!resendMessage && !error && (
-                  <Text className="text-green-600 text-sm text-center mt-2">{resendMessage}</Text>
-                )}
-              </View>
-            </Animated.View>
-
-            {/* Help */}
-            <Animated.View
-              entering={FadeInUp.delay(400).springify()}
-              className="mt-auto mb-6"
+                  {resendMessage}
+                </Text>
+              )}
+            </Surface>
+            <PressableScale
+              onPress={() => router.push("/support")}
+              style={{
+                minHeight: 50,
+                justifyContent: "center",
+                alignItems: "center",
+                marginTop: 14,
+              }}
             >
-              <Pressable className="py-4 items-center">
-                <Text className="text-orange-500 font-medium">
-                  Need help? Contact Support
-                </Text>
-              </Pressable>
-            </Animated.View>
+              <Text
+                style={{ color: palette.blue, fontSize: 12, fontWeight: "600" }}
+              >
+                Need a hand? Get help
+              </Text>
+            </PressableScale>
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
