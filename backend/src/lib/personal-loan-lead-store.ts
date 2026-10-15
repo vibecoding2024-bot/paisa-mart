@@ -132,7 +132,7 @@ export async function savePersonalLoanLead(input: PersonalLoanLeadInput): Promis
       normalized.monthlyIncome,
       normalized.loanAmountRequired || null,
       normalized.existingEmi,
-      normalized.source,
+      normalized.source ?? "personal-loans-details",
       createdAt,
     ],
   );
