@@ -2,6 +2,9 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import { brandFonts } from '@/components/brand';
+import WebAppearance from '@/components/brand/WebAppearance';
 import { useColorScheme } from '@/lib/useColorScheme';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -68,6 +71,7 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="travel/hotels" options={{ headerShown: false }} />
         <Stack.Screen name="travel/bus" options={{ headerShown: false }} />
         <Stack.Screen name="travel/train" options={{ headerShown: false }} />
+        <Stack.Screen name="home-loan-applications" options={{ headerShown: false }} />
         <Stack.Screen name="home-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="business-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="personal-loans-details" options={{ headerShown: false }} />
@@ -87,16 +91,20 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const [fontsLoaded, fontError] = useFonts(brandFonts);
 
   useEffect(() => {
-    if (Platform.OS !== 'web') {
+    if (Platform.OS !== 'web' && (fontsLoaded || fontError)) {
       SplashScreen.hideAsync().catch(() => {});
     }
-  }, []);
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null;
 
   const content = (
     <>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <WebAppearance />
+      <StatusBar style="dark" />
       <RootLayoutNav colorScheme={colorScheme} />
       <ToastHost />
     </>

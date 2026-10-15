@@ -1,3 +1,4 @@
+import { adminLogin } from './home-loan-admin-api';
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -262,9 +263,8 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
   auditLogs: [],
 
   login: async (email: string, password: string) => {
-    // Simple auth check - in production, this would be a proper API call
-    const user = get().adminUsers.find(u => u.email.toLowerCase() === email.toLowerCase());
-    if (user && password === 'admin123') {
+    const user = await adminLogin(email, password);
+    if (user) {
       const updatedUser = { ...user, lastLogin: new Date().toISOString() };
       set({ isAuthenticated: true, currentAdmin: updatedUser });
       get().logAction('LOGIN', 'admin', user.id);
@@ -281,6 +281,7 @@ export const useAdminStore = create<AdminStore>((set, get) => ({
     }
     set({ isAuthenticated: false, currentAdmin: null });
     AsyncStorage.removeItem('admin_session');
+    AsyncStorage.removeItem('paisa_mart_admin_api_token');
   },
 
   addLead: (lead) => {

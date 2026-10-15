@@ -1,35 +1,54 @@
-import { useRef, useState } from 'react';
+import { useRef, useState } from "react";
 import {
   View,
-  Text,
   TextInput,
-  Pressable,
+  ScrollView,
+  useWindowDimensions,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import Animated, {
-  FadeInDown,
-  FadeInUp,
-} from 'react-native-reanimated';
-import { Phone, ArrowRight, Award, Wallet, Info, Headphones } from 'lucide-react-native';
-import { sendOtp } from '@/lib/auth-api';
-import { useIncentiveStore } from '@/lib/incentive-store';
-import { useUserProfileStore } from '@/lib/user-profile-store';
-import { getAuthSecurityConfig } from '@/lib/auth-security';
-import { fetchUserProfile } from '@/lib/user-profile-api';
-import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
-import { cancelOtpLoginFlow, finishOtpLoginFlow, startOtpLoginFlow } from '@/lib/auth-flow';
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import {
+  ArrowUpRight,
+  Landmark,
+  CreditCard,
+  ShieldCheck,
+  Headphones,
+  Check,
+  Sparkles,
+} from "lucide-react-native";
+import PressableScale from "@/components/PressableScale";
+import {
+  ActionButton,
+  BrandMark,
+  Typography as Text,
+  palette,
+  IconBadge,
+} from "@/components/brand";
+import { sendOtp } from "@/lib/auth-api";
+import { useIncentiveStore } from "@/lib/incentive-store";
+import { useUserProfileStore } from "@/lib/user-profile-store";
+import { getAuthSecurityConfig } from "@/lib/auth-security";
+import { fetchUserProfile } from "@/lib/user-profile-api";
+import { getPostAuthRoute, normalizeKycStatus } from "@/lib/onboarding-flow";
+import {
+  cancelOtpLoginFlow,
+  finishOtpLoginFlow,
+  startOtpLoginFlow,
+} from "@/lib/auth-flow";
 
-const isWeb = Platform.OS === 'web';
+const isWeb = Platform.OS === "web";
 
 export default function LoginScreen() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const { width } = useWindowDimensions();
+  const wide = width >= 860;
+  const heroSize = wide ? 48 : width < 370 ? 28 : 32;
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [isFocused, setIsFocused] = useState(false);
   const [isSending, setIsSending] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const sendInFlightRef = useRef(false);
   const router = useRouter();
   const profile = useUserProfileStore((s) => s.profile);
@@ -44,7 +63,7 @@ export default function LoginScreen() {
     const targetRoute = getPostAuthRoute(profile, userKYC?.status);
     const config = await getAuthSecurityConfig();
     router.push({
-      pathname: config.hasMpin ? '/unlock' : '/mpin-setup',
+      pathname: config.hasMpin ? "/unlock" : "/mpin-setup",
       params: { next: targetRoute },
     });
   };
@@ -54,7 +73,7 @@ export default function LoginScreen() {
     try {
       serverProfile = await fetchUserProfile(verifiedPhone);
     } catch (error) {
-      console.warn('Profile lookup failed after OTP verification', error);
+      console.warn("Profile lookup failed after OTP verification", error);
     }
 
     if (serverProfile) {
@@ -67,7 +86,7 @@ export default function LoginScreen() {
       router.replace(
         config.hasMpin
           ? targetRoute
-          : { pathname: '/mpin-setup', params: { next: targetRoute } }
+          : { pathname: "/mpin-setup", params: { next: targetRoute } },
       );
       finishOtpLoginFlow();
       return;
@@ -79,28 +98,34 @@ export default function LoginScreen() {
       router.replace(
         config.hasMpin
           ? targetRoute
-          : { pathname: '/mpin-setup', params: { next: targetRoute } }
+          : { pathname: "/mpin-setup", params: { next: targetRoute } },
       );
       finishOtpLoginFlow();
       return;
     }
 
     finishOtpLoginFlow();
-    router.replace({ pathname: '/basic-info', params: { phone: verifiedPhone } });
+    router.replace({
+      pathname: "/basic-info",
+      params: { phone: verifiedPhone },
+    });
   };
 
   const handleContinue = async () => {
     if (isValidPhone && !sendInFlightRef.current) {
       sendInFlightRef.current = true;
-      setError('');
+      setError("");
       setIsSending(true);
       try {
         startOtpLoginFlow();
-        const otpResult = await sendOtp(phoneNumber, isWeb ? 'web' : 'mobile');
-        router.push({ pathname: '/otp', params: { phone: phoneNumber, reqId: otpResult.reqId } });
+        const otpResult = await sendOtp(phoneNumber, isWeb ? "web" : "mobile");
+        router.push({
+          pathname: "/otp",
+          params: { phone: phoneNumber, reqId: otpResult.reqId },
+        });
       } catch (e) {
         cancelOtpLoginFlow();
-        setError(e instanceof Error ? e.message : 'Unable to send OTP');
+        setError(e instanceof Error ? e.message : "Unable to send OTP");
       } finally {
         sendInFlightRef.current = false;
         setIsSending(false);
@@ -109,208 +134,459 @@ export default function LoginScreen() {
   };
 
   const formatPhoneDisplay = (value: string) => {
-    const cleaned = value.replace(/\D/g, '').slice(0, 10);
+    const cleaned = value.replace(/\D/g, "").slice(0, 10);
     return cleaned;
   };
 
   return (
-    <View className="flex-1 bg-white">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          className="flex-1"
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: palette.canvas }}
+      edges={["top", "bottom"]}
+    >
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        style={{ flex: 1 }}
+      >
+        <ScrollView
+          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            padding: wide ? 40 : 0,
+          }}
         >
-          {/* Top Section - Blue Background */}
-          <LinearGradient
-            colors={['#002561', '#003380']}
-            style={{ paddingBottom: 28, borderBottomLeftRadius: 30, borderBottomRightRadius: 30 }}
+          <View
+            style={{
+              width: "100%",
+              maxWidth: 1120,
+              alignSelf: "center",
+              flexDirection: wide ? "row" : "column",
+              borderRadius: wide ? 32 : 0,
+              overflow: "hidden",
+              backgroundColor: "#fff",
+              borderWidth: wide ? 1 : 0,
+              borderColor: palette.line,
+            }}
           >
-            <View className="px-6 pt-4">
-              {/* Logo */}
-              <Animated.View
-                entering={isWeb ? undefined : FadeInDown.delay(100).springify()}
-                className="flex-row items-center"
-              >
-                <View className="w-10 h-10 bg-orange-500 rounded-lg items-center justify-center mr-2">
-                  <Text className="text-white font-bold text-lg">P</Text>
-                </View>
-                <Text className="text-white text-2xl font-bold">Paisa Mart</Text>
-              </Animated.View>
-
-              {/* Hero Text */}
-              <Animated.View
-                entering={isWeb ? undefined : FadeInDown.delay(200).springify()}
-                className="mt-5"
-              >
-                <Text className="text-white text-2xl font-bold leading-8">
-                  Sell financial products{'\n'}and earn real money{'\n'}online!
-                </Text>
-              </Animated.View>
-
-
-            </View>
-          </LinearGradient>
-
-          {/* Bottom Section - White Background */}
-          <View className="flex-1 px-6 mt-5">
-            {/* Login Card */}
-            <Animated.View
-              entering={isWeb ? undefined : FadeInUp.delay(300).springify()}
-              className="bg-white rounded-2xl p-5 shadow-lg"
+            <LinearGradient
+              colors={["#102F48", "#164B69"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
               style={{
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.1,
-                shadowRadius: 12,
-                elevation: 8,
+                flex: wide ? 1.1 : undefined,
+                padding: wide ? 46 : 26,
+                paddingBottom: wide ? 46 : 34,
+                overflow: "hidden",
               }}
             >
-              <Text className="text-gray-800 text-lg font-semibold mb-1">
-                Get Started
-              </Text>
-              <Text className="text-gray-500 text-sm mb-4">
-                Enter your mobile number to continue
-              </Text>
-
-              {/* Phone Input */}
               <View
-                className={`flex-row items-center bg-gray-50 rounded-xl px-4 border-2 ${
-                  isFocused ? 'border-orange-500' : 'border-gray-200'
-                }`}
-                style={{ minHeight: 56 }}
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  width: 330,
+                  height: 330,
+                  borderRadius: 165,
+                  borderWidth: 1,
+                  borderColor: "#ffffff12",
+                  right: -160,
+                  top: 60,
+                }}
+              />
+              <View
+                pointerEvents="none"
+                style={{
+                  position: "absolute",
+                  width: 260,
+                  height: 260,
+                  borderRadius: 130,
+                  borderWidth: 36,
+                  borderColor: "#ffffff04",
+                  right: -120,
+                  top: 95,
+                }}
+              />
+              <BrandMark light />
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 7,
+                  marginTop: wide ? 62 : 30,
+                }}
               >
-                <View className="flex-row items-center mr-3 pr-3 border-r border-gray-300">
-                  <Text className="text-gray-700 font-semibold">+91</Text>
+                <View
+                  style={{
+                    width: 6,
+                    height: 6,
+                    backgroundColor: palette.mint,
+                    borderRadius: 3,
+                  }}
+                />
+                <Text
+                  style={{
+                    color: palette.mint,
+                    fontSize: 10,
+                    fontWeight: "700",
+                    letterSpacing: 2,
+                  }}
+                >
+                  YOUR NEXT CHAPTER
+                </Text>
+              </View>
+              <Text
+                accessibilityRole="header"
+                style={{
+                  fontSize: heroSize,
+                  lineHeight: wide ? 57 : 40,
+                  fontWeight: "800",
+                  color: "#fff",
+                  letterSpacing: -1.5,
+                  marginTop: 14,
+                }}
+              >
+                Big ambitions.{"\n"}
+                <Text
+                  style={{
+                    color: palette.mint,
+                    fontSize: heroSize,
+                    lineHeight: wide ? 57 : 40,
+                    fontWeight: "800",
+                    letterSpacing: -1.5,
+                  }}
+                >
+                  Brighter beginnings.
+                </Text>
+              </Text>
+              <Text
+                style={{
+                  color: "#C6DAE7",
+                  fontSize: 14,
+                  lineHeight: 23,
+                  marginTop: 17,
+                  maxWidth: 340,
+                }}
+              >
+                Discover financial products. Help your customers. Build your
+                earning journey with Paisa Mart.
+              </Text>
+              {wide && (
+                <View style={{ marginTop: 40, gap: 12 }}>
+                  <View
+                    style={{
+                      backgroundColor: "#ffffff10",
+                      padding: 18,
+                      borderRadius: 20,
+                      borderColor: "#ffffff20",
+                      borderWidth: 1,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 14,
+                    }}
+                  >
+                    <IconBadge
+                      icon={Landmark}
+                      color={palette.navy}
+                      background={palette.mint}
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text
+                        style={{
+                          color: "#fff",
+                          fontWeight: "700",
+                          fontSize: 15,
+                        }}
+                      >
+                        More possibilities, one place.
+                      </Text>
+                      <Text
+                        style={{ color: "#C6DAE7", fontSize: 12, marginTop: 5 }}
+                      >
+                        Banking · Credit cards · Loans · Insurance
+                      </Text>
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 7,
+                      padding: 6,
+                    }}
+                  >
+                    <Check size={15} color={palette.mint} />
+                    <Text style={{ color: "#C6DAE7", fontSize: 12 }}>
+                      Product discovery to application, made simpler.
+                    </Text>
+                  </View>
                 </View>
-                <Phone size={20} color="#6B7280" />
+              )}
+            </LinearGradient>
+            <View
+              style={{
+                flex: wide ? 1 : undefined,
+                padding: wide ? 46 : 26,
+                justifyContent: "center",
+              }}
+            >
+              <View
+                style={{
+                  alignSelf: "flex-start",
+                  borderRadius: 12,
+                  backgroundColor: "#EDF7F3",
+                  paddingHorizontal: 11,
+                  paddingVertical: 8,
+                  flexDirection: "row",
+                  gap: 7,
+                  alignItems: "center",
+                  marginBottom: 23,
+                }}
+              >
+                <ShieldCheck size={15} color={palette.teal} />
+                <Text
+                  style={{
+                    color: palette.teal,
+                    fontSize: 11,
+                    fontWeight: "600",
+                  }}
+                >
+                  Sign in with OTP
+                </Text>
+              </View>
+              <Text
+                style={{ fontSize: 28, fontWeight: "800", letterSpacing: -0.8 }}
+              >
+                Welcome to Paisa Mart
+              </Text>
+              <Text
+                style={{
+                  color: palette.muted,
+                  fontSize: 13,
+                  lineHeight: 21,
+                  marginTop: 9,
+                  marginBottom: 28,
+                }}
+              >
+                A world of opportunities starts with your mobile number.
+              </Text>
+              <Text
+                style={{ fontSize: 12, fontWeight: "700", marginBottom: 10 }}
+              >
+                Mobile number
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  borderWidth: 1.5,
+                  borderColor: error
+                    ? "#D84747"
+                    : isFocused
+                      ? palette.blue
+                      : "#DCE5EE",
+                  backgroundColor: isFocused ? "#fff" : "#F8FAFC",
+                  borderRadius: 15,
+                  minHeight: 58,
+                  paddingHorizontal: 16,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 16,
+                    fontWeight: "600",
+                    borderRightWidth: 1,
+                    borderColor: "#DCE5EE",
+                    paddingRight: 14,
+                  }}
+                >
+                  +91
+                </Text>
                 <TextInput
-                  className="flex-1 ml-3 text-gray-800 text-base"
-                  style={{ height: 50, fontSize: 16, paddingVertical: 0 }}
-                  placeholder="Mobile Number"
-                  placeholderTextColor="#9CA3AF"
+                  accessibilityLabel="Mobile number"
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    paddingLeft: 14,
+                    height: 56,
+                    fontSize: 16,
+                    color: palette.ink,
+                    fontFamily: "JakartaSemiBold",
+                  }}
+                  placeholder="Enter 10-digit number"
+                  placeholderTextColor="#8697A6"
                   keyboardType="number-pad"
                   value={phoneNumber}
-                  onChangeText={(text) => setPhoneNumber(formatPhoneDisplay(text))}
+                  onChangeText={(text) => {
+                    setPhoneNumber(formatPhoneDisplay(text));
+                    if (error) setError("");
+                  }}
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   maxLength={10}
                   autoCorrect={false}
                   textContentType="telephoneNumber"
-                  returnKeyType="done"
+                  autoComplete="tel"
+                  returnKeyType="go"
+                  onSubmitEditing={handleContinue}
+                  editable={!isSending}
                 />
               </View>
-
               {!!error && (
-                <Text className="text-red-600 text-sm mt-3 rounded-lg bg-red-50 px-3 py-2">
+                <Text
+                  accessibilityRole="alert"
+                  style={{
+                    color: "#C93636",
+                    fontSize: 12,
+                    lineHeight: 19,
+                    marginTop: 10,
+                  }}
+                >
                   {error}
                 </Text>
               )}
-
-              {profile ? (
-                <Pressable onPress={handleMpinLogin} className="mt-4">
-                  <View className="rounded-xl py-3 items-center justify-center bg-blue-50 border border-blue-100">
-                    <Text className="text-blue-700 font-bold text-sm">Login with MPIN</Text>
-                  </View>
-                </Pressable>
-              ) : null}
-
-              {/* Continue Button */}
-              <Pressable
-                onPress={handleContinue}
-                disabled={!isValidPhone || isSending}
-                className="mt-4"
-              >
-                {({ pressed }) => (
-                  <View
-                    className={`rounded-xl py-4 flex-row items-center justify-center ${
-                      isValidPhone && !isSending ? 'bg-orange-500' : 'bg-gray-300'
-                    }`}
+              <View style={{ marginTop: 18 }}>
+                <ActionButton
+                  label={isSending ? "Sending your code…" : "Get started"}
+                  loading={isSending}
+                  disabled={!isValidPhone}
+                  onPress={handleContinue}
+                />
+              </View>
+              {profile && (
+                <PressableScale
+                  onPress={handleMpinLogin}
+                  style={{
+                    minHeight: 48,
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginTop: 8,
+                  }}
+                >
+                  <Text
                     style={{
-                      opacity: pressed ? 0.9 : 1,
-                      transform: [{ scale: pressed ? 0.98 : 1 }],
+                      color: palette.blue,
+                      fontWeight: "700",
+                      fontSize: 13,
                     }}
                   >
-                    <Text className={`text-base font-bold mr-2 ${isValidPhone ? 'text-white' : 'text-gray-500'}`}>
-                      {isSending ? 'Sending OTP...' : 'Continue'}
-                    </Text>
-                    <ArrowRight size={20} color={isValidPhone ? '#fff' : '#9CA3AF'} />
-                  </View>
-                )}
-              </Pressable>
-
-              {/* Footer Links */}
-              <View className="mt-6 flex-row flex-wrap justify-center gap-3 mb-4">
-                <Pressable onPress={() => router.push('/about-us')} className="flex-row items-center bg-blue-50 px-4 py-2 rounded-full">
-                  <Info size={14} color="#0A3D91" />
-                  <Text className="text-blue-700 text-xs font-semibold ml-1">About Us</Text>
-                </Pressable>
-                <Pressable onPress={() => router.push('/support')} className="flex-row items-center bg-green-50 px-4 py-2 rounded-full">
-                  <Headphones size={14} color="#16A34A" />
-                  <Text className="text-green-700 text-xs font-semibold ml-1">Contact Us</Text>
-                </Pressable>
-                <Pressable onPress={() => router.push('/terms-and-conditions')} className="flex-row items-center bg-orange-50 px-4 py-2 rounded-full">
-                  <Text className="text-orange-600 text-xs font-semibold">T&C</Text>
-                </Pressable>
-              </View>
-
-              {/* Terms */}
-              <Text className="text-gray-400 text-xs text-center leading-5">
-                By continuing, you agree to our{' '}
-                <Pressable onPress={() => router.push('/terms-and-conditions')}>
-                  <Text className="text-orange-500 font-semibold">Terms of Service</Text>
-                </Pressable>
-                {' '}and{' '}
-                <Text className="text-orange-500">Privacy Policy</Text>
+                    Sign in with MPIN
+                  </Text>
+                </PressableScale>
+              )}
+              <Text
+                style={{
+                  color: palette.muted,
+                  fontSize: 11,
+                  lineHeight: 19,
+                  marginTop: 16,
+                }}
+              >
+                By continuing, you agree to our{" "}
+                <Text
+                  onPress={() => router.push("/terms-and-conditions")}
+                  accessibilityRole="link"
+                  style={{
+                    color: palette.blue,
+                    fontSize: 11,
+                    fontWeight: "700",
+                    textDecorationLine: "underline",
+                  }}
+                >
+                  Terms & Conditions
+                </Text>
+                .
               </Text>
-            </Animated.View>
-
-            {/* How it works */}
-            <Animated.View
-              entering={isWeb ? undefined : FadeInUp.delay(500).springify()}
-              className="mt-6"
-            >
-              <Text className="text-gray-800 font-semibold text-base mb-4">How it works</Text>
-              <View className="flex-row justify-between">
-                <View className="items-center flex-1">
-                  <View className="w-12 h-12 rounded-full bg-blue-50 items-center justify-center border-2 border-blue-600">
-                    <Text className="text-blue-600 font-bold">1</Text>
+              <View
+                style={{
+                  borderTopWidth: 1,
+                  borderColor: palette.line,
+                  marginTop: 28,
+                  paddingTop: 23,
+                  gap: 15,
+                }}
+              >
+                {[
+                  {
+                    icon: CreditCard,
+                    title: "Discover",
+                    caption: "Explore products for every customer.",
+                  },
+                  {
+                    icon: Sparkles,
+                    title: "Grow",
+                    caption: "Learn, share, and build your business.",
+                  },
+                ].map((item) => (
+                  <View
+                    key={item.title}
+                    style={{
+                      flexDirection: "row",
+                      gap: 12,
+                      alignItems: "center",
+                    }}
+                  >
+                    <IconBadge
+                      icon={item.icon}
+                      size={37}
+                      background="#F0F5FB"
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 12, fontWeight: "700" }}>
+                        {item.title}
+                      </Text>
+                      <Text
+                        style={{
+                          fontSize: 11,
+                          color: palette.muted,
+                          marginTop: 3,
+                        }}
+                      >
+                        {item.caption}
+                      </Text>
+                    </View>
                   </View>
-                  <Text className="text-gray-600 text-xs mt-2 text-center">Register{'\n'}& Train</Text>
-                </View>
-                <View className="items-center flex-1">
-                  <View className="w-12 h-12 rounded-full bg-orange-50 items-center justify-center border-2 border-orange-500">
-                    <Text className="text-orange-500 font-bold">2</Text>
-                  </View>
-                  <Text className="text-gray-600 text-xs mt-2 text-center">Sell{'\n'}Products</Text>
-                </View>
-                <View className="items-center flex-1">
-                  <View className="w-12 h-12 rounded-full bg-green-50 items-center justify-center border-2 border-green-500">
-                    <Text className="text-green-500 font-bold">3</Text>
-                  </View>
-                  <Text className="text-gray-600 text-xs mt-2 text-center">Earn{'\n'}Money</Text>
-                </View>
+                ))}
               </View>
-            </Animated.View>
-
-            {/* Partner Benefits */}
-            <Animated.View
-              entering={isWeb ? undefined : FadeInUp.delay(600).springify()}
-              className="mt-6 flex-row gap-3"
-            >
-              <View className="flex-1 bg-blue-50 rounded-xl p-3">
-                <Award size={20} color="#002561" />
-                <Text className="text-gray-800 font-medium text-sm mt-2">Zero Investment</Text>
-                <Text className="text-gray-500 text-xs">Start earning with no money down</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
+                  marginTop: 25,
+                }}
+              >
+                <PressableScale
+                  onPress={() => router.push("/about-us")}
+                  style={{ minHeight: 44, justifyContent: "center" }}
+                >
+                  <Text style={{ color: palette.muted, fontSize: 12 }}>
+                    About Paisa Mart
+                  </Text>
+                </PressableScale>
+                <PressableScale
+                  onPress={() => router.push("/support")}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    minHeight: 44,
+                    gap: 6,
+                  }}
+                >
+                  <Headphones size={15} color={palette.blue} />
+                  <Text
+                    style={{
+                      color: palette.blue,
+                      fontSize: 12,
+                      fontWeight: "700",
+                    }}
+                  >
+                    Get help
+                  </Text>
+                  <ArrowUpRight size={13} color={palette.blue} />
+                </PressableScale>
               </View>
-              <View className="flex-1 bg-orange-50 rounded-xl p-3">
-                <Wallet size={20} color="#FF8C00" />
-                <Text className="text-gray-800 font-medium text-sm mt-2">Instant Payout</Text>
-                <Text className="text-gray-500 text-xs">Get paid directly to bank</Text>
-              </View>
-            </Animated.View>
+            </View>
           </View>
-        </KeyboardAvoidingView>
-      </SafeAreaView>
-    </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }

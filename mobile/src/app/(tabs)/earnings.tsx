@@ -1,53 +1,115 @@
-import { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Modal, TextInput, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import { Wallet, TrendingUp, ArrowDownLeft, ArrowUpRight, ChevronRight, Clock, CheckCircle, X, AlertTriangle, Shield } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from '@/lib/haptics';
-import { toast } from '@/lib/toast-store';
-import PressableScale from '@/components/PressableScale';
-import { useIncentiveStore } from '@/lib/incentive-store';
-import { KYC_ENFORCEMENT_DISABLED } from '@/lib/onboarding-flow';
+import { useState, useMemo } from "react";
+import {
+  View,
+  Modal,
+  TextInput,
+  Pressable,
+  useWindowDimensions,
+} from "react-native";
+import {
+  Page,
+  ScreenHeader,
+  Surface,
+  Typography as Text,
+  SectionHeading,
+  IconBadge,
+  palette,
+} from "@/components/brand";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
+import {
+  Wallet,
+  TrendingUp,
+  ArrowDownLeft,
+  ArrowUpRight,
+  ChevronRight,
+  Clock,
+  CheckCircle,
+  X,
+  AlertTriangle,
+  Shield,
+} from "lucide-react-native";
+
+import * as Haptics from "@/lib/haptics";
+import { toast } from "@/lib/toast-store";
+import PressableScale from "@/components/PressableScale";
+import { useIncentiveStore } from "@/lib/incentive-store";
+import { KYC_ENFORCEMENT_DISABLED } from "@/lib/onboarding-flow";
 
 const TRANSACTIONS = [
-  { type: 'credit', title: 'HDFC Credit Card Sale', amount: '₹2,100', date: 'Today', status: 'completed' },
-  { type: 'credit', title: 'SBI Personal Loan', amount: '₹3,500', date: 'Yesterday', status: 'completed' },
-  { type: 'debit', title: 'Withdrawal to Bank', amount: '₹5,000', date: '2 days ago', status: 'completed' },
-  { type: 'credit', title: 'Referral Bonus', amount: '₹500', date: '3 days ago', status: 'completed' },
-  { type: 'credit', title: 'ICICI Credit Card', amount: '₹1,800', date: '5 days ago', status: 'pending' },
+  {
+    type: "credit",
+    title: "HDFC Credit Card Sale",
+    amount: "₹2,100",
+    date: "Today",
+    status: "completed",
+  },
+  {
+    type: "credit",
+    title: "SBI Personal Loan",
+    amount: "₹3,500",
+    date: "Yesterday",
+    status: "completed",
+  },
+  {
+    type: "debit",
+    title: "Withdrawal to Bank",
+    amount: "₹5,000",
+    date: "2 days ago",
+    status: "completed",
+  },
+  {
+    type: "credit",
+    title: "Referral Bonus",
+    amount: "₹500",
+    date: "3 days ago",
+    status: "completed",
+  },
+  {
+    type: "credit",
+    title: "ICICI Credit Card",
+    amount: "₹1,800",
+    date: "5 days ago",
+    status: "pending",
+  },
 ];
 
 export default function EarningsScreen() {
+  const { width } = useWindowDimensions();
+  const wide = width >= 760;
+  const [showAllTransactions, setShowAllTransactions] =
+    useState<boolean>(false);
   const router = useRouter();
-  const userKYC = useIncentiveStore(s => s.userKYC);
-  const bankAccounts = useIncentiveStore(s => s.bankAccounts);
-  const minWithdrawalAmount = useIncentiveStore(s => s.minWithdrawalAmount);
-  const initiatePayout = useIncentiveStore(s => s.initiatePayout);
+  const userKYC = useIncentiveStore((s) => s.userKYC);
+  const bankAccounts = useIncentiveStore((s) => s.bankAccounts);
+  const minWithdrawalAmount = useIncentiveStore((s) => s.minWithdrawalAmount);
+  const initiatePayout = useIncentiveStore((s) => s.initiatePayout);
 
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState("");
   const [selectedBankId, setSelectedBankId] = useState<string | null>(null);
 
   const availableBalance = 7900; // In real app, this would come from the store
 
   const canWithdraw = useMemo(() => {
-    return (KYC_ENFORCEMENT_DISABLED || userKYC?.status === 'verified') && bankAccounts.length > 0;
+    return (
+      (KYC_ENFORCEMENT_DISABLED || userKYC?.status === "verified") &&
+      bankAccounts.length > 0
+    );
   }, [userKYC, bankAccounts]);
 
   const primaryBank = useMemo(() => {
-    return bankAccounts.find(a => a.isPrimary) || bankAccounts[0];
+    return bankAccounts.find((a) => a.isPrimary) || bankAccounts[0];
   }, [bankAccounts]);
 
   const handleWithdraw = () => {
     if (!canWithdraw) {
-      if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified') {
-        toast.info('Complete your KYC to unlock withdrawals');
-        router.push('/kyc');
+      if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== "verified") {
+        toast.info("Complete your KYC to unlock withdrawals");
+        router.push("/kyc");
       } else {
-        toast.info('Add a bank account to receive payouts');
-        router.push('/bank-details');
+        toast.info("Add a bank account to receive payouts");
+        router.push("/bank-details");
       }
       return;
     }
@@ -59,7 +121,7 @@ export default function EarningsScreen() {
     const amount = parseInt(withdrawAmount, 10);
 
     if (isNaN(amount) || amount <= 0) {
-      toast.error('Please enter a valid amount');
+      toast.error("Please enter a valid amount");
       return;
     }
     if (amount < minWithdrawalAmount) {
@@ -71,203 +133,320 @@ export default function EarningsScreen() {
       return;
     }
     if (!selectedBankId) {
-      toast.error('Please select a bank account');
+      toast.error("Please select a bank account");
       return;
     }
 
-    const success = initiatePayout('user-current', 'Partner Name', amount, selectedBankId);
+    const success = initiatePayout(
+      "user-current",
+      "Partner Name",
+      amount,
+      selectedBankId,
+    );
 
     if (success) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       setShowWithdrawModal(false);
-      setWithdrawAmount('');
-      toast.success(`₹${amount.toLocaleString()} withdrawal initiated — arrives in 24–48h`);
+      setWithdrawAmount("");
+      toast.success(
+        `Preview withdrawal of ₹${amount.toLocaleString()} saved. No funds were transferred.`,
+      );
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-      toast.error('Failed to initiate withdrawal. Try again.');
+      toast.error("Failed to initiate withdrawal. Try again.");
     }
   };
 
   return (
-    <View className="flex-1 bg-gray-50">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Header */}
-        <LinearGradient
-          colors={['#002561', '#0A3D91']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
+    <View style={{ flex: 1 }}>
+      <Page>
+        <ScreenHeader
+          eyebrow="Your growth, at a glance"
+          title="Every effort adds up."
+          subtitle="Keep track of earnings, payouts, and recent activity."
+          icon={Wallet}
+        />
+        <View
+          style={{
+            backgroundColor: "#FFF5E5",
+            borderRadius: 13,
+            padding: 13,
+            marginBottom: 17,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 9,
+          }}
         >
-          <View className="px-4 pt-2">
-            <Text className="text-white text-xl font-bold">My Earnings</Text>
-
-            {/* Balance Card */}
-            <LinearGradient
-              colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
-              style={{ borderRadius: 22, padding: 18, marginTop: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}
+          <AlertTriangle size={16} color="#996B2E" />
+          <Text
+            style={{ fontSize: 11, lineHeight: 17, color: "#896029", flex: 1 }}
+          >
+            Preview · These are sample figures, not your live balance.
+          </Text>
+        </View>
+        <LinearGradient
+          colors={["#102F48", "#194D69"]}
+          style={{
+            borderRadius: 26,
+            padding: 26,
+            overflow: "hidden",
+            marginBottom: 19,
+          }}
+        >
+          <View
+            pointerEvents="none"
+            style={{
+              position: "absolute",
+              right: -48,
+              top: -70,
+              width: 260,
+              height: 260,
+              borderRadius: 130,
+              borderColor: "#ffffff08",
+              borderWidth: 45,
+            }}
+          />
+          <Text style={{ color: "#BDD3E1", fontSize: 12 }}>
+            Available balance · Preview
+          </Text>
+          <Text
+            style={{
+              color: "#fff",
+              fontWeight: "800",
+              fontSize: 43,
+              letterSpacing: -1.5,
+              lineHeight: 57,
+              marginTop: 10,
+            }}
+          >
+            ₹{availableBalance.toLocaleString("en-IN")}
+            <Text style={{ color: "#A8C1D2", fontSize: 24 }}>.00</Text>
+          </Text>
+          <View style={{ flexDirection: "row", gap: 12, marginTop: 25 }}>
+            <PressableScale
+              onPress={handleWithdraw}
+              style={{
+                backgroundColor: palette.mint,
+                borderRadius: 14,
+                flex: 1,
+                minHeight: 48,
+                justifyContent: "center",
+                alignItems: "center",
+                flexDirection: "row",
+                gap: 6,
+              }}
             >
-              <Text className="text-white/60 text-xs font-medium">Available Balance</Text>
-              <Text className="text-white font-extrabold text-4xl mt-1">₹{availableBalance.toLocaleString()}</Text>
-
-              <View className="flex-row mt-4 gap-3">
-                <PressableScale haptic="medium" onPress={handleWithdraw} className="flex-1">
-                  <LinearGradient
-                    colors={['#FF8C00', '#FF6B00']}
-                    style={{ borderRadius: 14, paddingVertical: 13, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}
-                  >
-                    <ArrowUpRight size={18} color="#fff" />
-                    <Text className="text-white font-bold ml-2">Withdraw</Text>
-                  </LinearGradient>
-                </PressableScale>
-                <PressableScale
-                  haptic="light"
-                  onPress={() => toast.info('Your full transaction history is below')}
-                  className="flex-1 bg-white/15 rounded-2xl py-3 flex-row items-center justify-center"
-                >
-                  <Clock size={18} color="#fff" />
-                  <Text className="text-white font-bold ml-2">History</Text>
-                </PressableScale>
-              </View>
-            </LinearGradient>
+              <ArrowUpRight size={17} color={palette.navy} />
+              <Text style={{ fontWeight: "700", fontSize: 12 }}>Withdraw</Text>
+            </PressableScale>
+            <PressableScale
+              onPress={() => router.push("/bank-details")}
+              style={{
+                backgroundColor: "#ffffff13",
+                borderWidth: 1,
+                borderColor: "#ffffff20",
+                borderRadius: 14,
+                flex: 1,
+                minHeight: 48,
+                justifyContent: "center",
+                alignItems: "center",
+                gap: 6,
+                flexDirection: "row",
+              }}
+            >
+              <Shield size={16} color="#fff" />
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12 }}>
+                Bank details
+              </Text>
+            </PressableScale>
           </View>
         </LinearGradient>
-
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* KYC/Bank Warning */}
-          {!canWithdraw && (
-            <Animated.View entering={FadeInDown.delay(50).springify()} className="px-4 mt-4">
-              <PressableScale
-                haptic="light"
-                activeScale={0.98}
-                onPress={() => {
-                  if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified') {
-                    router.push('/kyc');
-                  } else {
-                    router.push('/bank-details');
-                  }
+        {!canWithdraw && (
+          <PressableScale
+            onPress={() =>
+              router.push(
+                !KYC_ENFORCEMENT_DISABLED && userKYC?.status !== "verified"
+                  ? "/kyc"
+                  : "/bank-details",
+              )
+            }
+            style={{
+              padding: 18,
+              borderRadius: 18,
+              backgroundColor: "#EAF1FF",
+              marginBottom: 19,
+              flexDirection: "row",
+              gap: 10,
+              alignItems: "center",
+            }}
+          >
+            <Shield size={19} color={palette.blue} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: "700", fontSize: 12 }}>
+                {!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== "verified"
+                  ? "Complete your KYC"
+                  : "Connect your bank account"}
+              </Text>
+              <Text
+                style={{ color: palette.muted, fontSize: 11, marginTop: 4 }}
+              >
+                Set up your details for future payouts.
+              </Text>
+            </View>
+            <ChevronRight size={17} color={palette.blue} />
+          </PressableScale>
+        )}
+        <View style={{ flexDirection: "row", gap: 12, marginBottom: 24 }}>
+          {[
+            { label: "This month", value: "₹12,400", icon: TrendingUp },
+            { label: "Total earned", value: "₹45,600", icon: Wallet },
+          ].map((item) => (
+            <Surface key={item.label} style={{ flex: 1, padding: 19 }}>
+              <IconBadge
+                icon={item.icon}
+                size={35}
+                background="#EDF6F1"
+                color={palette.teal}
+              />
+              <Text
+                style={{ color: palette.muted, fontSize: 11, marginTop: 16 }}
+              >
+                {item.label}
+              </Text>
+              <Text
+                style={{
+                  fontSize: wide ? 28 : 22,
+                  fontWeight: "800",
+                  marginTop: 5,
+                  letterSpacing: -0.7,
                 }}
-                className="bg-yellow-50 border border-yellow-200 rounded-2xl p-4 flex-row items-center"
               >
-                <View className="w-10 h-10 bg-yellow-100 rounded-xl items-center justify-center">
-                  <AlertTriangle size={20} color="#F59E0B" />
-                </View>
-                <View className="flex-1 ml-3">
-                  <Text className="text-yellow-800 font-semibold">
-                    {!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified' ? 'Complete KYC' : 'Add Bank Account'}
-                  </Text>
-                  <Text className="text-yellow-700 text-sm">
-                    {!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== 'verified'
-                      ? 'Verify your identity to enable withdrawals'
-                      : 'Add bank account to receive payouts'}
-                  </Text>
-                </View>
-                <ChevronRight size={20} color="#F59E0B" />
-              </PressableScale>
-            </Animated.View>
-          )}
-
-          {/* Stats */}
-          <Animated.View entering={FadeInDown.delay(100).springify()} className="flex-row px-4 mt-4 gap-3">
-            <View className="flex-1 bg-white rounded-2xl p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
-              <View className="w-9 h-9 bg-green-50 rounded-xl items-center justify-center">
-                <TrendingUp size={18} color="#22C55E" />
-              </View>
-              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹12,400</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">This Month</Text>
-            </View>
-            <View className="flex-1 bg-white rounded-2xl p-4" style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8, elevation: 2 }}>
-              <View className="w-9 h-9 bg-blue-50 rounded-xl items-center justify-center">
-                <Wallet size={18} color="#3B82F6" />
-              </View>
-              <Text className="text-gray-900 font-bold text-2xl mt-2.5">₹45,600</Text>
-              <Text className="text-gray-400 text-xs mt-0.5">Total Earned</Text>
-            </View>
-          </Animated.View>
-
-          {/* Pending */}
-          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-4">
-            <View className="bg-yellow-50 rounded-2xl p-4 border border-yellow-200">
-              <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-gray-600 text-xs">Pending Earnings</Text>
-                  <Text className="text-gray-900 font-bold text-lg">₹1,800</Text>
-                </View>
-                <View className="bg-yellow-400 px-3 py-1 rounded-full">
-                  <Text className="text-white text-xs font-bold">Processing</Text>
-                </View>
-              </View>
-            </View>
-          </Animated.View>
-
-          {/* Transactions */}
-          <Animated.View entering={FadeInDown.delay(300).springify()} className="px-4 mt-5">
-            <View className="flex-row items-center justify-between mb-3">
-              <Text className="text-gray-900 font-bold text-base">Recent Transactions</Text>
-              <PressableScale
-                haptic="selection"
-                onPress={() => toast.info("You're all caught up")}
-                className="flex-row items-center"
-              >
-                <Text className="text-orange-500 text-sm font-semibold">View All</Text>
-                <ChevronRight size={16} color="#FF8C00" />
-              </PressableScale>
-            </View>
-
-            {TRANSACTIONS.map((transaction, index) => (
-              <View
-                key={index}
-                className="bg-white rounded-2xl p-4 mb-3 flex-row items-center"
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
-              >
-                <View
-                  className={`w-10 h-10 rounded-full items-center justify-center mr-3 ${
-                    transaction.type === 'credit' ? 'bg-green-100' : 'bg-red-100'
-                  }`}
-                >
-                  {transaction.type === 'credit' ? (
-                    <ArrowDownLeft size={20} color="#22C55E" />
-                  ) : (
-                    <ArrowUpRight size={20} color="#EF4444" />
-                  )}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold">{transaction.title}</Text>
-                  <View className="flex-row items-center mt-0.5">
-                    <Text className="text-gray-400 text-xs">{transaction.date}</Text>
-                    {transaction.status === 'pending' && (
-                      <View className="flex-row items-center ml-2">
-                        <Clock size={10} color="#F59E0B" />
-                        <Text className="text-yellow-500 text-xs ml-1">Pending</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
+                {item.value}
+              </Text>
+            </Surface>
+          ))}
+        </View>
+        <View
+          style={{
+            backgroundColor: "#EDF1F6",
+            borderRadius: 18,
+            padding: 18,
+            marginBottom: 27,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 12,
+          }}
+        >
+          <Clock size={21} color={palette.muted} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: palette.muted, fontSize: 11 }}>
+              Pending earnings
+            </Text>
+            <Text style={{ fontWeight: "800", fontSize: 18, marginTop: 4 }}>
+              ₹1,800
+            </Text>
+          </View>
+          <Text
+            style={{
+              color: "#956B2F",
+              fontWeight: "600",
+              fontSize: 10,
+              backgroundColor: "#F9ECCD",
+              borderRadius: 8,
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+            }}
+          >
+            Processing
+          </Text>
+        </View>
+        <SectionHeading
+          title="Recent activity"
+          detail="Sample transaction history"
+          action={showAllTransactions ? "Show less" : "View all"}
+          onPress={() => setShowAllTransactions(!showAllTransactions)}
+        />
+        <Surface style={{ padding: 0, overflow: "hidden" }}>
+          {TRANSACTIONS.slice(
+            0,
+            showAllTransactions ? TRANSACTIONS.length : 3,
+          ).map((transaction, index, list) => (
+            <View
+              key={transaction.title}
+              style={{
+                flexDirection: "row",
+                alignItems: "center",
+                gap: 12,
+                padding: 18,
+                borderBottomWidth: index === list.length - 1 ? 0 : 1,
+                borderColor: palette.line,
+              }}
+            >
+              <IconBadge
+                icon={
+                  transaction.type === "credit" ? ArrowDownLeft : ArrowUpRight
+                }
+                color={
+                  transaction.type === "credit" ? palette.teal : palette.blue
+                }
+                background={
+                  transaction.type === "credit" ? "#ECF6F0" : "#ECF2FC"
+                }
+                size={39}
+              />
+              <View style={{ flex: 1 }}>
                 <Text
-                  className={`font-extrabold ${
-                    transaction.type === 'credit' ? 'text-green-600' : 'text-red-500'
-                  }`}
+                  style={{ fontSize: 12, fontWeight: "700", lineHeight: 19 }}
                 >
-                  {transaction.type === 'credit' ? '+' : '-'}{transaction.amount}
+                  {transaction.title}
+                </Text>
+                <Text
+                  style={{ color: palette.muted, fontSize: 10, marginTop: 5 }}
+                >
+                  {transaction.date}
+                  {transaction.status === "pending" ? " · Pending" : ""}
                 </Text>
               </View>
-            ))}
-          </Animated.View>
-
-          <View className="h-6" />
-        </ScrollView>
-      </SafeAreaView>
-
+              <Text
+                style={{
+                  color:
+                    transaction.type === "credit" ? palette.teal : palette.ink,
+                  fontWeight: "700",
+                  fontSize: 13,
+                }}
+              >
+                {transaction.type === "credit" ? "+" : "−"}
+                {transaction.amount}
+              </Text>
+            </View>
+          ))}
+        </Surface>
+      </Page>
       {/* Withdraw Modal */}
-      <Modal visible={showWithdrawModal} transparent animationType="slide">
+      <Modal
+        visible={showWithdrawModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowWithdrawModal(false)}
+      >
         <Pressable
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setShowWithdrawModal(false)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable
+            onPress={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 560, alignSelf: "center" }}
+          >
             <View className="bg-white rounded-t-3xl p-6">
               <View className="flex-row items-center justify-between mb-6">
-                <Text className="text-gray-900 text-xl font-bold">Withdraw Funds</Text>
-                <PressableScale haptic="light" onPress={() => setShowWithdrawModal(false)} className="w-9 h-9 bg-gray-100 rounded-full items-center justify-center">
+                <Text className="text-gray-900 text-xl font-bold">
+                  Preview withdrawal
+                </Text>
+                <PressableScale
+                  haptic="light"
+                  onPress={() => setShowWithdrawModal(false)}
+                  className="w-9 h-9 bg-gray-100 rounded-full items-center justify-center"
+                >
                   <X size={18} color="#6B7280" />
                 </PressableScale>
               </View>
@@ -275,7 +454,9 @@ export default function EarningsScreen() {
               {/* Available Balance */}
               <View className="bg-gray-100 rounded-2xl p-4 mb-4">
                 <Text className="text-gray-500 text-xs">Available Balance</Text>
-                <Text className="text-gray-900 text-2xl font-bold">₹{availableBalance.toLocaleString()}</Text>
+                <Text className="text-gray-900 text-2xl font-bold">
+                  ₹{availableBalance.toLocaleString()}
+                </Text>
               </View>
 
               {/* Amount Input */}
@@ -288,7 +469,9 @@ export default function EarningsScreen() {
                     placeholder="0"
                     placeholderTextColor="#9CA3AF"
                     value={withdrawAmount}
-                    onChangeText={(text) => setWithdrawAmount(text.replace(/\D/g, ''))}
+                    onChangeText={(text) =>
+                      setWithdrawAmount(text.replace(/\D/g, ""))
+                    }
                     keyboardType="number-pad"
                   />
                 </View>
@@ -306,12 +489,16 @@ export default function EarningsScreen() {
                     activeScale={0.94}
                     onPress={() => setWithdrawAmount(String(amount))}
                     className={`flex-1 py-2.5 rounded-xl items-center ${
-                      withdrawAmount === String(amount) ? 'bg-orange-500' : 'bg-gray-100'
+                      withdrawAmount === String(amount)
+                        ? "bg-blue-600"
+                        : "bg-gray-100"
                     }`}
                   >
                     <Text
                       className={`font-bold ${
-                        withdrawAmount === String(amount) ? 'text-white' : 'text-gray-600'
+                        withdrawAmount === String(amount)
+                          ? "text-white"
+                          : "text-gray-600"
                       }`}
                     >
                       ₹{amount}
@@ -323,7 +510,9 @@ export default function EarningsScreen() {
               {/* Bank Account Selection */}
               {bankAccounts.length > 0 && (
                 <View className="mb-4">
-                  <Text className="text-gray-600 text-sm mb-2">Withdraw to</Text>
+                  <Text className="text-gray-600 text-sm mb-2">
+                    Withdraw to
+                  </Text>
                   {bankAccounts.map((account) => (
                     <PressableScale
                       key={account.id}
@@ -331,15 +520,21 @@ export default function EarningsScreen() {
                       activeScale={0.98}
                       onPress={() => setSelectedBankId(account.id)}
                       className={`flex-row items-center p-3 rounded-2xl mb-2 border-2 ${
-                        selectedBankId === account.id ? 'border-orange-500 bg-orange-50' : 'border-gray-200 bg-gray-50'
+                        selectedBankId === account.id
+                          ? "border-blue-600 bg-blue-50"
+                          : "border-gray-200 bg-gray-50"
                       }`}
                     >
                       <View className="w-10 h-10 bg-gray-200 rounded-lg items-center justify-center mr-3">
                         <Shield size={20} color="#6B7280" />
                       </View>
                       <View className="flex-1">
-                        <Text className="text-gray-900 font-semibold">{account.bankName}</Text>
-                        <Text className="text-gray-500 text-xs">•••• {account.accountNumber.slice(-4)}</Text>
+                        <Text className="text-gray-900 font-semibold">
+                          {account.bankName}
+                        </Text>
+                        <Text className="text-gray-500 text-xs">
+                          •••• {account.accountNumber.slice(-4)}
+                        </Text>
                       </View>
                       {selectedBankId === account.id && (
                         <CheckCircle size={20} color="#F97316" />
@@ -352,17 +547,22 @@ export default function EarningsScreen() {
               {/* Confirm Button */}
               <PressableScale haptic="medium" onPress={handleConfirmWithdraw}>
                 <LinearGradient
-                  colors={['#FF8C00', '#FF6B00']}
-                  style={{ borderRadius: 16, paddingVertical: 16, alignItems: 'center' }}
+                  colors={["#1261E8", "#1261E8"]}
+                  style={{
+                    borderRadius: 16,
+                    paddingVertical: 16,
+                    alignItems: "center",
+                  }}
                 >
                   <Text className="text-white font-bold text-base">
-                    Withdraw ₹{withdrawAmount || '0'}
+                    Withdraw ₹{withdrawAmount || "0"}
                   </Text>
                 </LinearGradient>
               </PressableScale>
 
               <Text className="text-gray-500 text-center text-xs mt-3">
-                Funds will be transferred within 24-48 hours
+                This preview uses sample balances; it does not transfer real
+                funds.
               </Text>
             </View>
           </Pressable>

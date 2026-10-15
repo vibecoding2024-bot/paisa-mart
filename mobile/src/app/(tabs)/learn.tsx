@@ -1,11 +1,27 @@
-import { useState, useMemo } from 'react';
-import { View, Text, ScrollView } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Play, BookOpen, Award, Clock, ChevronRight, CheckCircle, Lock } from 'lucide-react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import { toast } from '@/lib/toast-store';
-import PressableScale from '@/components/PressableScale';
+import { useState, useMemo } from "react";
+import { View } from "react-native";
+import {
+  Page,
+  ScreenHeader,
+  Surface,
+  Typography as Text,
+  SectionHeading,
+  IconBadge,
+  palette,
+} from "@/components/brand";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Play,
+  BookOpen,
+  Award,
+  Clock,
+  ChevronRight,
+  CheckCircle,
+  Lock,
+} from "lucide-react-native";
+
+import { toast } from "@/lib/toast-store";
+import PressableScale from "@/components/PressableScale";
 
 interface Course {
   id: string;
@@ -16,23 +32,62 @@ interface Course {
 }
 
 const INITIAL_COURSES: Course[] = [
-  { id: 'c1', title: 'Introduction to Financial Products', duration: '15 min', completed: true, locked: false },
-  { id: 'c2', title: 'How to Sell Credit Cards', duration: '20 min', completed: true, locked: false },
-  { id: 'c3', title: 'Understanding Loan Products', duration: '25 min', completed: false, locked: false },
-  { id: 'c4', title: 'Insurance Basics', duration: '18 min', completed: false, locked: false },
-  { id: 'c5', title: 'Advanced Sales Techniques', duration: '30 min', completed: false, locked: true },
-  { id: 'c6', title: 'Customer Handling', duration: '22 min', completed: false, locked: true },
+  {
+    id: "c1",
+    title: "Introduction to Financial Products",
+    duration: "15 min",
+    completed: true,
+    locked: false,
+  },
+  {
+    id: "c2",
+    title: "How to Sell Credit Cards",
+    duration: "20 min",
+    completed: true,
+    locked: false,
+  },
+  {
+    id: "c3",
+    title: "Understanding Loan Products",
+    duration: "25 min",
+    completed: false,
+    locked: false,
+  },
+  {
+    id: "c4",
+    title: "Insurance Basics",
+    duration: "18 min",
+    completed: false,
+    locked: false,
+  },
+  {
+    id: "c5",
+    title: "Advanced Sales Techniques",
+    duration: "30 min",
+    completed: false,
+    locked: true,
+  },
+  {
+    id: "c6",
+    title: "Customer Handling",
+    duration: "22 min",
+    completed: false,
+    locked: true,
+  },
 ];
 
 export default function LearnScreen() {
   const [courses, setCourses] = useState<Course[]>(INITIAL_COURSES);
 
-  const completedCount = useMemo(() => courses.filter(c => c.completed).length, [courses]);
+  const completedCount = useMemo(
+    () => courses.filter((c) => c.completed).length,
+    [courses],
+  );
   const progress = (completedCount / courses.length) * 100;
 
   const handleCoursePress = (course: Course) => {
     if (course.locked) {
-      toast.info('Complete the earlier modules to unlock this');
+      toast.info("Complete the earlier modules to unlock this");
       return;
     }
     if (course.completed) {
@@ -40,8 +95,8 @@ export default function LearnScreen() {
       return;
     }
     // Mark as completed and unlock the next module
-    setCourses(prev => {
-      const idx = prev.findIndex(c => c.id === course.id);
+    setCourses((prev) => {
+      const idx = prev.findIndex((c) => c.id === course.id);
       const next = prev.map((c, i) => {
         if (c.id === course.id) return { ...c, completed: true };
         // unlock the first locked course after this one
@@ -53,134 +108,273 @@ export default function LearnScreen() {
     toast.success(`Module completed! 🎉`);
   };
 
+  const nextCourse = courses.find(
+    (course) => !course.completed && !course.locked,
+  );
   return (
-    <View className="flex-1 bg-gray-50">
-      <SafeAreaView className="flex-1" edges={['top']}>
-        {/* Header */}
-        <LinearGradient
-          colors={['#002561', '#0A3D91']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={{ paddingBottom: 24, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 }}
+    <Page>
+      <ScreenHeader
+        eyebrow="The Paisa Mart academy"
+        title="A little learning. A lot of growth."
+        subtitle="Build confidence, one financial conversation at a time."
+        icon={BookOpen}
+      />
+      <LinearGradient
+        colors={["#102F48", "#194D69"]}
+        style={{ borderRadius: 26, padding: 25, marginBottom: 25 }}
+      >
+        <View
+          style={{
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 15,
+          }}
         >
-          <View className="px-4 pt-2">
-            <Text className="text-white text-xl font-bold">Learn & Earn</Text>
-            <Text className="text-white/60 text-sm mt-1">Complete training to become certified</Text>
-
-            {/* Progress Card */}
-            <LinearGradient
-              colors={['rgba(255,255,255,0.16)', 'rgba(255,255,255,0.06)']}
-              style={{ borderRadius: 22, padding: 18, marginTop: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.12)' }}
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: "#BAD3E3", fontSize: 12 }}>
+              Your learning journey
+            </Text>
+            <Text
+              style={{
+                color: "#fff",
+                fontWeight: "800",
+                fontSize: 27,
+                marginTop: 8,
+              }}
             >
-              <View className="flex-row items-center justify-between mb-3">
-                <View>
-                  <Text className="text-white/60 text-xs font-medium">Your Progress</Text>
-                  <Text className="text-white font-bold text-lg">{completedCount}/{courses.length} Completed</Text>
-                </View>
-                <LinearGradient
-                  colors={['#FF8C00', '#FF6B00']}
-                  style={{ width: 56, height: 56, borderRadius: 28, alignItems: 'center', justifyContent: 'center' }}
-                >
-                  <Text className="text-white font-extrabold">{Math.round(progress)}%</Text>
-                </LinearGradient>
-              </View>
-              <View className="h-2.5 bg-white/20 rounded-full overflow-hidden">
-                <View
-                  className="h-full bg-orange-500 rounded-full"
-                  style={{ width: `${progress}%` }}
-                />
-              </View>
-            </LinearGradient>
-          </View>
-        </LinearGradient>
-
-        <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-          {/* Certification Banner */}
-          <Animated.View entering={FadeInDown.delay(100).springify()} className="px-4 mt-4">
-            <LinearGradient
-              colors={['#FEF9C3', '#FFEDD5']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{ borderRadius: 18, padding: 16, borderWidth: 1, borderColor: '#FDE68A' }}
-            >
-              <View className="flex-row items-center">
-                <LinearGradient
-                  colors={['#FBBF24', '#F59E0B']}
-                  style={{ width: 48, height: 48, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
-                >
-                  <Award size={24} color="#fff" />
-                </LinearGradient>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-bold">Get Certified</Text>
-                  <Text className="text-gray-500 text-xs mt-0.5">Complete all courses to earn your certificate</Text>
-                </View>
-              </View>
-            </LinearGradient>
-          </Animated.View>
-
-          {/* Courses */}
-          <Animated.View entering={FadeInDown.delay(200).springify()} className="px-4 mt-5">
-            <Text className="text-gray-900 font-bold text-base mb-3">Training Modules</Text>
-
-            {courses.map((course, index) => (
-              <PressableScale
-                key={course.id}
-                haptic={course.locked ? 'none' : 'light'}
-                activeScale={course.locked ? 1 : 0.98}
-                onPress={() => handleCoursePress(course)}
-                className={`bg-white rounded-2xl p-4 mb-3 flex-row items-center ${course.locked ? 'opacity-60' : ''}`}
-                style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+              {completedCount} of {courses.length}
+              <Text
+                style={{ color: "#BAD3E3", fontSize: 14, fontWeight: "400" }}
               >
-                <View
-                  className={`w-12 h-12 rounded-2xl items-center justify-center mr-3 ${
-                    course.completed ? 'bg-green-100' : course.locked ? 'bg-gray-100' : 'bg-blue-100'
-                  }`}
-                >
-                  {course.completed ? (
-                    <CheckCircle size={24} color="#22C55E" />
-                  ) : course.locked ? (
-                    <Lock size={24} color="#9CA3AF" />
-                  ) : (
-                    <Play size={24} color="#3B82F6" />
-                  )}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-gray-900 font-semibold">{course.title}</Text>
-                  <View className="flex-row items-center mt-1">
-                    <Clock size={12} color="#9CA3AF" />
-                    <Text className="text-gray-400 text-xs ml-1">{course.duration}</Text>
-                    {course.completed && (
-                      <Text className="text-green-500 text-xs ml-2 font-medium">✓ Completed</Text>
-                    )}
-                  </View>
-                </View>
-                <ChevronRight size={20} color={course.locked ? '#D1D5DB' : '#6B7280'} />
-              </PressableScale>
-            ))}
-          </Animated.View>
-
-          {/* Resources */}
-          <Animated.View entering={FadeInDown.delay(300).springify()} className="px-4 mt-2 mb-8">
-            <Text className="text-gray-900 font-bold text-base mb-3">Resources</Text>
-            <PressableScale
-              haptic="light"
-              activeScale={0.98}
-              onPress={() => toast.info('Product guides will be sent to your email')}
-              className="bg-white rounded-2xl p-4 flex-row items-center"
-              style={{ shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 }}
+                {" "}
+                complete
+              </Text>
+            </Text>
+          </View>
+          <View
+            style={{
+              width: 66,
+              height: 66,
+              borderRadius: 24,
+              backgroundColor: "#ffffff14",
+              alignItems: "center",
+              justifyContent: "center",
+              borderWidth: 1,
+              borderColor: "#ffffff20",
+            }}
+          >
+            <Text
+              style={{ color: palette.mint, fontSize: 23, fontWeight: "800" }}
             >
-              <View className="w-12 h-12 bg-purple-100 rounded-2xl items-center justify-center mr-3">
-                <BookOpen size={24} color="#8B5CF6" />
+              {Math.round(progress)}%
+            </Text>
+          </View>
+        </View>
+        <View
+          accessibilityRole="progressbar"
+          accessibilityValue={{
+            min: 0,
+            max: courses.length,
+            now: completedCount,
+          }}
+          style={{
+            backgroundColor: "#ffffff20",
+            height: 6,
+            borderRadius: 4,
+            marginTop: 24,
+            overflow: "hidden",
+          }}
+        >
+          <View
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              borderRadius: 4,
+              backgroundColor: palette.mint,
+            }}
+          />
+        </View>
+        {nextCourse && (
+          <PressableScale
+            onPress={() => handleCoursePress(nextCourse)}
+            style={{
+              marginTop: 21,
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 10,
+              minHeight: 44,
+            }}
+          >
+            <View
+              style={{
+                backgroundColor: palette.mint,
+                width: 35,
+                height: 35,
+                borderRadius: 12,
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Play size={15} color={palette.navy} fill={palette.navy} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: "#fff", fontWeight: "700", fontSize: 12 }}>
+                Continue learning
+              </Text>
+              <Text style={{ color: "#BAD3E3", fontSize: 11, marginTop: 4 }}>
+                {nextCourse.title}
+              </Text>
+            </View>
+            <ChevronRight size={18} color="#fff" />
+          </PressableScale>
+        )}
+      </LinearGradient>
+      <SectionHeading
+        title="Your learning path"
+        detail="Small steps. Stronger skills."
+      />
+      <Surface style={{ padding: 0, overflow: "hidden", marginBottom: 24 }}>
+        {courses.map((course, index) => (
+          <PressableScale
+            key={course.id}
+            haptic={course.locked ? "none" : "light"}
+            onPress={() => handleCoursePress(course)}
+            accessibilityLabel={`${course.title}, ${course.locked ? "locked" : course.completed ? "completed" : "available"}`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 14,
+              padding: 20,
+              minHeight: 94,
+              borderBottomWidth: index < courses.length - 1 ? 1 : 0,
+              borderColor: palette.line,
+            }}
+          >
+            <IconBadge
+              icon={
+                course.completed ? CheckCircle : course.locked ? Lock : Play
+              }
+              background={
+                course.completed
+                  ? "#EAF5EF"
+                  : course.locked
+                    ? "#F0F3F6"
+                    : "#EAF1FF"
+              }
+              color={
+                course.completed
+                  ? palette.teal
+                  : course.locked
+                    ? "#7F909D"
+                    : palette.blue
+              }
+              size={44}
+            />
+            <View style={{ flex: 1 }}>
+              <Text
+                style={{
+                  color: palette.muted,
+                  fontSize: 9,
+                  letterSpacing: 1.3,
+                  fontWeight: "600",
+                  marginBottom: 5,
+                }}
+              >
+                MODULE {String(index + 1).padStart(2, "0")}
+              </Text>
+              <Text
+                style={{
+                  color: course.locked ? palette.muted : palette.ink,
+                  fontSize: 13,
+                  fontWeight: "700",
+                  lineHeight: 20,
+                }}
+              >
+                {course.title}
+              </Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 6,
+                  marginTop: 7,
+                }}
+              >
+                <Clock size={11} color={palette.muted} />
+                <Text style={{ color: palette.muted, fontSize: 10 }}>
+                  {course.duration}
+                </Text>
+                {course.completed && (
+                  <Text
+                    style={{
+                      color: palette.teal,
+                      fontSize: 10,
+                      fontWeight: "600",
+                    }}
+                  >
+                    {" "}
+                    · Completed
+                  </Text>
+                )}
               </View>
-              <View className="flex-1">
-                <Text className="text-gray-900 font-semibold">Product Guide</Text>
-                <Text className="text-gray-400 text-xs mt-0.5">Download PDF guides for all products</Text>
-              </View>
-              <ChevronRight size={20} color="#6B7280" />
-            </PressableScale>
-          </Animated.View>
-        </ScrollView>
-      </SafeAreaView>
-    </View>
+            </View>
+            <ChevronRight
+              size={17}
+              color={course.locked ? "#B2C0CC" : palette.blue}
+            />
+          </PressableScale>
+        ))}
+      </Surface>
+      <View
+        style={{
+          backgroundColor: "#FCF3E6",
+          padding: 21,
+          borderRadius: 22,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 14,
+          borderWidth: 1,
+          borderColor: "#F0E3CE",
+          marginBottom: 25,
+        }}
+      >
+        <IconBadge icon={Award} background="#F5E5CA" color="#906229" />
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontWeight: "700", fontSize: 14 }}>
+            Make your knowledge count
+          </Text>
+          <Text
+            style={{
+              color: "#8A7456",
+              fontSize: 12,
+              lineHeight: 19,
+              marginTop: 5,
+            }}
+          >
+            Complete the learning path to earn your certificate.
+          </Text>
+        </View>
+      </View>
+      <SectionHeading title="Keep exploring" />
+      <PressableScale
+        onPress={() => toast.info("Product guides will be sent to your email")}
+      >
+        <Surface
+          style={{ flexDirection: "row", alignItems: "center", gap: 13 }}
+        >
+          <IconBadge icon={BookOpen} />
+          <View style={{ flex: 1 }}>
+            <Text style={{ fontSize: 14, fontWeight: "700" }}>
+              Product guides
+            </Text>
+            <Text style={{ color: palette.muted, fontSize: 12, marginTop: 5 }}>
+              Your handy product reference library
+            </Text>
+          </View>
+          <ChevronRight size={18} color={palette.blue} />
+        </Surface>
+      </PressableScale>
+    </Page>
   );
 }

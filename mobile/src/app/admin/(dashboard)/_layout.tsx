@@ -39,6 +39,7 @@ export default function AdminTabsLayout() {
   }
 
   const navItems = [
+    { path: '/admin/home-loans', label: 'Home Loan Pipeline', icon: Users },
     { path: '/admin/dashboard', label: 'Overview', icon: LayoutDashboard },
     { path: '/admin/leads', label: 'Leads', icon: Users },
     { path: '/admin/pipeline', label: 'Pipeline', icon: Kanban },

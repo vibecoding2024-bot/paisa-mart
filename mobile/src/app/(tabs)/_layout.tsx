@@ -1,15 +1,24 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs, useRouter } from 'expo-router';
-import { ActivityIndicator, Text, View, Platform } from 'react-native';
-import { Home, Grid3X3, Wallet, User, GraduationCap } from 'lucide-react-native';
-import * as Haptics from '@/lib/haptics';
-import { useUserProfileStore } from '@/lib/user-profile-store';
-import { useIncentiveStore } from '@/lib/incentive-store';
-import { fetchUserProfile } from '@/lib/user-profile-api';
-import { getPostAuthRoute, normalizeKycStatus } from '@/lib/onboarding-flow';
+import React, { useEffect, useState } from "react";
+import { Tabs, useRouter } from "expo-router";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { palette } from "@/components/brand";
+import { ActivityIndicator, Text, View, Platform } from "react-native";
+import {
+  Home,
+  Grid3X3,
+  Wallet,
+  User,
+  GraduationCap,
+} from "lucide-react-native";
+import * as Haptics from "@/lib/haptics";
+import { useUserProfileStore } from "@/lib/user-profile-store";
+import { useIncentiveStore } from "@/lib/incentive-store";
+import { fetchUserProfile } from "@/lib/user-profile-api";
+import { getPostAuthRoute, normalizeKycStatus } from "@/lib/onboarding-flow";
 
 export default function TabLayout() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const profile = useUserProfileStore((s) => s.profile);
   const setProfile = useUserProfileStore((s) => s.setProfile);
   const profileHasHydrated = useUserProfileStore((s) => s.hasHydrated);
@@ -25,15 +34,16 @@ export default function TabLayout() {
 
     const guardDashboard = async () => {
       if (!profile?.phoneNumber) {
-        router.replace('/basic-info');
+        router.replace("/basic-info");
         return;
       }
 
       const localRoute = getPostAuthRoute(profile, userKYC?.status);
-      if (localRoute !== '/(tabs)') {
-        router.replace(
-          { pathname: localRoute, params: { phone: profile.phoneNumber } }
-        );
+      if (localRoute !== "/(tabs)") {
+        router.replace({
+          pathname: localRoute,
+          params: { phone: profile.phoneNumber },
+        });
         return;
       }
 
@@ -58,12 +68,15 @@ export default function TabLayout() {
           profile.dateOfBirth?.year !== serverProfile.dateOfBirth?.year;
 
         const serverRoute = getPostAuthRoute(serverProfile, serverKycStatus);
-        if (profileChanged && serverRoute === '/(tabs)') {
+        if (profileChanged && serverRoute === "/(tabs)") {
           setProfile(serverProfile);
         }
         setKYCStatus(serverProfile.phoneNumber, serverKycStatus);
       } catch (error) {
-        console.warn('Dashboard access check failed, using local profile state', error);
+        console.warn(
+          "Dashboard access check failed, using local profile state",
+          error,
+        );
       }
     };
 
@@ -85,8 +98,10 @@ export default function TabLayout() {
   if (!profileHasHydrated || !kycHasHydrated || isCheckingAccess) {
     return (
       <View className="flex-1 bg-white items-center justify-center px-6">
-        <ActivityIndicator size="large" color="#FF8C00" />
-        <Text className="text-gray-500 text-sm mt-3 text-center">Checking your profile status...</Text>
+        <ActivityIndicator size="large" color={palette.blue} />
+        <Text className="text-gray-500 text-sm mt-3 text-center">
+          Checking your profile status...
+        </Text>
       </View>
     );
   }
@@ -95,21 +110,22 @@ export default function TabLayout() {
     <Tabs
       screenListeners={{
         tabPress: () => {
-          if (Platform.OS !== 'web') {
+          if (Platform.OS !== "web") {
             Haptics.selectionAsync();
           }
         },
       }}
       screenOptions={{
-        tabBarActiveTintColor: '#FF8C00',
-        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarActiveTintColor: palette.blue,
+        tabBarInactiveTintColor: palette.muted,
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 0,
-          height: 64,
-          paddingBottom: 8,
+          backgroundColor: "#fff",
+          borderTopWidth: 1,
+          borderTopColor: palette.line,
+          height: 68 + insets.bottom,
+          paddingBottom: Math.max(insets.bottom, 8),
           paddingTop: 8,
-          shadowColor: '#0A3D91',
+          shadowColor: "#0A3D91",
           shadowOffset: { width: 0, height: -4 },
           shadowOpacity: 0.06,
           shadowRadius: 12,
@@ -117,7 +133,8 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
+          fontFamily: "JakartaSemiBold",
+          fontWeight: "normal",
         },
         headerShown: false,
       }}
@@ -125,9 +142,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, focused }) => (
-            <View className={focused ? 'bg-orange-50 px-3 py-1 rounded-full' : 'px-3 py-1'}>
+            <View
+              className={
+                focused ? "bg-blue-50 px-3 py-1 rounded-full" : "px-3 py-1"
+              }
+            >
               <Home size={22} color={color} />
             </View>
           ),
@@ -136,9 +157,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="products"
         options={{
-          title: 'Products',
+          title: "Products",
           tabBarIcon: ({ color, focused }) => (
-            <View className={focused ? 'bg-orange-50 px-3 py-1 rounded-full' : 'px-3 py-1'}>
+            <View
+              className={
+                focused ? "bg-blue-50 px-3 py-1 rounded-full" : "px-3 py-1"
+              }
+            >
               <Grid3X3 size={22} color={color} />
             </View>
           ),
@@ -147,9 +172,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="learn"
         options={{
-          title: 'Learn',
+          title: "Learn",
           tabBarIcon: ({ color, focused }) => (
-            <View className={focused ? 'bg-orange-50 px-3 py-1 rounded-full' : 'px-3 py-1'}>
+            <View
+              className={
+                focused ? "bg-blue-50 px-3 py-1 rounded-full" : "px-3 py-1"
+              }
+            >
               <GraduationCap size={22} color={color} />
             </View>
           ),
@@ -158,9 +187,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="earnings"
         options={{
-          title: 'Earnings',
+          title: "Earnings",
           tabBarIcon: ({ color, focused }) => (
-            <View className={focused ? 'bg-orange-50 px-3 py-1 rounded-full' : 'px-3 py-1'}>
+            <View
+              className={
+                focused ? "bg-blue-50 px-3 py-1 rounded-full" : "px-3 py-1"
+              }
+            >
               <Wallet size={22} color={color} />
             </View>
           ),
@@ -169,9 +202,13 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, focused }) => (
-            <View className={focused ? 'bg-orange-50 px-3 py-1 rounded-full' : 'px-3 py-1'}>
+            <View
+              className={
+                focused ? "bg-blue-50 px-3 py-1 rounded-full" : "px-3 py-1"
+              }
+            >
               <User size={22} color={color} />
             </View>
           ),

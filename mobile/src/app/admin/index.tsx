@@ -39,7 +39,7 @@ export default function AdminLoginScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         router.replace('/admin/dashboard');
       } else {
-        setError('Invalid credentials. Try admin@paisamart.com / admin123');
+        setError('Invalid email or password.');
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
     } catch (err) {
@@ -149,12 +149,6 @@ export default function AdminLoginScreen() {
                 )}
               </Pressable>
 
-              {/* Demo Credentials */}
-              <View className="mt-6 p-4 bg-slate-700/50 rounded-xl">
-                <Text className="text-slate-400 text-xs text-center mb-2">Demo Credentials</Text>
-                <Text className="text-slate-300 text-sm text-center">admin@paisamart.com</Text>
-                <Text className="text-slate-300 text-sm text-center">admin123</Text>
-              </View>
             </Animated.View>
 
             {/* Back to App */}

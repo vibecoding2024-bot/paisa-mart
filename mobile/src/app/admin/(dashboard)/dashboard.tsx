@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import HomeLoanPipelineSummary from '@/components/HomeLoanPipelineSummary';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -102,14 +103,14 @@ export default function DashboardScreen() {
   const router = useRouter();
   const leads = useAdminStore(s => s.leads);
   const whatsappLeads = useWhatsAppLeadsStore(s => s.leads);
-  const newWhatsAppLeads = useWhatsAppLeadsStore(s => s.getLeadsByStatus('New'));
   const openPlotsLeads = useOpenPlotsLeadsStore(s => s.leads);
-  const newOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getLeadsByStatus('New'));
-  const highPriorityOpenPlotsLeads = useOpenPlotsLeadsStore(s => s.getHighPriorityLeads());
   const vehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.leads);
-  const newVehicleInsuranceLeads = useVehicleInsuranceLeadsStore(s => s.getLeadsByStatus('New'));
   const utilityTransactions = useUtilityTransactionStore(s => s.transactions);
   const healthInsuranceApps = useHealthInsuranceStore(s => s.applications);
+  const newWhatsAppLeads = whatsappLeads.filter(lead => lead.status === 'New');
+  const newOpenPlotsLeads = openPlotsLeads.filter(lead => lead.status === 'New');
+  const highPriorityOpenPlotsLeads = openPlotsLeads.filter(lead => lead.priority === 'High');
+  const newVehicleInsuranceLeads = vehicleInsuranceLeads.filter(lead => lead.status === 'New');
   const newHealthInsuranceApps = healthInsuranceApps.filter(a => a.status === 'New');
   const motorInsuranceApps = useMotorInsuranceStore(s => s.applications);
   const newMotorInsuranceApps = motorInsuranceApps.filter(a => a.status === 'New');
@@ -213,6 +214,7 @@ export default function DashboardScreen() {
           <Text className="text-slate-400 mb-4">Real-time metrics and insights</Text>
         </Animated.View>
 
+        <HomeLoanPipelineSummary />
         {/* Key Metrics Row */}
         <Animated.View entering={FadeInDown.delay(100).springify()}>
           <ScrollView keyboardShouldPersistTaps="handled"
