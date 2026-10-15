@@ -1,0 +1,7 @@
+nodeLinker: hoisted
+allowBuilds:
+  '@parcel/watcher': true
+  unrs-resolver: true
+
+patchedDependencies:
+  '@react-native-menu/menu@1.2.2': patches/@react-native-menu%2Fmenu@1.2.2.patch

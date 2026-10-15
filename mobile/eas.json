@@ -5,7 +5,7 @@
   "build": {
     "production": {
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle"
       }
     },
     "preview": {
@@ -20,6 +20,12 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {},
+    "console": {
+      "android": {
+        "track": "internal",
+        "releaseStatus": "draft"
+      }
+    }
   }
 }

@@ -3,6 +3,20 @@
 Backend: Hono + Bun, served by pm2, fronted by nginx (`:80` -> `127.0.0.1:3000`).
 App code lives in `backend/`. Bun is at `~/.bun/bin/bun` (NOT on PATH).
 
+## Current server (2026-09-19)
+
+- Amazon Linux 2023: `ec2-user@54.252.33.16`, key `~/Downloads/paisa1.pem`.
+- Application: `/home/ec2-user/paisa-mart-new`, deployed from source commit `27e4ef6`.
+- This is a source snapshot, not a Git checkout; the Git-based redeploy commands below do not yet apply to this host.
+- Bun and PM2 are installed in `/usr/bin`. PM2 process `paisa-mart` and nginx are enabled at boot.
+- Backend environment files are in `backend/` with mode `600`. SQLite data lives separately at `/home/ec2-user/paisa-mart-data/payments.db`; previous production data has not been migrated.
+- nginx configuration: `/etc/nginx/conf.d/paisa-mart.conf`.
+- Web build targets `https://paisa-mart.com`. Direct HTTP access to the IP is a page preview; API flows require the domain cutover.
+
+Pending cutover: allow inbound TCP 80/443 in the EC2 Security Group, then update the domain A record to `54.252.33.16`. Once DNS resolves to this host, issue a certificate with `sudo certbot --nginx -d paisa-mart.com -d www.paisa-mart.com --redirect`, replace the temporary empty `X-Forwarded-Proto` value in nginx with `$scheme`, and enable/check certificate renewal. DNS and HTTPS were deferred by the owner.
+
+Runtime checks: `curl -fsS http://localhost:3000/health`, `pm2 list`, and `sudo nginx -t`.
+
 ## One-command deploy from local machine
 ```bash
 chmod +x scripts/deploy-ec2.sh

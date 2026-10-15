@@ -14,10 +14,14 @@ const sharedFolder = path.resolve(__dirname, "../shared");
 const sharedFolderExists = fs.existsSync(sharedFolder);
 const mobileNodeModules = path.resolve(__dirname, "node_modules");
 const rootNodeModules = path.resolve(__dirname, "../node_modules");
+const rootNodeModulesExists = fs.existsSync(rootNodeModules);
+
 const packageRoot = (packageName) =>
   path.dirname(
     require.resolve(`${packageName}/package.json`, {
-      paths: [mobileNodeModules, __dirname, rootNodeModules],
+      paths: rootNodeModulesExists
+        ? [mobileNodeModules, __dirname, rootNodeModules]
+        : [mobileNodeModules, __dirname],
     })
   );
 const reactPath = packageRoot("react");
@@ -27,7 +31,9 @@ const reactNativeWebPath = packageRoot("react-native-web");
 const expoPath = packageRoot("expo");
 const schedulerPath = path.dirname(
   require.resolve("scheduler/package.json", {
-    paths: [reactDomPath, mobileNodeModules, __dirname, rootNodeModules],
+    paths: rootNodeModulesExists
+      ? [reactDomPath, mobileNodeModules, __dirname, rootNodeModules]
+      : [reactDomPath, mobileNodeModules, __dirname],
   })
 );
 
@@ -71,22 +77,23 @@ config.resolver = {
     "react-native-web": reactNativeWebPath,
     "expo": expoPath,
     "scheduler": schedulerPath,
-    "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
-    "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
-    "invariant": path.join(rootNodeModules, "invariant"),
-    "nullthrows": path.join(rootNodeModules, "nullthrows"),
-    "memoize-one": path.join(rootNodeModules, "memoize-one"),
-    "promise": path.join(rootNodeModules, "promise"),
-    "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
-    "base64-js": path.join(rootNodeModules, "base64-js"),
-    "abort-controller": path.join(rootNodeModules, "abort-controller"),
-    "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
-    "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
+    ...(rootNodeModulesExists && {
+      "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
+      "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
+      "invariant": path.join(rootNodeModules, "invariant"),
+      "nullthrows": path.join(rootNodeModules, "nullthrows"),
+      "memoize-one": path.join(rootNodeModules, "memoize-one"),
+      "promise": path.join(rootNodeModules, "promise"),
+      "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
+      "base64-js": path.join(rootNodeModules, "base64-js"),
+      "abort-controller": path.join(rootNodeModules, "abort-controller"),
+      "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
+      "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
+    }),
   },
-  nodeModulesPaths: [
-    mobileNodeModules,
-    rootNodeModules,
-  ],
+  nodeModulesPaths: rootNodeModulesExists
+    ? [mobileNodeModules, rootNodeModules]
+    : [mobileNodeModules],
   // Only add shared folder resolution if it exists
   // NOTE: unstable_enablePackageExports moved inside conditional - it breaks dynamic imports
   // like `await import("expo-image")` when enabled globally
@@ -100,23 +107,24 @@ config.resolver = {
       "react-native-web": reactNativeWebPath,
       "expo": expoPath,
       "scheduler": schedulerPath,
-      "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
-      "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
-      "invariant": path.join(rootNodeModules, "invariant"),
-      "nullthrows": path.join(rootNodeModules, "nullthrows"),
-      "memoize-one": path.join(rootNodeModules, "memoize-one"),
-      "promise": path.join(rootNodeModules, "promise"),
-      "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
-      "base64-js": path.join(rootNodeModules, "base64-js"),
-      "abort-controller": path.join(rootNodeModules, "abort-controller"),
-      "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
-      "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
+      ...(rootNodeModulesExists && {
+        "@babel/runtime": path.join(rootNodeModules, "@babel/runtime"),
+        "whatwg-fetch": path.join(rootNodeModules, "whatwg-fetch"),
+        "invariant": path.join(rootNodeModules, "invariant"),
+        "nullthrows": path.join(rootNodeModules, "nullthrows"),
+        "memoize-one": path.join(rootNodeModules, "memoize-one"),
+        "promise": path.join(rootNodeModules, "promise"),
+        "regenerator-runtime": path.join(rootNodeModules, "regenerator-runtime"),
+        "base64-js": path.join(rootNodeModules, "base64-js"),
+        "abort-controller": path.join(rootNodeModules, "abort-controller"),
+        "flow-enums-runtime": path.join(rootNodeModules, "flow-enums-runtime"),
+        "stacktrace-parser": path.join(rootNodeModules, "stacktrace-parser"),
+      }),
       "@/shared": sharedFolder,
     },
-    nodeModulesPaths: [
-      mobileNodeModules,
-      rootNodeModules,
-    ],
+    nodeModulesPaths: rootNodeModulesExists
+      ? [mobileNodeModules, rootNodeModules]
+      : [mobileNodeModules],
   }),
   resolveRequest: (context, moduleName, platform) => {
     const pinnedPackages = {
