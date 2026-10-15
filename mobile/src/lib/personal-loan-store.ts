@@ -1,3 +1,4 @@
+import type { PersonalLoanReceipt } from './personal-loan-api';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -18,6 +19,8 @@ export interface PersonalLoanData {
 }
 
 interface PersonalLoanStore {
+  receipt: PersonalLoanReceipt | null;
+  setReceipt: (receipt: PersonalLoanReceipt) => void;
   data: PersonalLoanData | null;
   setData: (data: PersonalLoanData) => void;
   clearData: () => void;
@@ -26,9 +29,11 @@ interface PersonalLoanStore {
 export const usePersonalLoanStore = create<PersonalLoanStore>()(
   persist(
     (set) => ({
+      receipt: null,
+      setReceipt: (receipt) => set({ receipt }),
       data: null,
       setData: (data) => set({ data }),
-      clearData: () => set({ data: null }),
+      clearData: () => set({ data: null, receipt: null }),
     }),
     {
       name: 'personal-loan-storage',

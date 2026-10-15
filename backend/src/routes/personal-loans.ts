@@ -1,8 +1,10 @@
+import { personalApplicationsRouter } from './personal-loan-applications';
 import { Hono } from "hono";
 import { z } from "zod";
 import { savePersonalLoanLead } from "../lib/personal-loan-lead-store";
 
 const personalLoansRouter = new Hono();
+personalLoansRouter.route("/applications", personalApplicationsRouter);
 
 const leadSchema = z.object({
   phoneNumber: z.string().regex(/^\d{10}$/),
@@ -13,9 +15,9 @@ const leadSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   companyName: z.string().optional(),
-  monthlyIncome: z.string().regex(/^\d+$/).optional(),
+  monthlyIncome: z.string().regex(/^\d+$/),
   loanAmountRequired: z.string().regex(/^\d+$/).optional(),
-  existingEmi: z.string().regex(/^\d+$/).optional(),
+  existingEmi: z.string().regex(/^\d+$/),
   employmentType: z.enum(["Private", "Government"]).optional(),
   source: z.string().optional(),
 });
