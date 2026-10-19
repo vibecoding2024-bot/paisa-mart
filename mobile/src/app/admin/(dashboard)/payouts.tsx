@@ -1,3 +1,4 @@
+import { FinanceUnavailable } from '@/components/AdminOperationsPanels';
 import { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, TextInput } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -28,6 +29,8 @@ const STATUS_CONFIG: Record<PayoutStatus, { bg: string; text: string; icon: Reac
 };
 
 function formatCurrency(amount: number): string {
+  return 'Unavailable';
+
   if (amount >= 100000) {
     return `₹${(amount / 100000).toFixed(1)}L`;
   }
@@ -38,7 +41,7 @@ function formatCurrency(amount: number): string {
 }
 
 export default function PayoutsScreen() {
-  const payouts = useIncentiveStore(s => s.payouts);
+  const payouts: Payout[] = [];
   const minWithdrawalAmount = useIncentiveStore(s => s.minWithdrawalAmount);
   const dailyPayoutLimit = useIncentiveStore(s => s.dailyPayoutLimit);
   const updatePayoutStatus = useIncentiveStore(s => s.updatePayoutStatus);
@@ -104,11 +107,12 @@ export default function PayoutsScreen() {
   return (
     <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
+<FinanceUnavailable/>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-white text-2xl font-bold">Payout Management</Text>
-            <Pressable
+            <Pressable disabled
               onPress={() => setShowSettingsModal(true)}
               className="flex-row items-center bg-slate-800 px-3 py-2 rounded-lg"
             >
@@ -124,28 +128,28 @@ export default function PayoutsScreen() {
           <View className="bg-slate-800 rounded-xl p-4 w-[48%]">
             <View className="flex-row items-center justify-between">
               <Clock size={20} color="#F59E0B" />
-              <Text className="text-yellow-500 text-2xl font-bold">{stats.initiated}</Text>
+              <Text className="text-yellow-500 text-2xl font-bold">Unavailable</Text>
             </View>
             <Text className="text-slate-400 text-sm mt-2">Initiated</Text>
           </View>
           <View className="bg-slate-800 rounded-xl p-4 w-[48%]">
             <View className="flex-row items-center justify-between">
               <RefreshCw size={20} color="#3B82F6" />
-              <Text className="text-blue-500 text-2xl font-bold">{stats.processing}</Text>
+              <Text className="text-blue-500 text-2xl font-bold">Unavailable</Text>
             </View>
             <Text className="text-slate-400 text-sm mt-2">Processing</Text>
           </View>
           <View className="bg-slate-800 rounded-xl p-4 w-[48%]">
             <View className="flex-row items-center justify-between">
               <CheckCircle size={20} color="#10B981" />
-              <Text className="text-green-500 text-2xl font-bold">{stats.completed}</Text>
+              <Text className="text-green-500 text-2xl font-bold">Unavailable</Text>
             </View>
             <Text className="text-slate-400 text-sm mt-2">Completed</Text>
           </View>
           <View className="bg-slate-800 rounded-xl p-4 w-[48%]">
             <View className="flex-row items-center justify-between">
               <XCircle size={20} color="#EF4444" />
-              <Text className="text-red-500 text-2xl font-bold">{stats.failed}</Text>
+              <Text className="text-red-500 text-2xl font-bold">Unavailable</Text>
             </View>
             <Text className="text-slate-400 text-sm mt-2">Failed</Text>
           </View>
@@ -195,7 +199,7 @@ export default function PayoutsScreen() {
             <Text className="text-white font-semibold">
               Payout Requests ({filteredPayouts.length})
             </Text>
-            <Pressable
+            <Pressable disabled
               onPress={() => setShowFilterModal(true)}
               className="flex-row items-center bg-slate-800 px-3 py-2 rounded-lg"
             >
@@ -213,7 +217,7 @@ export default function PayoutsScreen() {
           {filteredPayouts.map((payout) => {
             const statusConfig = STATUS_CONFIG[payout.status];
             return (
-              <Pressable
+              <Pressable disabled
                 key={payout.id}
                 onPress={() => setSelectedPayout(payout)}
                 className="bg-slate-800 rounded-xl p-4 mb-3"
@@ -257,7 +261,7 @@ export default function PayoutsScreen() {
                     {new Date(payout.initiatedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                   </Text>
                   {payout.status === 'initiated' && (
-                    <Pressable
+                    <Pressable disabled
                       onPress={() => handleProcessPayout(payout.id)}
                       className="bg-blue-600 px-3 py-1 rounded-lg"
                     >
@@ -266,13 +270,13 @@ export default function PayoutsScreen() {
                   )}
                   {payout.status === 'processing' && (
                     <View className="flex-row gap-2">
-                      <Pressable
+                      <Pressable disabled
                         onPress={() => handleCompletePayout(payout.id)}
                         className="bg-green-600 px-3 py-1 rounded-lg"
                       >
                         <Text className="text-white text-xs font-medium">Complete</Text>
                       </Pressable>
-                      <Pressable
+                      <Pressable disabled
                         onPress={() => handleFailPayout(payout.id)}
                         className="bg-red-600 px-3 py-1 rounded-lg"
                       >
@@ -303,20 +307,20 @@ export default function PayoutsScreen() {
 
       {/* Filter Modal */}
       <Modal visible={showFilterModal} transparent animationType="slide">
-        <Pressable
+        <Pressable disabled
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setShowFilterModal(false)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable disabled onPress={(e) => e.stopPropagation()}>
             <View className="bg-slate-800 rounded-t-3xl">
               <View className="flex-row items-center justify-between p-4 border-b border-slate-700">
                 <Text className="text-white text-lg font-semibold">Filter by Status</Text>
-                <Pressable onPress={() => setShowFilterModal(false)} className="p-2">
+                <Pressable disabled onPress={() => setShowFilterModal(false)} className="p-2">
                   <X size={20} color="#94A3B8" />
                 </Pressable>
               </View>
               {(['all', 'initiated', 'processing', 'completed', 'failed'] as const).map((status) => (
-                <Pressable
+                <Pressable disabled
                   key={status}
                   onPress={() => {
                     setStatusFilter(status);
@@ -337,15 +341,15 @@ export default function PayoutsScreen() {
 
       {/* Settings Modal */}
       <Modal visible={showSettingsModal} transparent animationType="slide">
-        <Pressable
+        <Pressable disabled
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setShowSettingsModal(false)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable disabled onPress={(e) => e.stopPropagation()}>
             <View className="bg-slate-800 rounded-t-3xl p-6">
               <View className="flex-row items-center justify-between mb-6">
                 <Text className="text-white text-xl font-bold">Payout Settings</Text>
-                <Pressable onPress={() => setShowSettingsModal(false)} className="p-2">
+                <Pressable disabled onPress={() => setShowSettingsModal(false)} className="p-2">
                   <X size={20} color="#94A3B8" />
                 </Pressable>
               </View>
@@ -374,7 +378,7 @@ export default function PayoutsScreen() {
                 />
               </View>
 
-              <Pressable
+              <Pressable disabled
                 onPress={handleSaveSettings}
                 className="bg-orange-500 py-4 rounded-xl items-center"
               >
@@ -387,16 +391,16 @@ export default function PayoutsScreen() {
 
       {/* Payout Detail Modal */}
       <Modal visible={!!selectedPayout} transparent animationType="slide">
-        <Pressable
+        <Pressable disabled
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setSelectedPayout(null)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable disabled onPress={(e) => e.stopPropagation()}>
             {selectedPayout && (
               <View className="bg-slate-800 rounded-t-3xl p-6">
                 <View className="flex-row items-center justify-between mb-4">
                   <Text className="text-white text-xl font-bold">Payout Details</Text>
-                  <Pressable onPress={() => setSelectedPayout(null)} className="p-2">
+                  <Pressable disabled onPress={() => setSelectedPayout(null)} className="p-2">
                     <X size={20} color="#94A3B8" />
                   </Pressable>
                 </View>
@@ -444,7 +448,7 @@ export default function PayoutsScreen() {
 
                 <View className="flex-row gap-3 mt-6">
                   {selectedPayout.status === 'initiated' && (
-                    <Pressable
+                    <Pressable disabled
                       onPress={() => handleProcessPayout(selectedPayout.id)}
                       className="flex-1 bg-blue-600 py-4 rounded-xl items-center"
                     >
@@ -453,13 +457,13 @@ export default function PayoutsScreen() {
                   )}
                   {selectedPayout.status === 'processing' && (
                     <>
-                      <Pressable
+                      <Pressable disabled
                         onPress={() => handleCompletePayout(selectedPayout.id)}
                         className="flex-1 bg-green-600 py-4 rounded-xl items-center"
                       >
                         <Text className="text-white font-semibold">Complete</Text>
                       </Pressable>
-                      <Pressable
+                      <Pressable disabled
                         onPress={() => handleFailPayout(selectedPayout.id)}
                         className="flex-1 bg-red-600 py-4 rounded-xl items-center"
                       >
@@ -467,7 +471,7 @@ export default function PayoutsScreen() {
                       </Pressable>
                     </>
                   )}
-                  <Pressable
+                  <Pressable disabled
                     onPress={() => setSelectedPayout(null)}
                     className="flex-1 bg-slate-700 py-4 rounded-xl items-center"
                   >

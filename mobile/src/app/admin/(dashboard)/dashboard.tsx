@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { periodStart } from '@/lib/admin-operations-api';
 import HomeLoanPipelineSummary from '@/components/HomeLoanPipelineSummary';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -119,9 +120,9 @@ export default function DashboardScreen() {
 
   const metrics = useMemo(() => {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const last7Days = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const last30Days = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
+    const today = new Date(periodStart('today'));
+    const last7Days = new Date(periodStart('7days'));
+    const last30Days = new Date(periodStart('30days'));
 
     const todayLeads = leads.filter(l => new Date(l.createdAt) >= today).length;
     const last7DaysLeads = leads.filter(l => new Date(l.createdAt) >= last7Days).length;
@@ -149,9 +150,9 @@ export default function DashboardScreen() {
     });
 
     // Rates
-    const totalProcessed = stageCounts.approved + stageCounts.rejected + stageCounts.closed + stageCounts.disbursed;
-    const approvalRate = totalProcessed > 0 ? ((stageCounts.approved + stageCounts.disbursed + stageCounts.closed) / totalProcessed * 100).toFixed(1) : '0';
-    const rejectionRate = totalProcessed > 0 ? (stageCounts.rejected / totalProcessed * 100).toFixed(1) : '0';
+    const totalProcessed = leads.filter(l => ['approved','rejected','disbursed'].includes(l.providerDecision || '')).length;
+    const approvalRate = totalProcessed > 0 ? (leads.filter(l=>['approved','disbursed'].includes(l.providerDecision||'')).length / totalProcessed * 100).toFixed(1) : 'Unavailable';
+    const rejectionRate = totalProcessed > 0 ? (leads.filter(l=>l.providerDecision==='rejected').length / totalProcessed * 100).toFixed(1) : 'Unavailable';
 
     // Stuck leads (no update in 3+ days)
     const stuckThreshold = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
@@ -166,7 +167,7 @@ export default function DashboardScreen() {
         providerCounts[l.provider] = { total: 0, approved: 0 };
       }
       providerCounts[l.provider].total++;
-      if (['approved', 'disbursed', 'closed'].includes(l.stage)) {
+      if (['approved','disbursed'].includes(l.providerDecision || '')) {
         providerCounts[l.provider].approved++;
       }
     });
@@ -225,7 +226,6 @@ export default function DashboardScreen() {
             <MetricCard
               title="Total Leads"
               value={metrics.totalLeads}
-              change="+12%"
               changeType="positive"
               icon={<Users size={16} color="#3B82F6" />}
               color="#3B82F6"
@@ -238,16 +238,14 @@ export default function DashboardScreen() {
             />
             <MetricCard
               title="Approval Rate"
-              value={`${metrics.approvalRate}%`}
-              change="+2.5%"
+              value={metrics.approvalRate === 'Unavailable' ? 'Unavailable' : `${metrics.approvalRate}%`}
               changeType="positive"
               icon={<CheckCircle size={16} color="#22C55E" />}
               color="#22C55E"
             />
             <MetricCard
               title="Rejection Rate"
-              value={`${metrics.rejectionRate}%`}
-              change="-1.2%"
+              value={metrics.rejectionRate === 'Unavailable' ? 'Unavailable' : `${metrics.rejectionRate}%`}
               changeType="positive"
               icon={<XCircle size={16} color="#EF4444" />}
               color="#EF4444"
@@ -416,7 +414,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-green-400 font-medium">WhatsApp Shared Leads</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {whatsappLeads.length} total • {newWhatsAppLeads.length} new
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -437,7 +435,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-purple-400 font-medium">Open Plots Leads</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {openPlotsLeads.length} total • {newOpenPlotsLeads.length} new • {highPriorityOpenPlotsLeads.length} high priority
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -458,7 +456,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-cyan-400 font-medium">Vehicle Insurance Leads</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {vehicleInsuranceLeads.length} total • {newVehicleInsuranceLeads.length} new
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -479,7 +477,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-red-400 font-medium">Utility Transactions</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {utilityTransactions.length} total · ₹0 payout · Zero commission
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -500,7 +498,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-green-400 font-medium">Health Insurance</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {healthInsuranceApps.length} total · {newHealthInsuranceApps.length} new
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -521,7 +519,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-sky-400 font-medium">Motor Insurance</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {motorInsuranceApps.length} total · {newMotorInsuranceApps.length} new
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>
@@ -542,7 +540,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-indigo-400 font-medium">Life Insurance</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    {lifeInsuranceApps.length} total · {newLifeInsuranceApps.length} new
+                    Backend data unavailable
                   </Text>
                 </View>
               </View>

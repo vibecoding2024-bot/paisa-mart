@@ -1,3 +1,4 @@
+import AdminDataBoundary from '@/components/AdminDataBoundary';
 import { useEffect } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter, usePathname, Slot } from 'expo-router';
@@ -132,7 +133,7 @@ export default function AdminTabsLayout() {
 
         {/* Content */}
         <View className="flex-1">
-          <Slot />
+          <AdminDataBoundary><Slot /></AdminDataBoundary>
         </View>
       </SafeAreaView>
     </View>

@@ -46,7 +46,7 @@ function HorizontalBar({ data, maxValue }: BarChartProps) {
             <View
               className="h-full rounded-full"
               style={{
-                width: `${(item.value / maxValue) * 100}%`,
+                width: `${maxValue > 0 ? (item.value / maxValue) * 100 : 0}%`,
                 backgroundColor: item.color,
               }}
             />
@@ -66,8 +66,8 @@ export default function AnalyticsScreen() {
 
     // Basic counts
     const totalLeads = leads.length;
-    const approvedLeads = leads.filter(l => ['approved', 'disbursed', 'closed'].includes(l.stage)).length;
-    const rejectedLeads = leads.filter(l => l.stage === 'rejected').length;
+    const approvedLeads = leads.filter(l => ['approved','disbursed'].includes(l.providerDecision || '')).length;
+    const rejectedLeads = leads.filter(l => l.providerDecision === 'rejected').length;
     const pendingLeads = leads.filter(l => !['approved', 'rejected', 'disbursed', 'closed'].includes(l.stage)).length;
 
     // Rates
@@ -82,10 +82,10 @@ export default function AnalyticsScreen() {
         byProduct[l.productType] = { total: 0, approved: 0, rejected: 0 };
       }
       byProduct[l.productType].total++;
-      if (['approved', 'disbursed', 'closed'].includes(l.stage)) {
+      if (['approved','disbursed'].includes(l.providerDecision || '')) {
         byProduct[l.productType].approved++;
       }
-      if (l.stage === 'rejected') {
+      if (l.providerDecision === 'rejected') {
         byProduct[l.productType].rejected++;
       }
     });
@@ -97,10 +97,10 @@ export default function AnalyticsScreen() {
         byProvider[l.provider] = { total: 0, approved: 0, rejected: 0 };
       }
       byProvider[l.provider].total++;
-      if (['approved', 'disbursed', 'closed'].includes(l.stage)) {
+      if (['approved','disbursed'].includes(l.providerDecision || '')) {
         byProvider[l.provider].approved++;
       }
-      if (l.stage === 'rejected') {
+      if (l.providerDecision === 'rejected') {
         byProvider[l.provider].rejected++;
       }
     });
@@ -128,13 +128,14 @@ export default function AnalyticsScreen() {
       }
     });
 
-    // Average time to closure (mock calculation)
-    const avgClosureTime = 72; // hours
+    // Average hours from submission to the recorded closing event.
+    const closed = leads.filter(l=>l.stage==='closed' && l.stageHistory.some(h=>h.toStage==='closed'));
+    const avgClosureTime = closed.length ? (closed.reduce((sum,l)=>sum+(new Date(l.stageHistory.filter(h=>h.toStage==='closed').at(-1)!.changedAt).getTime()-new Date(l.createdAt).getTime())/3600000,0)/closed.length).toFixed(1) : 'Unavailable';
 
-    // Rejection reasons (mock)
+    // Only recorded rejection reasons; do not invent distributions.
     const rejectionReasons = REJECTION_CODES.map(code => ({
       ...code,
-      count: Math.floor(Math.random() * 10) + 1,
+      count: leads.filter(l=>l.rejectionReason === code.code).length,
     })).sort((a, b) => b.count - a.count);
 
     return {
@@ -165,7 +166,7 @@ export default function AnalyticsScreen() {
       <View className="p-4 border-b border-slate-800">
         <Text className="text-white text-xl font-bold">Analytics</Text>
         <Text className="text-slate-400 text-sm mt-1">
-          Outcome metrics and performance insights
+          All saved applications · All time · Asia/Kolkata
         </Text>
       </View>
 
@@ -199,11 +200,11 @@ export default function AnalyticsScreen() {
                     <CheckCircle size={20} color="#22C55E" />
                     <View className="flex-row items-center">
                       <TrendingUp size={12} color="#22C55E" />
-                      <Text className="text-green-500 text-xs ml-1">+5%</Text>
+                      <Text className="text-green-500 text-xs ml-1">Unavailable</Text>
                     </View>
                   </View>
                   <Text className="text-white text-3xl font-bold mt-2">
-                    {analytics.approvalRate.toFixed(1)}%
+                    {analytics.approvedLeads + analytics.rejectedLeads ? analytics.approvalRate.toFixed(1)+'%' : 'Unavailable'}
                   </Text>
                   <Text className="text-slate-400 text-sm">Approval Rate</Text>
                 </View>
@@ -213,11 +214,11 @@ export default function AnalyticsScreen() {
                     <XCircle size={20} color="#EF4444" />
                     <View className="flex-row items-center">
                       <TrendingDown size={12} color="#22C55E" />
-                      <Text className="text-green-500 text-xs ml-1">-2%</Text>
+                      <Text className="text-green-500 text-xs ml-1">Unavailable</Text>
                     </View>
                   </View>
                   <Text className="text-white text-3xl font-bold mt-2">
-                    {analytics.rejectionRate.toFixed(1)}%
+                    {analytics.approvedLeads + analytics.rejectedLeads ? analytics.rejectionRate.toFixed(1)+'%' : 'Unavailable'}
                   </Text>
                   <Text className="text-slate-400 text-sm">Rejection Rate</Text>
                 </View>
@@ -232,7 +233,7 @@ export default function AnalyticsScreen() {
                   <Text className="text-white font-semibold ml-2">Average Time to Closure</Text>
                 </View>
                 <Text className="text-white text-4xl font-bold">
-                  {analytics.avgClosureTime}h
+                  {analytics.avgClosureTime === 'Unavailable' ? 'Unavailable' : analytics.avgClosureTime+'h'}
                 </Text>
                 <Text className="text-slate-400 text-sm mt-1">Across all products</Text>
               </View>
@@ -276,7 +277,7 @@ export default function AnalyticsScreen() {
               <View className="bg-slate-800 rounded-xl p-4">
                 <View className="flex-row items-center mb-4">
                   <AlertTriangle size={20} color="#F59E0B" />
-                  <Text className="text-white font-semibold ml-2">High Drop-off Stages</Text>
+                  <Text className="text-white font-semibold ml-2">Stages unchanged for more than 48 hours</Text>
                 </View>
                 {Object.entries(analytics.stageDropoffs)
                   .filter(([_, count]) => count > 0)
@@ -323,13 +324,13 @@ export default function AnalyticsScreen() {
                 {Object.entries(analytics.byProduct)
                   .sort((a, b) => b[1].total - a[1].total)
                   .map(([product, data]) => {
-                    const rate = data.total > 0 ? (data.approved / data.total) * 100 : 0;
+                    const rate = data.approved + data.rejected > 0 ? (data.approved / (data.approved + data.rejected)) * 100 : null;
                     return (
                       <View key={product} className="flex-row items-center justify-between py-3 border-b border-slate-700">
                         <Text className="text-slate-300">{PRODUCT_LABELS[product as ProductCategory]}</Text>
                         <View className="flex-row items-center">
-                          <Text className="text-green-500 font-medium mr-2">{rate.toFixed(0)}%</Text>
-                          <Text className="text-slate-500 text-xs">({data.approved}/{data.total})</Text>
+                          <Text className="text-green-500 font-medium mr-2">{rate === null ? 'Unavailable' : rate.toFixed(0)+'%'}</Text>
+                          <Text className="text-slate-500 text-xs">({data.approved}/{data.approved + data.rejected} recorded decisions)</Text>
                         </View>
                       </View>
                     );
@@ -369,7 +370,7 @@ export default function AnalyticsScreen() {
                   })
                   .slice(0, 8)
                   .map(([provider, data]) => {
-                    const rate = data.total > 0 ? (data.approved / data.total) * 100 : 0;
+                    const rate = data.approved + data.rejected > 0 ? (data.approved / (data.approved + data.rejected)) * 100 : null;
                     return (
                       <View key={provider} className="flex-row items-center justify-between py-3 border-b border-slate-700">
                         <View>
@@ -377,7 +378,7 @@ export default function AnalyticsScreen() {
                           <Text className="text-slate-500 text-xs">{data.total} leads</Text>
                         </View>
                         <View className="items-end">
-                          <Text className="text-green-500 font-bold">{rate.toFixed(0)}%</Text>
+                          <Text className="text-green-500 font-bold">{rate === null ? 'Unavailable' : rate.toFixed(0)+'%'}</Text>
                           <Text className="text-slate-500 text-xs">approval</Text>
                         </View>
                       </View>

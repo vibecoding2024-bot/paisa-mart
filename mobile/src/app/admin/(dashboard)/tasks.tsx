@@ -1,3 +1,4 @@
+import { OperationsRecords } from '@/components/AdminOperationsPanels';
 import { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -40,14 +41,14 @@ export default function TasksScreen() {
         lead: l,
         date: new Date(l.followUpDate!),
         isOverdue: new Date(l.followUpDate!) < now,
-        isToday: new Date(l.followUpDate!).toDateString() === today.toDateString(),
+        isToday: new Date(l.followUpDate!).toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'}) === today.toLocaleDateString('en-CA',{timeZone:'Asia/Kolkata'}),
       }));
 
-    // Stuck leads (no movement in 24+ hours, not in terminal states)
+    // Stuck leads (no movement in 48+ hours, not in terminal states)
     const stuckLeads = leads
       .filter(l => {
         const hoursSinceUpdate = (now.getTime() - new Date(l.updatedAt).getTime()) / (1000 * 60 * 60);
-        return hoursSinceUpdate > 24 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
+        return hoursSinceUpdate > 48 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
       })
       .map(l => ({
         type: 'stuck' as const,
@@ -160,7 +161,7 @@ export default function TasksScreen() {
               </Pressable>
             ))}
           </View>
-        </ScrollView>
+        <OperationsRecords kind="ticket"/><OperationsRecords kind="complaint"/></ScrollView>
       </View>
 
       {/* Tasks List */}
