@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { periodStart } from '@/lib/admin-operations-api';
 import HomeLoanPipelineSummary from '@/components/HomeLoanPipelineSummary';
-import { View, Text, ScrollView, Pressable } from 'react-native';
+import { View, Text, ScrollView, Pressable, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
@@ -102,6 +102,16 @@ function FunnelBar({ label, count, total, color }: FunnelBarProps) {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const wideOverview = width >= 768;
+  const overviewPanelStyle = {
+    flexGrow: wideOverview ? 1 : 0,
+    flexBasis: wideOverview ? 0 : 'auto' as const,
+    minWidth: 0,
+    backgroundColor: '#1E293B',
+    borderRadius: 12,
+    padding: 16,
+  };
   const leads = useAdminStore(s => s.leads);
   const whatsappLeads = useWhatsAppLeadsStore(s => s.leads);
   const openPlotsLeads = useOpenPlotsLeadsStore(s => s.leads);
@@ -260,11 +270,11 @@ export default function DashboardScreen() {
         </Animated.View>
 
         {/* Two Column Layout */}
-        <View className="flex-row gap-4 mt-6">
+        <View style={{ flexDirection: wideOverview ? 'row' : 'column', gap: 16, marginTop: 24 }}>
           {/* Funnel View */}
           <Animated.View
             entering={FadeInDown.delay(150).springify()}
-            className="flex-1 bg-slate-800 rounded-xl p-4"
+            style={overviewPanelStyle}
           >
             <Text className="text-white font-semibold mb-4">Lead Funnel</Text>
             {funnelStages.map((item, index) => {
@@ -287,24 +297,24 @@ export default function DashboardScreen() {
           {/* Leads by Stage */}
           <Animated.View
             entering={FadeInDown.delay(200).springify()}
-            className="flex-1 bg-slate-800 rounded-xl p-4"
+            style={overviewPanelStyle}
           >
             <Text className="text-white font-semibold mb-4">By Stage</Text>
             {Object.entries(metrics.stageCounts)
               .filter(([_, count]) => count > 0)
               .slice(0, 6)
               .map(([stage, count]) => (
-                <View key={stage} className="flex-row items-center justify-between mb-3">
-                  <View className="flex-row items-center">
+                <View key={stage} className="flex-row items-center justify-between mb-3" style={{ gap: 16 }}>
+                  <View className="flex-row items-center" style={{ flex: 1, minWidth: 0 }}>
                     <View
                       className="w-2 h-2 rounded-full mr-2"
                       style={{ backgroundColor: STAGE_COLORS[stage as LeadStage] }}
                     />
-                    <Text className="text-slate-300 text-sm">
+                    <Text className="text-slate-300 text-sm" style={{ flexShrink: 1 }}>
                       {STAGE_LABELS[stage as LeadStage]}
                     </Text>
                   </View>
-                  <Text className="text-white font-medium">{count}</Text>
+                  <Text className="text-white font-medium" style={{ flexShrink: 0, minWidth: 24, textAlign: 'right' }}>{count}</Text>
                 </View>
               ))}
           </Animated.View>
