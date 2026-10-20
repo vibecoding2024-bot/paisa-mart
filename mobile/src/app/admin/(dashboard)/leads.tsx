@@ -1,3 +1,4 @@
+import { periodStart } from '@/lib/admin-operations-api';
 import { useState, useMemo } from 'react';
 import {
   View,
@@ -108,9 +109,9 @@ export default function LeadsScreen() {
         const leadDate = new Date(lead.createdAt);
         const daysDiff = (now.getTime() - leadDate.getTime()) / (1000 * 60 * 60 * 24);
 
-        if (filters.dateRange === 'today' && daysDiff > 1) return false;
-        if (filters.dateRange === '7days' && daysDiff > 7) return false;
-        if (filters.dateRange === '30days' && daysDiff > 30) return false;
+        if (leadDate.getTime() < periodStart(filters.dateRange)) return false;
+
+
       }
 
       return true;
@@ -131,9 +132,9 @@ export default function LeadsScreen() {
     router.push({ pathname: '/admin/lead-details', params: { id: lead.id } } as any);
   };
 
-  const handleStageChange = (newStage: LeadStage) => {
+  const handleStageChange = async (newStage: LeadStage) => {
     if (selectedLead && currentAdmin?.role !== 'viewer') {
-      updateLeadStage(selectedLead.id, newStage);
+      if (!await updateLeadStage(selectedLead.id, newStage)) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setShowStageModal(false);
@@ -464,7 +465,7 @@ export default function LeadsScreen() {
               </Text>
 
               <Pressable
-                onPress={() => setShowStageModal(true)}
+                onPress={() => selectedLead?.productType==='home-loans' ? router.push('/admin/home-loans' as any) : setShowStageModal(true)}
                 className="flex-row items-center bg-slate-700 rounded-xl p-4 mb-3"
               >
                 <Calendar size={20} color="#94A3B8" />
@@ -474,7 +475,7 @@ export default function LeadsScreen() {
               <Pressable
                 onPress={() => {
                   if (selectedLead) {
-                    assignLead(selectedLead.id, currentAdmin?.name || 'Admin');
+                    void assignLead(selectedLead.id, currentAdmin?.email || '');
                     setShowActions(false);
                   }
                 }}
@@ -511,7 +512,7 @@ export default function LeadsScreen() {
             <View className="bg-slate-800 rounded-t-3xl p-6 max-h-[70%]">
               <Text className="text-white text-lg font-semibold mb-4">Select New Stage</Text>
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {Object.entries(STAGE_LABELS).map(([stage, label]) => (
+                {Object.entries(STAGE_LABELS).filter(([stage])=>['new','eligibility_check','kyc_pending','kyc_completed','submitted','closed'].includes(stage)).map(([stage, label]) => (
                   <Pressable
                     key={stage}
                     onPress={() => handleStageChange(stage as LeadStage)}

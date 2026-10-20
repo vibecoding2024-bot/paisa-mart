@@ -1,3 +1,4 @@
+import { ApplicationOperations } from '@/components/AdminOperationsPanels';
 import { useState, useMemo } from 'react';
 import {
   View,
@@ -86,9 +87,9 @@ export default function LeadDetailsScreen() {
     });
   };
 
-  const handleStageChange = () => {
+  const handleStageChange = async () => {
     if (selectedNewStage && !isViewer) {
-      updateLeadStage(lead.id, selectedNewStage, undefined, stageChangeReason);
+      if (!await updateLeadStage(lead.id, selectedNewStage, undefined, stageChangeReason)) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setShowStageModal(false);
@@ -96,20 +97,20 @@ export default function LeadDetailsScreen() {
     setStageChangeReason('');
   };
 
-  const handleAddNote = () => {
+  const handleAddNote = async () => {
     if (newNote.trim()) {
-      addLeadNote(lead.id, newNote.trim());
+      if (!await addLeadNote(lead.id, newNote.trim())) return;
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     setShowNoteModal(false);
     setNewNote('');
   };
 
-  const handleSetFollowUp = () => {
+  const handleSetFollowUp = async () => {
     if (followUpDate && !isViewer) {
       const date = new Date();
       date.setDate(date.getDate() + parseInt(followUpDate));
-      setFollowUp(lead.id, date.toISOString());
+      if (!await setFollowUp(lead.id, date.toISOString())) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     setShowFollowUpModal(false);
@@ -157,13 +158,13 @@ export default function LeadDetailsScreen() {
       {!isViewer && (
         <View className="flex-row px-4 py-3 gap-2 border-b border-slate-800">
           <Pressable
-            onPress={() => setShowStageModal(true)}
+            onPress={() => lead.productType==='home-loans' ? router.push('/admin/home-loans' as any) : setShowStageModal(true)}
             className="flex-1 bg-slate-800 rounded-lg py-2 items-center"
           >
             <Text className="text-white text-sm">Change Stage</Text>
           </Pressable>
           <Pressable
-            onPress={() => assignLead(lead.id, currentAdmin?.name || 'Admin')}
+            onPress={() => assignLead(lead.id, currentAdmin?.email || '')}
             className="flex-1 bg-slate-800 rounded-lg py-2 items-center"
           >
             <Text className="text-white text-sm">Assign to Me</Text>
@@ -199,6 +200,7 @@ export default function LeadDetailsScreen() {
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
+<ApplicationOperations lead={lead} />
         {activeTab === 'overview' && (
           <View className="p-4">
             {/* Contact Info */}
@@ -411,7 +413,7 @@ export default function LeadDetailsScreen() {
               </View>
 
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {Object.entries(STAGE_LABELS).map(([stage, label]) => (
+                {Object.entries(STAGE_LABELS).filter(([stage])=>['new','eligibility_check','kyc_pending','kyc_completed','submitted','closed'].includes(stage)).map(([stage, label]) => (
                   <Pressable
                     key={stage}
                     onPress={() => setSelectedNewStage(stage as LeadStage)}

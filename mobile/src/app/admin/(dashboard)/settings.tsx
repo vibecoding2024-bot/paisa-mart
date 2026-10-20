@@ -1,3 +1,4 @@
+import { SavedDirectory, StaffAccess, OperationsRecords, AuditAndExport } from '@/components/AdminOperationsPanels';
 import { useState } from 'react';
 import {
   View,
@@ -150,7 +151,8 @@ export default function SettingsScreen() {
       </View>
 
       <ScrollView keyboardShouldPersistTaps="handled" className="flex-1" showsVerticalScrollIndicator={false}>
-        {activeTab === 'users' && (
+        {activeTab === 'users' && <><SavedDirectory kind="customers"/><StaffAccess/><OperationsRecords kind="partner"/></>}
+{false && (
           <View className="p-4">
             {/* Add User Button */}
             {isAdmin && (
@@ -229,7 +231,8 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {activeTab === 'audit' && (
+        {activeTab === 'audit' && <AuditAndExport/>}
+{false && (
           <View className="p-4">
             <View className="bg-slate-800 rounded-xl overflow-hidden">
               <View className="p-4 border-b border-slate-700">
@@ -308,12 +311,12 @@ export default function SettingsScreen() {
 
             {/* SLA Settings */}
             <View className="bg-slate-800 rounded-xl p-4">
-              <Text className="text-white font-semibold mb-4">SLA Thresholds</Text>
+              <Text className="text-white font-semibold mb-4">Operational indicators (not provider SLAs)</Text>
               {[
-                { label: 'Stuck Lead Alert', value: '24 hours' },
-                { label: 'Follow-up Overdue', value: '48 hours' },
-                { label: 'KYC Completion', value: '72 hours' },
-                { label: 'Partner Response', value: '24 hours' },
+                { label: 'Unchanged-stage display', value: '48 hours (UI indicator)' },
+                { label: 'Follow-up Overdue', value: 'Past scheduled time' },
+                { label: 'KYC Completion', value: 'Not configured' },
+                { label: 'Partner Response', value: 'Not configured' },
               ].map((item) => (
                 <View key={item.label} className="flex-row items-center justify-between py-3 border-b border-slate-700">
                   <Text className="text-slate-300">{item.label}</Text>
@@ -326,7 +329,8 @@ export default function SettingsScreen() {
           </View>
         )}
 
-        {activeTab === 'export' && (
+        {activeTab === 'export' && <AuditAndExport/>}
+{false && (
           <View className="p-4">
             {!isAdmin ? (
               <View className="bg-red-500/20 border border-red-500/30 rounded-xl p-4">

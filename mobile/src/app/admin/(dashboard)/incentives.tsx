@@ -1,3 +1,4 @@
+import { FinanceUnavailable } from '@/components/AdminOperationsPanels';
 import { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, FlatList } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -57,6 +58,8 @@ function MetricCard({ title, value, icon, color, trend, trendUp }: MetricCardPro
 }
 
 function formatCurrency(amount: number): string {
+  return 'Unavailable';
+
   if (amount >= 100000) {
     return `₹${(amount / 100000).toFixed(1)}L`;
   }
@@ -73,8 +76,8 @@ const STATUS_COLORS: Record<IncentiveStatus, { bg: string; text: string }> = {
 };
 
 export default function IncentivesScreen() {
-  const incentives = useIncentiveStore(s => s.incentives);
-  const incomingOutgoing = useIncentiveStore(s => s.incomingOutgoing);
+  const incentives: UserIncentive[] = [];
+  const incomingOutgoing: any[] = [];
   const getTotalIncentivesEarned = useIncentiveStore(s => s.getTotalIncentivesEarned);
   const getTotalIncentivesPaid = useIncentiveStore(s => s.getTotalIncentivesPaid);
   const getPendingIncentives = useIncentiveStore(s => s.getPendingIncentives);
@@ -133,11 +136,12 @@ export default function IncentivesScreen() {
   return (
     <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
+<FinanceUnavailable/>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-white text-2xl font-bold">Incentive Management</Text>
-            <Pressable
+            <Pressable disabled
               onPress={handleExport}
               className="flex-row items-center bg-green-600 px-3 py-2 rounded-lg"
             >
@@ -160,7 +164,7 @@ export default function IncentivesScreen() {
               value={formatCurrency(totalEarned)}
               icon={<Wallet size={20} color="#3B82F6" />}
               color="#3B82F6"
-              trend="+18%"
+
               trendUp={true}
             />
             <MetricCard
@@ -168,7 +172,7 @@ export default function IncentivesScreen() {
               value={formatCurrency(totalPaid)}
               icon={<CheckCircle size={20} color="#10B981" />}
               color="#10B981"
-              trend="+12%"
+
               trendUp={true}
             />
             <MetricCard
@@ -182,7 +186,7 @@ export default function IncentivesScreen() {
               value={formatCurrency(netBalance)}
               icon={<DollarSign size={20} color="#8B5CF6" />}
               color="#8B5CF6"
-              trend="+8%"
+
               trendUp={true}
             />
           </ScrollView>
@@ -191,7 +195,7 @@ export default function IncentivesScreen() {
         {/* Tab Switcher */}
         <Animated.View entering={FadeInDown.delay(150).springify()} className="mt-6">
           <View className="flex-row bg-slate-800 rounded-xl p-1">
-            <Pressable
+            <Pressable disabled
               onPress={() => setActiveTab('ledger')}
               className={`flex-1 py-3 rounded-lg items-center ${activeTab === 'ledger' ? 'bg-orange-500' : ''}`}
             >
@@ -199,7 +203,7 @@ export default function IncentivesScreen() {
                 User Incentive Ledger
               </Text>
             </Pressable>
-            <Pressable
+            <Pressable disabled
               onPress={() => setActiveTab('incoming-outgoing')}
               className={`flex-1 py-3 rounded-lg items-center ${activeTab === 'incoming-outgoing' ? 'bg-orange-500' : ''}`}
             >
@@ -218,7 +222,7 @@ export default function IncentivesScreen() {
                 <Text className="text-white font-semibold">
                   {filteredIncentives.length} Records
                 </Text>
-                <Pressable
+                <Pressable disabled
                   onPress={() => setShowFilterModal(true)}
                   className="flex-row items-center bg-slate-800 px-3 py-2 rounded-lg"
                 >
@@ -236,7 +240,7 @@ export default function IncentivesScreen() {
               {filteredIncentives.slice(0, 20).map((incentive, index) => {
                 const statusStyle = STATUS_COLORS[incentive.status];
                 return (
-                  <Pressable
+                  <Pressable disabled
                     key={incentive.id}
                     onPress={() => setSelectedIncentive(incentive)}
                     className="bg-slate-800 rounded-xl p-4 mb-3"
@@ -279,7 +283,7 @@ export default function IncentivesScreen() {
                         {new Date(incentive.date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
                       </Text>
                       {incentive.status === 'pending' && (
-                        <Pressable
+                        <Pressable disabled
                           onPress={() => handleApprove(incentive.id)}
                           className="bg-blue-600 px-3 py-1 rounded-lg"
                         >
@@ -287,7 +291,7 @@ export default function IncentivesScreen() {
                         </Pressable>
                       )}
                       {incentive.status === 'approved' && (
-                        <Pressable
+                        <Pressable disabled
                           onPress={() => handleMarkPaid(incentive.id)}
                           className="bg-green-600 px-3 py-1 rounded-lg"
                         >
@@ -368,20 +372,20 @@ export default function IncentivesScreen() {
 
       {/* Filter Modal */}
       <Modal visible={showFilterModal} transparent animationType="slide">
-        <Pressable
+        <Pressable disabled
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setShowFilterModal(false)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable disabled onPress={(e) => e.stopPropagation()}>
             <View className="bg-slate-800 rounded-t-3xl">
               <View className="flex-row items-center justify-between p-4 border-b border-slate-700">
                 <Text className="text-white text-lg font-semibold">Filter by Status</Text>
-                <Pressable onPress={() => setShowFilterModal(false)} className="p-2">
+                <Pressable disabled onPress={() => setShowFilterModal(false)} className="p-2">
                   <X size={20} color="#94A3B8" />
                 </Pressable>
               </View>
               {(['all', 'pending', 'approved', 'paid'] as const).map((status) => (
-                <Pressable
+                <Pressable disabled
                   key={status}
                   onPress={() => {
                     setStatusFilter(status);
@@ -402,16 +406,16 @@ export default function IncentivesScreen() {
 
       {/* Incentive Detail Modal */}
       <Modal visible={!!selectedIncentive} transparent animationType="slide">
-        <Pressable
+        <Pressable disabled
           className="flex-1 bg-black/50 justify-end"
           onPress={() => setSelectedIncentive(null)}
         >
-          <Pressable onPress={(e) => e.stopPropagation()}>
+          <Pressable disabled onPress={(e) => e.stopPropagation()}>
             {selectedIncentive && (
               <View className="bg-slate-800 rounded-t-3xl p-6">
                 <View className="flex-row items-center justify-between mb-4">
                   <Text className="text-white text-xl font-bold">Incentive Details</Text>
-                  <Pressable onPress={() => setSelectedIncentive(null)} className="p-2">
+                  <Pressable disabled onPress={() => setSelectedIncentive(null)} className="p-2">
                     <X size={20} color="#94A3B8" />
                   </Pressable>
                 </View>
@@ -458,7 +462,7 @@ export default function IncentivesScreen() {
 
                 <View className="flex-row gap-3 mt-6">
                   {selectedIncentive.status === 'pending' && (
-                    <Pressable
+                    <Pressable disabled
                       onPress={() => handleApprove(selectedIncentive.id)}
                       className="flex-1 bg-blue-600 py-4 rounded-xl items-center"
                     >
@@ -466,14 +470,14 @@ export default function IncentivesScreen() {
                     </Pressable>
                   )}
                   {selectedIncentive.status === 'approved' && (
-                    <Pressable
+                    <Pressable disabled
                       onPress={() => handleMarkPaid(selectedIncentive.id)}
                       className="flex-1 bg-green-600 py-4 rounded-xl items-center"
                     >
                       <Text className="text-white font-semibold">Mark as Paid</Text>
                     </Pressable>
                   )}
-                  <Pressable
+                  <Pressable disabled
                     onPress={() => setSelectedIncentive(null)}
                     className="flex-1 bg-slate-700 py-4 rounded-xl items-center"
                   >

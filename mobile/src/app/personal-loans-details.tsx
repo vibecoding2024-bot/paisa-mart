@@ -1,4 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import BirthDatePicker from '@/components/BirthDatePicker';
+import { parseBirthDate } from '@/lib/birth-date';
 import {
   View,
   Text,
@@ -8,7 +11,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -22,7 +24,6 @@ import {
 import { ModalDropdown } from '@/components/ModalDropdown';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useAdminStore } from '@/lib/admin-store';
 import { usePersonalLoanStore } from '@/lib/personal-loan-store';
 import { submitPersonalLoanLead } from '@/lib/personal-loan-api';
 
@@ -155,7 +156,7 @@ const INDIAN_STATES = [
 export default function PersonalLoansDetailsScreen() {
   const router = useRouter();
   const setData = usePersonalLoanStore((s) => s.setData);
-  const addLead = useAdminStore((s) => s.addLead);
+  const setReceipt = usePersonalLoanStore(s => s.setReceipt);
 
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -169,7 +170,9 @@ export default function PersonalLoansDetailsScreen() {
   const [existingEmi, setExistingEmi] = useState('');
   const [employmentType, setEmploymentType] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitting = useRef(false);
+  const [confirmation, setConfirmation] = useState<string | null>(null);
+  const [showConfirmationDetails, setShowConfirmationDetails] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
   const validate = () => {
@@ -181,7 +184,7 @@ export default function PersonalLoansDetailsScreen() {
     } else if (Number(cibil) < 300 || Number(cibil) > 900) {
       newErrors.cibil = 'CIBIL score must be between 300 and 900';
     }
-    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
+    if (!parseBirthDate(dateOfBirth)) newErrors.dateOfBirth = 'Please select a valid date of birth from the calendar';
     if (!city.trim()) newErrors.city = 'Please enter city';
     if (!state.trim()) newErrors.state = 'Please enter state';
     if (!companyName.trim()) newErrors.companyName = 'Please enter company name';
@@ -203,74 +206,64 @@ export default function PersonalLoansDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setSubmitError('');
-    if (!validate() || isSubmitting) return;
-
-    const submittedAt = new Date().toISOString();
-    const leadData = {
-      full_name: fullName.trim(),
-      mobile_number: mobileNumber,
-      cibil,
-      date_of_birth: dateOfBirth.trim(),
-      city: city.trim(),
-      state: state.trim(),
-      company_name: companyName.trim(),
-      monthly_income: monthlyIncome,
-      loan_amount_required: loanAmountRequired,
-      existing_emi: existingEmi,
-      employment_type: employmentType,
-      timestamp: submittedAt,
-    };
-
-    try {
-      setIsSubmitting(true);
-      await submitPersonalLoanLead({ ...leadData, phoneNumber: mobileNumber });
-      setData(leadData);
-      addLead({
-        userName: fullName.trim(),
-        mobile: mobileNumber,
-        email: '',
-        productType: 'personal-loans',
-        provider: 'Personal Loan',
-        stage: 'new',
-        outcome: 'pending',
-        priority: 'medium',
+  const mutation = useMutation({
+    mutationFn: async () => {
+      const submittedAt = new Date().toISOString();
+      const leadData = {
+        full_name: fullName.trim(),
+        mobile_number: mobileNumber,
+        cibil,
+        date_of_birth: dateOfBirth.trim(),
         city: city.trim(),
         state: state.trim(),
-        source: 'Paisa Mart',
-        consentGiven: true,
-        extraDetails: {
-          'Full Name': fullName.trim(),
-          'Mobile Number': mobileNumber,
-          'CIBIL Score': cibil,
-          'Date of Birth': dateOfBirth.trim(),
-          City: city.trim(),
-          State: state.trim(),
-          'Company Name': companyName.trim(),
-          'Monthly Income': monthlyIncome,
-          'Loan Amount Required': loanAmountRequired,
-          'Existing EMI': existingEmi,
-          'Employment Type': employmentType,
-          'Submission Date & Time': submittedAt,
-          'Lead Source': 'Paisa Mart',
-          Status: 'New',
-        },
-      });
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Application Submitted! 🎉',
-        'Our Banking Executive will reach you to further process your loan.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-      );
-    } catch (error) {
-      setSubmitError(error instanceof Error ? error.message : 'Could not submit personal loan details');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-    } finally {
-      setIsSubmitting(false);
-    }
+        company_name: companyName.trim(),
+        monthly_income: monthlyIncome,
+        loan_amount_required: loanAmountRequired,
+        existing_emi: existingEmi,
+        employment_type: employmentType,
+        timestamp: submittedAt,
+      };
+
+      const saved = await submitPersonalLoanLead({ ...leadData, phoneNumber: mobileNumber });
+      return { saved, leadData };
+    },
+    onSuccess: ({ saved, leadData }) => {
+      setConfirmation(saved.referenceNumber);
+      setReceipt(saved);
+      setData(leadData);
+      setSubmitError('');
+    },
+    onError: error => setSubmitError(error instanceof Error ? error.message : 'Could not submit your application. Please try again.'),
+    onSettled: () => { submitting.current = false; },
+    retry: false,
+  });
+  const isSubmitting = mutation.isPending;
+  const handleSubmit = () => {
+    if (submitting.current || confirmation || !validate()) return;
+    submitting.current = true;
+    setSubmitError('');
+    mutation.mutate();
   };
+
+  if (confirmation) return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 48 }}>
+        <View style={{ backgroundColor: '#fff', padding: 24, borderRadius: 20 }}>
+          <Text style={{ color: '#16A34A', fontSize: 18, fontWeight: '700' }}>✓ Lead received</Text>
+          <Text style={{ color: '#002561', fontSize: 26, fontWeight: '700', marginTop: 16 }}>Details submitted successfully</Text>
+          <Text style={{ color: '#475569', fontSize: 16, lineHeight: 24, marginTop: 12 }}>We have received your personal loan details. Our team will contact you shortly.</Text>
+          <View style={{ backgroundColor: '#F1F5F9', padding: 16, borderRadius: 12, marginVertical: 24 }}>
+            <Text style={{ color: '#64748B', marginBottom: 8 }}>Your confirmation number</Text>
+            <Text selectable style={{ color: '#002561', fontWeight: '700', fontSize: 18 }}>{confirmation}</Text>
+          </View>
+          {showConfirmationDetails && <Text style={{ color: '#475569', lineHeight: 24, marginBottom: 20 }}>{mutation.data?.leadData.full_name}{'\n'}{mutation.data?.leadData.mobile_number}{'\n'}{'Personal loan'}{'\n'}Loan amount: ₹{Number(mutation.data?.leadData.loan_amount_required).toLocaleString('en-IN')}{'\n'}{mutation.data?.leadData.city}, {mutation.data?.leadData.state}</Text>}
+          <Pressable accessibilityRole="button" onPress={() => setShowConfirmationDetails(v => !v)} style={{ backgroundColor: '#002561', borderRadius: 12, padding: 16, alignItems: 'center', marginBottom: 12 }}><Text style={{ color: '#fff', fontWeight: '700' }}>{showConfirmationDetails ? 'Hide details' : 'View Confirmation'}</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.push('/personal-loan-application-status')} style={{ padding: 16, alignItems: 'center' }}><Text style={{ color: '#002561', fontWeight: '700' }}>View Application Status</Text></Pressable>
+          <Pressable accessibilityRole="button" onPress={() => router.replace('/(tabs)')} style={{ borderColor: '#CBD5E1', borderWidth: 1, borderRadius: 12, padding: 16, alignItems: 'center' }}><Text style={{ color: '#002561', fontWeight: '700' }}>Back to Home</Text></Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
+  );
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
@@ -397,16 +390,7 @@ export default function PersonalLoansDetailsScreen() {
                 }}
                 error={errors.cibil}
               />
-              <TextField
-                label="Date of Birth"
-                placeholder="DD/MM/YYYY"
-                value={dateOfBirth}
-                onChangeText={(val) => {
-                  setDateOfBirth(val);
-                  setErrors((e) => ({ ...e, dateOfBirth: '' }));
-                }}
-                error={errors.dateOfBirth}
-              />
+              <BirthDatePicker value={dateOfBirth} onChange={value => { setDateOfBirth(value); setErrors(e => ({ ...e, dateOfBirth: '' })); }} error={errors.dateOfBirth} />
               <TextField
                 label="City"
                 placeholder="Enter city"

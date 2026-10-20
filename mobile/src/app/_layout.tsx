@@ -74,7 +74,8 @@ function RootLayoutNav({ colorScheme }: { colorScheme: 'light' | 'dark' | null |
         <Stack.Screen name="home-loan-applications" options={{ headerShown: false }} />
         <Stack.Screen name="home-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="business-loans-details" options={{ headerShown: false }} />
-        <Stack.Screen name="personal-loans-details" options={{ headerShown: false }} />
+        <Stack.Screen name="personal-loan-application-status" options={{ headerShown: false }} />
+          <Stack.Screen name="personal-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="vehicle-loans-details" options={{ headerShown: false }} />
         <Stack.Screen name="health-insurance-members" options={{ headerShown: false }} />
         <Stack.Screen name="health-insurance-details" options={{ headerShown: false }} />

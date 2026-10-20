@@ -36,7 +36,7 @@ interface PipelineColumnProps {
 function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: PipelineColumnProps) {
   const stuckLeads = leads.filter(l => {
     const hoursSinceUpdate = (Date.now() - new Date(l.updatedAt).getTime()) / (1000 * 60 * 60);
-    return hoursSinceUpdate > 24 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
+    return hoursSinceUpdate > 48 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
   });
 
   return (
@@ -75,7 +75,7 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
       <View className="bg-slate-800/50 rounded-b-xl p-2 min-h-[300px]">
         {leads.slice(0, 5).map((lead, index) => {
           const hoursSinceUpdate = (Date.now() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60);
-          const isStuck = hoursSinceUpdate > 24;
+          const isStuck = hoursSinceUpdate > 48;
 
           return (
             <Pressable
@@ -211,7 +211,7 @@ export default function PipelineScreen() {
           showsVerticalScrollIndicator={false}
           renderItem={({ item: lead }) => {
             const hoursSinceUpdate = (Date.now() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60);
-            const isStuck = hoursSinceUpdate > 24 && !['closed', 'disbursed', 'rejected'].includes(lead.stage);
+            const isStuck = hoursSinceUpdate > 48 && !['closed', 'disbursed', 'rejected'].includes(lead.stage);
 
             return (
               <Pressable
