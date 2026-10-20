@@ -128,7 +128,7 @@ class PackagingTests(unittest.TestCase):
 
             self.assertEqual(manifest['source_commit'], self.commit)
 
-            self.assertEqual(len(manifest['backend_files']), 7)
+            self.assertEqual(len(manifest['backend_files']), 3)
 
             self.assertTrue((self.root / 'out' / (name + '-manifest') / 'approved-web.tar.gz.sha256').is_file())
 

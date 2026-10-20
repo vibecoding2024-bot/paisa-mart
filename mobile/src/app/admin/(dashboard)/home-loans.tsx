@@ -1,3 +1,5 @@
+import { useAdminStore } from '@/lib/admin-store';
+import { saveHomeLoanAndRefresh } from '@/lib/admin-refresh';
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -14,10 +16,18 @@ export default function HomeLoanPipeline() {
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const client = useQueryClient();
+  const refreshApplications = useAdminStore(s => s.refresh);
   const query = useQuery({ queryKey: ['home-loan-pipeline', search, page, stage ?? 'all'], queryFn: () => fetchAdminHomeLoans(search, page, stage), refetchInterval: 30000 });
   const mutation = useMutation({
-    mutationFn: () => { if (!selected) throw new Error('Select a lead'); return updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note }); },
-    onSuccess: () => { setSelected(null); void client.invalidateQueries({ queryKey: ['home-loan-pipeline'] }); },
+    mutationFn: () => {
+      if (!selected) throw new Error('Select a lead');
+      return saveHomeLoanAndRefresh({
+        save: () => updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note }),
+        refreshApplications,
+        refreshPipeline: () => client.invalidateQueries({ queryKey: ['home-loan-pipeline'] }, { throwOnError: true }),
+      });
+    },
+    onSuccess: () => { setSelected(null); },
   });
   const open = (lead: HomeLoanLead) => { mutation.reset(); setSelected(lead); setNextStage(lead.stage); setAmount(lead.loanAmountRequired); setNote(''); };
   const money = (value: string) => '₹' + BigInt(value).toLocaleString('en-IN');

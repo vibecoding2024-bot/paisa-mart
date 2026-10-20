@@ -1,7 +1,7 @@
 # Dashboard operations candidate
 
 Production has not been accessed. No merge, service restart or deployment is authorized by this candidate.
-Based on Personal Loan PR #4 (46d07d53), on top of main 9ec235ad. PR #4 remains a dependency.
+Personal Loan PR #4 (46d07d53) was deployed October 18, 2026, per user confirmation. The dashboard builds on that source and must not redeploy its four backend files.
 
 ## Requirements trace
 
@@ -31,9 +31,9 @@ Viewer cannot mutate, export, inspect audit, or access Home pipeline. Viewer con
 
 Dashboard: src/routes/admin.ts (existing login + mount), src/routes/admin-operations.ts (new guarded API), src/lib/admin-operations.ts (new persistence/read models). Tests: src/routes/admin-operations.test.ts.
 
-PR #4 prerequisite runtime delta: src/routes/personal-loans.ts, src/routes/personal-loan-applications.ts, src/lib/personal-loan-application-store.ts, src/lib/personal-loan-lead-store.ts. No dependency/lockfile changes.
+Already-deployed Personal files are verified unchanged and excluded from the dashboard install/rollback payload: src/routes/personal-loans.ts, src/routes/personal-loan-applications.ts, src/lib/personal-loan-application-store.ts, src/lib/personal-loan-lead-store.ts. Their recorded archive bytes are baseline guards only. No dependency/lockfile changes.
 
-New tables: admin_operations, admin_audit, admin_staff, admin_records, admin_commission_rules, admin_finance_ledger. PR #4 additionally creates personal_loan_applications with unique request_key. No table drops, destructive migrations or automatic old-database restores. Migration repeats safely; the updater runs it after verified backups and before restart.
+New tables: admin_operations, admin_audit, admin_staff, admin_records, admin_commission_rules, admin_finance_ledger. The already-deployed Personal release owns personal_loan_applications with unique request_key; the dashboard does not redeploy that migration. No table drops, destructive migrations or automatic old-database restores. Migration repeats safely; the updater runs it after verified backups and before restart.
 
 Rollback is code-only using the verified v2 backup; new applications, operations, staff and financial tables remain. Restoring old database snapshots would lose new records and is never automatic. Earlier frontend may not show retained data; do not delete it.
 
@@ -47,6 +47,17 @@ Manual acceptance: desktop and narrow mobile navigation/layout; submit Personal 
 
 ## Outstanding inputs / release gates
 
-PDF-specific staff responsibilities; provider agreements, effective rates/dates, earning/reversal criteria, settlement/reconciliation feed and separate approvers; any service data integrations not present in approved source. PostgreSQL and separately configured service databases require integration validation. Browser/manual visual acceptance remains pending. The bundle baseline is a Git source expectation, NOT a newly observed EC2 inventory; any live mismatch must stop and be reviewed. Do not bypass drift guards.
+PDF-specific staff responsibilities; provider agreements, effective rates/dates, earning/reversal criteria, settlement/reconciliation feed and separate approvers; any service data integrations not present in approved source. PostgreSQL and separately configured service databases require integration validation. Browser/manual visual acceptance remains pending. The bundle baseline is the user-confirmed deployed Personal source 46d07d53 and its recorded four-file archive, NOT a newly observed EC2 inventory; any live mismatch must stop and be reviewed. Do not bypass drift guards.
 
-Release artifacts and exact future EC2 commands are recorded alongside the candidate in release/dash. They are review material until separate approval. FileZilla upload -> checksum/stage -> guarded matching backend -> frontend dry-run -> separately authorized activation -> Incognito checks. FINAL-GOOD-20261006 is never used for normal release work.
+Release artifact evidence and the future deployment boundary are recorded alongside the candidate in release/dash. The user will provide the FileZilla → EC2 execution steps after review. They are review material until separate approval. FileZilla upload -> checksum/stage -> guarded matching backend -> frontend dry-run -> separately authorized activation -> Incognito checks. FINAL-GOOD-20261006 is never used for normal release work.
+
+## Four review findings fixed (October 20)
+
+- Analytics uses mutually exclusive provider-decision buckets: approved/disbursed, rejected, or pending confirmation. Internal stages never cause the same application to occupy two buckets.
+- Home save awaits the backend response, a fresh shared application snapshot and the Home query refresh before closing the editor. Failed persistence never reports success; a confirmed save with refresh failure states that distinction. The shared store ignores older overlapping snapshots and invalidates pending work on logout.
+- Generic updatedAt uses the latest valid timestamp from submission, operations metadata and workflow history, so assignment and Home stage updates cannot hide each other's changes.
+- Home history derives each fromStage from the preceding stored event; first transition starts at new and repeated-stage notes retain their actual previous stage.
+
+Regression evidence: scripts/dashboard-refresh.test.ts (partition/refresh/failure/race), scripts/dashboard-store.test.ts (actual Zustand count refresh), backend/src/routes/admin-operations.test.ts (timestamp/history/re-login persistence). JSX, classes, styles and navigation are unchanged by these four fixes. Browser visual verification remains unavailable.
+
+Packaging is dashboard-only: exactly the three runtime files above. package_backend.py validates the saved Personal archive identity and source equivalence, refuses any Personal code change or unexpected runtime delta, derives release identity from the full source commit and retains strict byte-level live drift checks. Tests prove update/rollback preserve deployed Personal files. A live mismatch still requires review, never bypassing guards.

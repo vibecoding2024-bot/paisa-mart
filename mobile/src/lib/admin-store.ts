@@ -1,3 +1,4 @@
+import { createLatestRefresh } from "./admin-refresh";
 import { operations, operationsSnapshot } from "./admin-operations-api";
 import { adminLogin } from "./home-loan-admin-api";
 import { create } from "zustand";
@@ -225,6 +226,31 @@ interface AdminStore {
 }
 
 export const useAdminStore = create<AdminStore>((set, get) => {
+  const latestRefresh = createLatestRefresh(
+    operationsSnapshot,
+    (data) => {
+      set({
+        ...data,
+        loading: false,
+        error: "",
+        followUps: data.leads
+          .filter((l: Lead) => l.followUpDate)
+          .map((l: Lead) => ({
+            id: l.id,
+            leadId: l.id,
+            scheduledAt: l.followUpDate!,
+            completed: false,
+            createdBy: l.assignedOwner || "",
+          })),
+      });
+    },
+    (error) =>
+      set({
+        loading: false,
+        error: error instanceof Error ? error.message : "Data unavailable",
+      }),
+  );
+
   const perform = async (task: () => Promise<unknown>) => {
     set({ error: "" });
     try {
@@ -257,32 +283,7 @@ export const useAdminStore = create<AdminStore>((set, get) => {
     loading: true,
     error: "",
     availability: {},
-    refresh: async () => {
-      try {
-        const data = await operationsSnapshot();
-        set({
-          ...data,
-          loading: false,
-          error: "",
-          followUps: data.leads
-            .filter((l: Lead) => l.followUpDate)
-            .map((l: Lead) => ({
-              id: l.id,
-              leadId: l.id,
-              scheduledAt: l.followUpDate!,
-              completed: false,
-              createdBy: l.assignedOwner || "",
-            })),
-        });
-        return true;
-      } catch (error) {
-        set({
-          loading: false,
-          error: error instanceof Error ? error.message : "Data unavailable",
-        });
-        return false;
-      }
-    },
+    refresh: latestRefresh.refresh,
     login: async (email, password) => {
       const user = await adminLogin(email, password);
       if (!user) return false;
@@ -291,6 +292,7 @@ export const useAdminStore = create<AdminStore>((set, get) => {
       return true;
     },
     logout: () => {
+      latestRefresh.invalidate();
       set({
         isAuthenticated: false,
         currentAdmin: null,

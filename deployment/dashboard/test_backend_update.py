@@ -104,6 +104,17 @@ class IsolatedUpdateTests(unittest.TestCase):
         for name,data in self.old_bytes.items(): self.assertEqual((self.m.APP/name).read_bytes(),data)
         self.assertFalse((self.m.APP/'src/lib/customer-token.ts').exists())
         self.assertEqual(digest(self.m.DB.read_bytes()),self.live_db_hash)
+    def test_update_and_rollback_leave_deployed_personal_files_untouched(self):
+        personal = ['src/routes/personal-loans.ts', 'src/routes/personal-loan-applications.ts', 'src/lib/personal-loan-application-store.ts', 'src/lib/personal-loan-lead-store.ts']
+        for name in personal:
+            data = ('deployed Personal: ' + name).encode()
+            path = self.m.APP/name; path.parent.mkdir(parents=True, exist_ok=True); path.write_bytes(data)
+            self.old_bytes[name] = data; self.m.OLD[name] = digest(data)
+        self.m.update()
+        for name in personal: self.assertEqual((self.m.APP/name).read_bytes(), self.old_bytes[name])
+        self.m.rollback()
+        self.assert_original()
+
     def test_successful_update(self):
         self.m.update()
         for name,data in self.new_bytes.items(): self.assertEqual((self.m.APP/name).read_bytes(),data)

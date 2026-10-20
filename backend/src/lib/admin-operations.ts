@@ -317,13 +317,15 @@ export async function applications(actor: Actor) {
         field("createdAt", "created_at"),
       ).toISOString();
       const history = homeStage
-        ? parse(workflow?.history ?? "[]").map((h: any) => ({
-            fromStage: null,
-            toStage: homeMap[h.stage],
-            changedAt: h.at,
-            changedBy: h.actor,
-            note: h.note,
-          }))
+        ? parse(workflow?.history ?? "[]").map(
+            (h: any, index: number, events: any[]) => ({
+              fromStage: index === 0 ? "new" : homeMap[events[index - 1].stage],
+              toStage: homeMap[h.stage],
+              changedAt: h.at,
+              changedBy: h.actor,
+              note: h.note,
+            }),
+          )
         : (op.history ?? []);
       const phone = String(field("phoneNumber", "phone_number"));
       rows.push({
@@ -347,7 +349,16 @@ export async function applications(actor: Actor) {
             ? "pending"
             : op.providerDecision,
         createdAt,
-        updatedAt: op.updatedAt ?? history.at(-1)?.changedAt ?? createdAt,
+        // Assignment metadata and the Home pipeline update independently.
+        // Neither timestamp may hide a later change from the other source.
+        updatedAt: new Date(
+          Math.max(
+            Date.parse(createdAt),
+            ...[op.updatedAt, ...history.map((event: any) => event.changedAt)]
+              .map((value) => Date.parse(value))
+              .filter(Number.isFinite),
+          ),
+        ).toISOString(),
         assignedOwner: op.assignedOwner ?? "",
         priority: op.priority ?? "medium",
         city: field("city"),

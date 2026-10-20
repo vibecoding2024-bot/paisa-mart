@@ -1,3 +1,4 @@
+import { providerOutcomeCounts } from '@/lib/admin-analytics';
 import { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Dimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -65,10 +66,7 @@ export default function AnalyticsScreen() {
     const now = new Date();
 
     // Basic counts
-    const totalLeads = leads.length;
-    const approvedLeads = leads.filter(l => ['approved','disbursed'].includes(l.providerDecision || '')).length;
-    const rejectedLeads = leads.filter(l => l.providerDecision === 'rejected').length;
-    const pendingLeads = leads.filter(l => !['approved', 'rejected', 'disbursed', 'closed'].includes(l.stage)).length;
+    const { totalLeads, approvedLeads, rejectedLeads, pendingLeads } = providerOutcomeCounts(leads);
 
     // Rates
     const processedLeads = approvedLeads + rejectedLeads;

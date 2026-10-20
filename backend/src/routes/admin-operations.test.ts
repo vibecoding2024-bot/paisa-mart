@@ -371,3 +371,122 @@ test("calendar periods use India midnight, invalid inputs fail and finance remai
     0,
   );
 });
+
+test("Home timestamps follow the latest assignment or workflow update and history keeps previous stages", async () => {
+  const { setSystemTime } = await import("bun:test");
+  const start = Date.now() + 60000;
+  const response = await home.request("/leads", {
+    method: "POST",
+    ...body({
+      phoneNumber: "9000000099",
+      fullName: "Synthetic Home regression",
+      monthlyIncome: "50000",
+      existingEmi: "0",
+      loanAmountRequired: "1000000",
+      loanType: "House Purchase",
+    }),
+  });
+  const saved = (await response.json()).data;
+  const read = async () =>
+    (
+      await (
+        await request("/applications?search=" + saved.referenceNumber)
+      ).json()
+    ).data[0];
+  const step = async (stage: string, version: number) =>
+    app.request("/home-loans/" + saved.id, {
+      method: "PATCH",
+      headers: {
+        Authorization: "Bearer " + admin,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        stage,
+        version,
+        loanAmountRequired: "1000000",
+        note: "Synthetic regression event",
+      }),
+    });
+  try {
+    setSystemTime(new Date(start));
+    expect(
+      (
+        await request(
+          "/applications/" + saved.referenceNumber,
+          admin,
+          {
+            version: 0,
+            assignedOwner: "admin@paisamart.com",
+            note: "Assigned",
+          },
+          "PATCH",
+        )
+      ).status,
+    ).toBe(200);
+    expect((await read()).updatedAt).toBe(new Date(start).toISOString());
+    setSystemTime(new Date(start + 1000));
+    expect((await step("contacted", 0)).status).toBe(200);
+    let row = await read();
+    expect(row.updatedAt).toBe(new Date(start + 1000).toISOString());
+    expect(row.assignedOwner).toBe("admin@paisamart.com");
+    expect(row.stageHistory.map((e: any) => [e.fromStage, e.toStage])).toEqual([
+      ["new", "eligibility_check"],
+    ]);
+    setSystemTime(new Date(start + 2000));
+    expect((await step("documents_pending", 1)).status).toBe(200);
+    row = await read();
+    expect(row.updatedAt).toBe(new Date(start + 2000).toISOString());
+    expect(row.homeStage).toBe("documents_pending");
+    expect(row.stageHistory.map((e: any) => [e.fromStage, e.toStage])).toEqual([
+      ["new", "eligibility_check"],
+      ["eligibility_check", "kyc_pending"],
+    ]);
+    setSystemTime(new Date(start + 3000));
+    expect(
+      (
+        await request(
+          "/applications/" + saved.referenceNumber,
+          admin,
+          { version: 1, note: "Follow-up assignment note" },
+          "PATCH",
+        )
+      ).status,
+    ).toBe(200);
+    expect((await read()).updatedAt).toBe(new Date(start + 3000).toISOString());
+    setSystemTime(new Date(start + 4000));
+    expect((await step("documents_pending", 2)).status).toBe(200);
+    row = await read();
+    expect(row.updatedAt).toBe(new Date(start + 4000).toISOString());
+    expect(row.stageHistory.at(-1).fromStage).toBe("kyc_pending");
+    expect(row.stageHistory.at(-1).toStage).toBe("kyc_pending");
+    expect(row.notes).toHaveLength(2);
+    expect(row.stageHistory).toHaveLength(3);
+    const raw = (
+      await store.query(
+        "SELECT history FROM home_loan_workflow WHERE lead_id=?",
+        [saved.id],
+      )
+    )[0];
+    expect(JSON.parse(raw.history).map((e: any) => e.stage)).toEqual([
+      "contacted",
+      "documents_pending",
+      "documents_pending",
+    ]);
+    const freshAdmin = await login(
+      "admin@paisamart.com",
+      "isolated-admin-password",
+    );
+    const fresh = (
+      await (
+        await request(
+          "/applications?search=" + saved.referenceNumber,
+          freshAdmin,
+        )
+      ).json()
+    ).data[0];
+    expect(fresh.updatedAt).toBe(row.updatedAt);
+    expect(fresh.stageHistory).toEqual(row.stageHistory);
+  } finally {
+    setSystemTime();
+  }
+});

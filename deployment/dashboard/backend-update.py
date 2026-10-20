@@ -19,6 +19,9 @@ def load_configuration():
     require(bool(re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_-]*', info['release_name'])), 'Invalid release name')
     for name in set(info['expected_baseline']) | set(info['install_lf_hashes']):
         require(not Path(name).is_absolute() and '..' not in Path(name).parts and (name.startswith('src/') or name == 'package.json'), 'Invalid source path')
+    preserved = info.get('personal_preserved_files', {})
+    require(not (set(preserved) & set(info['install_lf_hashes'])), 'Personal runtime files must not be redeployed')
+    require(all(info['expected_baseline'].get(name) == digest for name, digest in preserved.items()), 'Personal baseline must be preserved')
     global OLD, NEW, BACKUP
     BACKUP = Path('/home/ec2-user/paisa-mart-data/backups') / ('backend-before-' + info['release_name'])
     OLD, NEW = info['expected_baseline'], info['install_lf_hashes']

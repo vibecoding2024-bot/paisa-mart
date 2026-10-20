@@ -16,7 +16,7 @@ from urllib.parse import urlsplit, unquote
 
 PRODUCTION_API = 'https://paisa-mart.com'
 
-BACKEND_FILES = ['backend/src/routes/admin.ts', 'backend/src/routes/admin-operations.ts', 'backend/src/lib/admin-operations.ts', 'backend/src/routes/personal-loans.ts', 'backend/src/routes/personal-loan-applications.ts', 'backend/src/lib/personal-loan-application-store.ts', 'backend/src/lib/personal-loan-lead-store.ts']
+BACKEND_FILES = ['backend/src/routes/admin.ts', 'backend/src/routes/admin-operations.ts', 'backend/src/lib/admin-operations.ts']
 
 
 
