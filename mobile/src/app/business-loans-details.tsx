@@ -19,6 +19,8 @@ import * as Haptics from '@/lib/haptics';
 import { useAdminStore } from '@/lib/admin-store';
 import { useBusinessLoanStore } from '@/lib/business-loan-store';
 import { submitBusinessLoanLead } from '@/lib/business-loan-api';
+import BirthDatePicker from '@/components/BirthDatePicker';
+import { parseBirthDate } from '@/lib/birth-date';
 import { ModalDropdown } from '@/components/ModalDropdown';
 
 const BUSINESS_TYPES = [
@@ -173,7 +175,7 @@ export default function BusinessLoansDetailsScreen() {
     } else if (Number(cibil) < 300 || Number(cibil) > 900) {
       newErrors.cibil = 'CIBIL score must be between 300 and 900';
     }
-    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
+    if (!parseBirthDate(dateOfBirth)) newErrors.dateOfBirth = 'Please select a valid date of birth';
     if (!city.trim()) newErrors.city = 'Please enter city';
     if (!state.trim()) newErrors.state = 'Please enter state';
     if (!monthlyIncome || monthlyIncome.trim() === '') {
@@ -257,7 +259,7 @@ export default function BusinessLoansDetailsScreen() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert(
         'Application Submitted! 🎉',
-        'Our Banking Executive will reach you to further process your loan.',
+        'Details submitted successfully. We will contact you shortly.',
         [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
       );
     } catch (error) {
@@ -481,11 +483,9 @@ export default function BusinessLoansDetailsScreen() {
                 }}
                 error={errors.cibil}
               />
-              <FormField
-                label="Date of Birth"
-                placeholder="DD/MM/YYYY"
+              <BirthDatePicker
                 value={dateOfBirth}
-                onChangeText={(val) => {
+                onChange={(val) => {
                   setDateOfBirth(val);
                   setErrors((e) => ({ ...e, dateOfBirth: '' }));
                 }}

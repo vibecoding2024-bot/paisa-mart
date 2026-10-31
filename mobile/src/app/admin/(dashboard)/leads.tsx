@@ -34,6 +34,7 @@ import {
   STAGE_COLORS,
   PRODUCT_LABELS,
 } from '@/lib/admin-store';
+import { leadStageLabel, leadStageOptions } from '@/lib/loan-product-stages';
 
 const OUTCOME_COLORS = {
   pending: '#F59E0B',
@@ -172,7 +173,7 @@ export default function LeadsScreen() {
           style={{ backgroundColor: STAGE_COLORS[lead.stage] + '20' }}
         >
           <Text style={{ color: STAGE_COLORS[lead.stage], fontSize: 11, fontWeight: '500' }}>
-            {STAGE_LABELS[lead.stage]}
+            {leadStageLabel(lead.productType, lead.stage)}
           </Text>
         </View>
       </View>
@@ -278,7 +279,9 @@ export default function LeadsScreen() {
           className="mt-3"
           contentContainerStyle={{ gap: 8 }}
         >
-          {(['all', 'new', 'kyc_pending', 'submitted', 'approved', 'rejected'] as (LeadStage | 'all')[]).map((stage) => (
+          {(['all', ...(filters.product === 'all'
+            ? ['new', 'kyc_pending', 'submitted', 'approved', 'rejected'] as LeadStage[]
+            : leadStageOptions(filters.product))] as (LeadStage | 'all')[]).map((stage) => (
             <Pressable
               key={stage}
               onPress={() => setFilters(f => ({ ...f, stage }))}
@@ -287,7 +290,11 @@ export default function LeadsScreen() {
               }`}
             >
               <Text className={`text-sm ${filters.stage === stage ? 'text-white' : 'text-slate-400'}`}>
-                {stage === 'all' ? 'All Stages' : STAGE_LABELS[stage]}
+                {stage === 'all'
+                  ? 'All Stages'
+                  : filters.product === 'all'
+                    ? STAGE_LABELS[stage]
+                    : leadStageLabel(filters.product, stage)}
               </Text>
             </Pressable>
           ))}
@@ -512,7 +519,7 @@ export default function LeadsScreen() {
             <View className="bg-slate-800 rounded-t-3xl p-6 max-h-[70%]">
               <Text className="text-white text-lg font-semibold mb-4">Select New Stage</Text>
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {Object.entries(STAGE_LABELS).filter(([stage])=>['new','eligibility_check','kyc_pending','kyc_completed','submitted','closed'].includes(stage)).map(([stage, label]) => (
+                {(selectedLead ? leadStageOptions(selectedLead.productType) : []).map((stage) => (
                   <Pressable
                     key={stage}
                     onPress={() => handleStageChange(stage as LeadStage)}
@@ -522,7 +529,9 @@ export default function LeadsScreen() {
                       className="w-3 h-3 rounded-full mr-3"
                       style={{ backgroundColor: STAGE_COLORS[stage as LeadStage] }}
                     />
-                    <Text className="text-white">{label}</Text>
+                    <Text className="text-white">
+                      {selectedLead ? leadStageLabel(selectedLead.productType, stage) : STAGE_LABELS[stage]}
+                    </Text>
                   </Pressable>
                 ))}
               </ScrollView>

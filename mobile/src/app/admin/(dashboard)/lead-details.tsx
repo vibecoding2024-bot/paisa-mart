@@ -41,6 +41,7 @@ import {
   PRODUCT_LABELS,
   REJECTION_CODES,
 } from '@/lib/admin-store';
+import { leadStageLabel, leadStageOptions } from '@/lib/loan-product-stages';
 
 export default function LeadDetailsScreen() {
   const router = useRouter();
@@ -126,7 +127,7 @@ export default function LeadDetailsScreen() {
     ...(lead.kycCompleted ? [{ time: lead.kycCompleted, event: 'KYC Completed', type: 'kyc' }] : []),
     ...lead.stageHistory.map(sh => ({
       time: sh.changedAt,
-      event: `Stage: ${STAGE_LABELS[sh.fromStage || 'new']} → ${STAGE_LABELS[sh.toStage]}`,
+      event: `Stage: ${leadStageLabel(lead.productType, sh.fromStage || 'new')} → ${leadStageLabel(lead.productType, sh.toStage)}`,
       type: 'stage',
       by: sh.changedBy,
       note: sh.note,
@@ -149,7 +150,7 @@ export default function LeadDetailsScreen() {
           style={{ backgroundColor: STAGE_COLORS[lead.stage] + '30' }}
         >
           <Text style={{ color: STAGE_COLORS[lead.stage], fontSize: 12, fontWeight: '600' }}>
-            {STAGE_LABELS[lead.stage]}
+            {leadStageLabel(lead.productType, lead.stage)}
           </Text>
         </View>
       </View>
@@ -278,7 +279,7 @@ export default function LeadDetailsScreen() {
                       className="w-2 h-2 rounded-full mr-2"
                       style={{ backgroundColor: STAGE_COLORS[lead.stage] }}
                     />
-                    <Text className="text-white">{STAGE_LABELS[lead.stage]}</Text>
+                    <Text className="text-white">{leadStageLabel(lead.productType, lead.stage)}</Text>
                   </View>
                 </View>
                 <View className="flex-row items-center justify-between mb-3">
@@ -413,10 +414,10 @@ export default function LeadDetailsScreen() {
               </View>
 
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {Object.entries(STAGE_LABELS).filter(([stage])=>['new','eligibility_check','kyc_pending','kyc_completed','submitted','closed'].includes(stage)).map(([stage, label]) => (
+                {leadStageOptions(lead.productType).map((stage) => (
                   <Pressable
                     key={stage}
-                    onPress={() => setSelectedNewStage(stage as LeadStage)}
+                    onPress={() => setSelectedNewStage(stage)}
                     className={`flex-row items-center p-4 rounded-xl mb-2 ${
                       selectedNewStage === stage ? 'bg-orange-500' : 'bg-slate-700'
                     }`}
@@ -425,7 +426,7 @@ export default function LeadDetailsScreen() {
                       className="w-3 h-3 rounded-full mr-3"
                       style={{ backgroundColor: STAGE_COLORS[stage as LeadStage] }}
                     />
-                    <Text className="text-white">{label}</Text>
+                    <Text className="text-white">{leadStageLabel(lead.productType, stage)}</Text>
                     {lead.stage === stage && (
                       <Text className="text-slate-400 ml-2">(current)</Text>
                     )}

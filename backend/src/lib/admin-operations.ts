@@ -247,6 +247,18 @@ const sources = [
     prefix: "BL",
     env: "BUSINESS_LOANS_DATABASE_URL",
   },
+  {
+    table: "vehicle_loan_leads",
+    kind: "vehicle-loans",
+    prefix: "VL",
+    env: "VEHICLE_LOANS_DATABASE_URL",
+  },
+  {
+    table: "life_insurance_leads",
+    kind: "life-insurance",
+    prefix: "LI",
+    env: "LIFE_INSURANCE_DATABASE_URL",
+  },
 ] as const;
 async function exists(table: string) {
   return url
@@ -328,6 +340,32 @@ export async function applications(actor: Actor) {
           )
         : (op.history ?? []);
       const phone = String(field("phoneNumber", "phone_number"));
+      const extraDetails: Record<string, string> = {
+        "Loan Amount Required": String(field("loanAmountRequired", "loan_amount_required")),
+        "Internal processing stage": homeStage ?? op.stage ?? "new",
+        "Provider decision": op.providerDecision ?? "unconfirmed",
+      };
+      if (actor.role !== "viewer") {
+        const detailFields: Record<string, [string, string?]> = {
+          "Business Type": ["businessType", "business_type"],
+          "CIBIL Score": ["cibil"],
+          "Date of Birth": ["dateOfBirth", "date_of_birth"],
+          "Monthly Income": ["monthlyIncome", "monthly_income"],
+          "Existing EMI": ["existingEmi", "existing_emi"],
+          "Loan Purpose": ["loanPurpose", "loan_purpose"],
+          "Other Loan Purpose": ["loanPurposeOtherText", "loan_purpose_other_text"],
+          "Selected Life Insurer": ["selectedLifeInsurer", "selected_life_insurer"],
+          "Policy Type": ["policyType", "policy_type"],
+          "Premium Slab": ["premiumSlab", "premium_slab"],
+          "Custom Premium Amount": ["premiumOtherAmount", "premium_other_amount"],
+          "Vehicle Type": ["vehicleType", "vehicle_type"],
+          Occupation: ["occupation"],
+        };
+        for (const [label, [camel, snake]] of Object.entries(detailFields)) {
+          const value = field(camel, snake);
+          if (value !== "") extraDetails[label] = String(value);
+        }
+      }
       rows.push({
         id,
         sourceTable: source.table,
@@ -361,6 +399,10 @@ export async function applications(actor: Actor) {
         ).toISOString(),
         assignedOwner: op.assignedOwner ?? "",
         priority: op.priority ?? "medium",
+        creditScore:
+          actor.role !== "viewer" && field("cibil")
+            ? Number(field("cibil"))
+            : undefined,
         city: field("city"),
         state: field("state"),
         source: field("source") || source.table,
@@ -371,13 +413,7 @@ export async function applications(actor: Actor) {
         consentStatus:
           payload.consentGiven === true ? "recorded" : "not recorded",
         version: op.version ?? 0,
-        extraDetails: {
-          "Loan Amount Required": String(
-            field("loanAmountRequired", "loan_amount_required"),
-          ),
-          "Internal processing stage": homeStage ?? op.stage ?? "new",
-          "Provider decision": op.providerDecision ?? "unconfirmed",
-        },
+        extraDetails,
       });
     }
   }
@@ -438,6 +474,32 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
     throw new OperationsError(
       "Use the existing Home Loan pipeline to preserve its stages",
     );
+  const loanProducts = ["business-loans", "personal-loans", "vehicle-loans"];
+  const loanStages = [
+    "new",
+    "eligibility_check",
+    "kyc_pending",
+    "submitted",
+    "kyc_completed",
+    "approved",
+    "disbursed",
+    "rejected",
+  ];
+  const existingStages = [
+    "new",
+    "eligibility_check",
+    "kyc_pending",
+    "kyc_completed",
+    "submitted",
+    "closed",
+  ];
+  if (
+    input.stage &&
+    (loanProducts.includes(lead.productType)
+      ? !loanStages.includes(input.stage)
+      : !existingStages.includes(input.stage))
+  )
+    throw new OperationsError("This stage is not available for the selected product");
   if (input.assignedOwner) {
     const staff = await staffList();
     const valid = [
@@ -467,6 +529,20 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         "Application changed. Refresh and try again.",
         409,
       );
+    if (input.stage === "approved") {
+      const providerDecision =
+        input.providerDecision ?? current.providerDecision ?? "unconfirmed";
+      const provider = input.provider ?? current.provider;
+      const providerEvidence = input.providerEvidence ?? current.providerEvidence;
+      if (
+        providerDecision !== "approved" ||
+        !provider?.trim() ||
+        !providerEvidence?.trim()
+      )
+        throw new OperationsError(
+          "Record provider approval and evidence before marking as sanctioned",
+        );
+    }
     const at = new Date().toISOString();
     const next = { ...current, updatedAt: at };
     for (const key of [
@@ -513,6 +589,9 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         kyc_completed: "Documents reviewed",
         submitted: "Submitted for processing",
         closed: "Closed",
+        approved: "Sanctioned",
+        disbursed: "Disbursed",
+        rejected: "Rejected / dropped",
       };
       await query(
         "UPDATE personal_loan_applications SET status=? WHERE id=?",

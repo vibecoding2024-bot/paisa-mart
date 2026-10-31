@@ -11,6 +11,7 @@ import {
   STAGE_LABELS,
   STAGE_COLORS,
 } from '@/lib/admin-store';
+import { leadStageLabel } from '@/lib/loan-product-stages';
 
 const PIPELINE_STAGES: LeadStage[] = [
   'new',
@@ -87,6 +88,9 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
                 {lead.userName}
               </Text>
               <Text className="text-slate-400 text-xs mt-1">{lead.provider}</Text>
+              <Text className="text-orange-400 text-xs mt-1">
+                {leadStageLabel(lead.productType, lead.stage)}
+              </Text>
               <View className="flex-row items-center justify-between mt-2">
                 <View className="flex-row items-center">
                   <Clock size={10} color="#64748B" />

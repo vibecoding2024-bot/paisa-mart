@@ -16,8 +16,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Car, ChevronDown, ChevronLeft } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useAdminStore } from '@/lib/admin-store';
 import { ModalDropdown } from '@/components/ModalDropdown';
+import BirthDatePicker from '@/components/BirthDatePicker';
+import { parseBirthDate } from '@/lib/birth-date';
+import { submitVehicleLoanLead } from '@/lib/vehicle-loan-api';
 
 const VEHICLE_TYPES = [
   'Car',
@@ -150,8 +152,6 @@ function VehicleDropdown({
 
 export default function VehicleLoansDetailsScreen() {
   const router = useRouter();
-  const addLead = useAdminStore((s) => s.addLead);
-
   const [vehicleType, setVehicleType] = useState('');
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -165,6 +165,7 @@ export default function VehicleLoansDetailsScreen() {
   const [existingEmi, setExistingEmi] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -177,7 +178,7 @@ export default function VehicleLoansDetailsScreen() {
       newErrors.cibil = 'CIBIL score must be between 300 and 900';
     }
     if (!occupation.trim()) newErrors.occupation = 'Please enter occupation';
-    if (!dateOfBirth.trim()) newErrors.dateOfBirth = 'Please enter date of birth';
+    if (!parseBirthDate(dateOfBirth)) newErrors.dateOfBirth = 'Please select a valid date of birth';
     if (!city.trim()) newErrors.city = 'Please enter city';
     if (!state.trim()) newErrors.state = 'Please enter state';
     if (!monthlyIncome || Number(monthlyIncome) <= 0) newErrors.monthlyIncome = 'Please enter monthly income';
@@ -187,50 +188,38 @@ export default function VehicleLoansDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    setSubmitError('');
     if (!validate() || isSubmitting) return;
 
     setIsSubmitting(true);
-    const submittedAt = new Date().toISOString();
-    addLead({
-      userName: fullName.trim(),
-      mobile: mobileNumber,
-      email: '',
-      productType: 'vehicle-loans',
-      provider: 'Vehicle Loan',
-      stage: 'new',
-      outcome: 'pending',
-      priority: 'medium',
-      city: city.trim(),
-      state: state.trim(),
-      source: 'Paisa Mart',
-      creditScore: Number(cibil),
-      consentGiven: true,
-      extraDetails: {
-        'Vehicle Type': vehicleType,
-        'Full Name': fullName.trim(),
-        'Mobile Number': mobileNumber,
-        CIBIL: cibil,
-        Occupation: occupation.trim(),
-        'Date of Birth': dateOfBirth.trim(),
-        City: city.trim(),
-        State: state.trim(),
-        'Monthly Income': monthlyIncome,
-        'Loan Amount Required': loanAmount,
-        'Existing EMI': existingEmi,
-        'Submission Date & Time': submittedAt,
-        Status: 'New',
-        'Lead Source': 'Paisa Mart',
-      },
-    });
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setIsSubmitting(false);
-    Alert.alert(
-      'Application Submitted! 🎉',
-      'Our Banking Executive will reach you to further process your loan.',
-      [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-    );
+    try {
+      await submitVehicleLoanLead({
+        phoneNumber: mobileNumber,
+        full_name: fullName.trim(),
+        cibil,
+        occupation: occupation.trim(),
+        date_of_birth: dateOfBirth.trim(),
+        city: city.trim(),
+        state: state.trim(),
+        monthly_income: monthlyIncome,
+        loan_amount_required: loanAmount,
+        existing_emi: existingEmi,
+        vehicle_type: vehicleType,
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert(
+        'Application Submitted!',
+        'Details submitted successfully. We will contact you shortly.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+      );
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not submit vehicle loan details');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -339,11 +328,9 @@ export default function VehicleLoansDetailsScreen() {
                   }}
                   error={errors.occupation}
                 />
-                <Field
-                  label="Date of Birth"
-                  placeholder="DD/MM/YYYY"
+                <BirthDatePicker
                   value={dateOfBirth}
-                  onChangeText={(val) => {
+                  onChange={(val) => {
                     setDateOfBirth(val);
                     setErrors((e) => ({ ...e, dateOfBirth: '' }));
                   }}
@@ -403,6 +390,11 @@ export default function VehicleLoansDetailsScreen() {
               </Animated.View>
             ) : null}
           </ScrollView>
+          {submitError ? (
+            <Text accessibilityRole="alert" style={{ color: '#DC2626', paddingHorizontal: 16, paddingBottom: 8 }}>
+              {submitError}
+            </Text>
+          ) : null}
 
           <Animated.View
             entering={FadeInDown.delay(120).springify()}
