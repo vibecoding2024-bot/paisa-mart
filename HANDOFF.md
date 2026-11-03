@@ -5,7 +5,7 @@ Updated November 4, 2026 (user timezone Asia/Calcutta). **Draft review candidate
 ## Source and checkout reconciliation
 
 - Review branch: `feature/loan-requirements-review-20261103`.
-- Exact tested implementation commit: `53163400812c525a813c798aeb22b6f9118c66d7`. This handoff is a subsequent documentation-only commit; the PR head includes that documentation commit.
+- Exact tested implementation commit: `da1cc563980b1f48b37ff1854493c520b447137a`. This handoff is a subsequent documentation-only commit; the PR head includes that documentation commit.
 - Review checkout: `.requirements-review` inside the original workspace.
 - Fetched `origin/main`: `17eac94b39b708ee9e0979de0bda4efd551e6d24`, the recorded October 21 dashboard release. No intervening main commits were found on the final fetch.
 - Existing implementation: `feature/loan-requirements-20261101`, commit `110bda741f3df72e9c59e3b755605a2852b64165`, in sibling checkout `../paisa-mart-requirements-20261101`. It was clean and one commit ahead of current main. The review branch continues that commit; its implementation was not recreated.
@@ -61,7 +61,7 @@ The five partial source integrations above are genuine remaining gaps, not passi
 - Reused and verified the November 1 form/store implementation; added the missing Vehicle condition, exact referral wording, and shared 15-module directory.
 - Replaced native-only success alerts with a receipt-backed dialog that works on web and native. Removed legacy local form copies from the submission success path so a local-store issue cannot turn a confirmed backend save into a reported failure.
 - Added nonempty receipt validation to all three API clients and synchronous submit locks. Calendar and form appearance retain the existing blue/white styling.
-- Added product-specific pipeline filters/labels; reserved space for the mobile filter row and label/count separation. Existing slate/orange admin styling retained.
+- Added product-specific pipeline filters/labels; reserved space for the mobile filter row, bounded scrolling for tall mobile columns, and label/count separation. Existing slate/orange admin styling retained.
 - Replaced two previously blocked browser-local demo routes (Products editor and Life list) with the read-only module directory and real saved Life applications. No local-only editing or fabricated records are exposed as backend functionality.
 - Preserved backend evidence checks and viewer redaction. Added Life issuance persistence tests, condition validation/persistence tests, receipt failure tests and payout guard tests.
 - Disabled the old potential-commission helper and direct incentive/payout mutations as well as customer withdrawal. Existing customer earnings sample figures remain explicitly labelled preview; they are not a live balance or newly calculated entitlement. Backend finance remains unavailable with no payout-write route.
@@ -87,7 +87,7 @@ All automated files run in separate Bun processes to isolate database environmen
 | Full backend `tsc --noEmit` | **Blocked**: compiler `RangeError: Maximum call stack size exceeded`, reproduced on unchanged main checkout `.dash` as well. Not reported as passing. |
 | Expo web export | Passed, localhost-only API configuration |
 | Bun backend bundle | Passed, 31 modules, external dependencies retained |
-| Browser acceptance | **67 checks passed**, no browser runtime errors; Chromium 1440×1000 desktop and 390×844 mobile emulation; 22 screenshots |
+| Browser acceptance | **69 checks passed**, no browser runtime errors; Chromium 1440×1000 desktop and 390×844 mobile emulation; 22 screenshots |
 | Diff whitespace / scope | Passed |
 
 Browser coverage includes both calendars; Business/Vehicle/Life failed and successful submissions, repeated clicks and actual saved references; Back to Home; exact referral copy; disabled withdrawal; 15 admin modules and filtered links; saved counts; assignment/stage updates; sign-out/sign-in persistence; previous-stage history; Home save/immediate shared refresh; disabled Payout box; loan/Life pipeline labels. Screenshots were inspected for spacing and form/dialog readability. Native device behaviour, physical mobile hardware and comparison with any unavailable original screenshot are not claimed.
@@ -98,14 +98,14 @@ Evidence directory (original workspace): `.build-tools/requirements-audit-202611
 
 ## Review build hashes — not deployment artifacts
 
-Source: `53163400812c525a813c798aeb22b6f9118c66d7`. No guarded production bundle was created or overwritten for this feature. These builds use the local preview API and must not be uploaded.
+Source: `da1cc563980b1f48b37ff1854493c520b447137a`. No guarded production bundle was created or overwritten for this feature. These builds use the local preview API and must not be uploaded.
 
 | Local review artifact | SHA256 |
 |---|---|
-| `.requirements-review/.preview/export/index.html` | `b2b63f530a7fd70b976d5febe08e62a9ad11b20fea7dc475c8a19e4c1e5df06c` |
-| `.requirements-review/.preview/export/_expo/static/js/web/index-cdef8ba20382cf064870d8b2037fc4f4.js` | `b81ba18e06dfb97353b3b1ddf9058d9416b22e37687f680666c7cd8ae1364859` |
+| `.requirements-review/.preview/export/index.html` | `efc0d6679042f1cb5d3cf1394900aebaf59a2e4c0eb1267acbe7f8c429a4d152` |
+| `.requirements-review/.preview/export/_expo/static/js/web/index-9b932315b78bdb84f3246e87ddb7668f.js` | `eb359cc230f7aae5e617db82f9382ba5a37af01323b40d1851ea273baed5cbc8` |
 | `.requirements-review/.preview/backend-build/index.js` | `e967dd22293232afd2f971413587c0aa742a489b3b8e35b09994231cd58106f1` |
-| `.build-tools/requirements-audit-20261103/review-build-manifest.json` | `5e4866a7cba4560c5f91a92d9738e8c867a8afb34911cc9824cda398633ca7ff` |
+| `.build-tools/requirements-audit-20261103/review-build-manifest.json` | `27110c1a2f66c80470ccc14a4bf7a4cce908ceeb610c691876b8b4bcdf361788` |
 
 ## Deployed baseline and backend scope
 
