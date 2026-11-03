@@ -20,7 +20,7 @@ export async function submitLifeInsuranceLead(input: {
     body: JSON.stringify(input),
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string') {
+  if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string' || !body.data.id) {
     throw new Error(body?.message || 'Could not submit life insurance details');
   }
   return body.data as { id: string; createdAt: string };

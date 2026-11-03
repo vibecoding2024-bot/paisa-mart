@@ -37,7 +37,7 @@ export async function submitBusinessLoanLead(payload: BusinessLoanLeadPayload) {
   });
 
   const body = await response.json().catch(() => ({}));
-  if (!response.ok || !body.success) {
+  if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string' || !body.data.id) {
     throw new Error(body.message || 'Could not submit business loan details');
   }
 

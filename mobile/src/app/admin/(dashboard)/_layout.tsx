@@ -92,6 +92,8 @@ export default function AdminTabsLayout() {
               </View>
             </View>
             <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sign out of admin"
               onPress={handleLogout}
               className="w-9 h-9 bg-red-500/20 rounded-full items-center justify-center ml-2"
             >

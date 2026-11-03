@@ -8,6 +8,7 @@ export type VehicleLoanSubmission = {
   monthly_income: string;
   loan_amount_required: string;
   existing_emi: string;
+  vehicle_condition: 'New Vehicle' | 'Used Vehicle';
   vehicle_type: string;
   phoneNumber: string;
 };
@@ -33,12 +34,13 @@ export async function submitVehicleLoanLead(payload: VehicleLoanSubmission) {
       monthlyIncome: payload.monthly_income,
       loanAmountRequired: payload.loan_amount_required,
       existingEmi: payload.existing_emi,
+      vehicleCondition: payload.vehicle_condition,
       vehicleType: payload.vehicle_type,
       source: 'vehicle-loans-details',
     }),
   });
   const body = await response.json().catch(() => null);
-  if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string') {
+  if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string' || !body.data.id) {
     throw new Error(body?.message || 'Could not submit vehicle loan details');
   }
   return body.data as { id: string; createdAt: string };

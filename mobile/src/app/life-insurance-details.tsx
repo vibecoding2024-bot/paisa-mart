@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import ApplicationSaved from '@/components/ApplicationSaved';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,7 +8,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Modal,
   ActivityIndicator,
 } from 'react-native';
@@ -145,7 +145,6 @@ export default function LifeInsuranceDetailsScreen() {
   const params = useLocalSearchParams<{ insurer?: string }>();
   const insurer = params.insurer || '';
 
-  const addApplication = useLifeInsuranceStore((s) => s.addApplication);
   const profile = useUserProfileStore((s) => s.profile);
 
   const [policyType, setPolicyType] = useState<PolicyType | ''>('');
@@ -153,6 +152,8 @@ export default function LifeInsuranceDetailsScreen() {
   const [premiumOther, setPremiumOther] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [savedReference, setSavedReference] = useState<string | null>(null);
+  const submitting = useRef(false);
 
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -167,13 +168,14 @@ export default function LifeInsuranceDetailsScreen() {
     const e: typeof errors = {};
     if (!policyType) e.policyType = 'Please select a policy type.';
     if (!premiumSlab) e.premiumSlab = 'Please select a premium amount.';
-    if (premiumSlab === 'Others Amount' && !premiumOther.trim())
+    if (premiumSlab === 'Others Amount' && !/^[1-9]\d{0,11}$/.test(premiumOther.trim()))
       e.premiumOther = 'Please enter the monthly premium amount.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async () => {
+    if (submitting.current || savedReference) return;
     setSubmitError('');
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
@@ -187,9 +189,10 @@ export default function LifeInsuranceDetailsScreen() {
       return;
     }
 
-    setIsSubmitting(true);
+    submitting.current = true;
+      setIsSubmitting(true);
     try {
-      await submitLifeInsuranceLead({
+      const receipt = await submitLifeInsuranceLead({
         phoneNumber,
         fullName: profile?.name?.trim() || 'User',
         selectedLifeInsurer: insurer,
@@ -197,38 +200,20 @@ export default function LifeInsuranceDetailsScreen() {
         premiumSlab: premiumSlab as PremiumSlab,
         premiumOtherAmount: premiumSlab === 'Others Amount' ? premiumOther.trim() : '',
       });
-      addApplication({
-        user_name: profile?.name || 'User',
-        phone_number: phoneNumber,
-        selected_life_insurer: insurer,
-        policy_type: policyType as PolicyType,
-        premium_slab: premiumSlab as PremiumSlab,
-        premium_other_amount: premiumSlab === 'Others Amount' ? premiumOther.trim() : '',
-      });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Application Submitted!',
-        'Details submitted successfully. We will contact you shortly.',
-        [
-          {
-            text: 'View Offers',
-            onPress: () =>
-              router.replace({
-                pathname: '/(tabs)/products',
-                params: { category: 'life-insurance' },
-              }),
-          },
-        ]
-      );
+      setSavedReference(String(receipt.id));
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not submit life insurance details');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };
 
   return (
+    <>
+    <ApplicationSaved reference={savedReference} product="life insurance" onDone={() => router.replace('/(tabs)')} />
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -542,5 +527,6 @@ export default function LifeInsuranceDetailsScreen() {
         />
       </View>
     </KeyboardAvoidingView>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { PAYOUT_CALCULATIONS_ENABLED } from './product-catalog';
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -31,6 +32,7 @@ export const isNoPayout = (moduleId: string): boolean => NO_PAYOUT_MODULES.has(m
 
 // Helper function to calculate potential commission
 export const calculatePotentialCommission = (productCategory: string, amount?: number): string => {
+  if (!PAYOUT_CALCULATIONS_ENABLED) return 'Awaiting confirmation';
   const commissionInfo = COMMISSION_RATES[productCategory];
   if (!commissionInfo) return 'N/A';
 
@@ -325,6 +327,7 @@ export const useIncentiveStore = create<IncentiveStore>()(
   },
 
   approveIncentive: (incentiveId: string, adminName: string) => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) return;
     set(state => ({
       incentives: state.incentives.map(inc =>
         inc.id === incentiveId
@@ -336,6 +339,7 @@ export const useIncentiveStore = create<IncentiveStore>()(
   },
 
   markIncentivePaid: (incentiveId: string, adminName: string) => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) return;
     set(state => ({
       incentives: state.incentives.map(inc =>
         inc.id === incentiveId
@@ -381,6 +385,7 @@ export const useIncentiveStore = create<IncentiveStore>()(
   },
 
   initiatePayout: (userId: string, userName: string, amount: number, bankAccountId: string) => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) return false;
     const { minWithdrawalAmount, userKYC, bankAccounts } = get();
 
     // Validation checks
@@ -418,6 +423,7 @@ export const useIncentiveStore = create<IncentiveStore>()(
   },
 
   updatePayoutStatus: (payoutId: string, status: PayoutStatus, reason?: string) => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) return;
     set(state => ({
       payouts: state.payouts.map(p => {
         if (p.id === payoutId) {

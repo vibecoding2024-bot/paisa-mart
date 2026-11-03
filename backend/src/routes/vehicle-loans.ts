@@ -28,6 +28,7 @@ const schema = z.object({
   monthlyIncome: z.string().regex(/^[1-9]\d{0,11}$/),
   loanAmountRequired: z.string().regex(/^[1-9]\d{0,11}$/),
   existingEmi: z.string().regex(/^\d{1,12}$/),
+  vehicleCondition: z.enum(['New Vehicle', 'Used Vehicle']),
   vehicleType: z.string().trim().min(1).max(120),
 });
 

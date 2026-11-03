@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import ApplicationSaved from '@/components/ApplicationSaved';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,7 +9,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -16,8 +16,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { ChevronLeft, Briefcase } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useAdminStore } from '@/lib/admin-store';
-import { useBusinessLoanStore } from '@/lib/business-loan-store';
 import { submitBusinessLoanLead } from '@/lib/business-loan-api';
 import BirthDatePicker from '@/components/BirthDatePicker';
 import { parseBirthDate } from '@/lib/birth-date';
@@ -146,8 +144,6 @@ function StateDropdown({ value, onSelect, error }: { value: string; onSelect: (v
 
 export default function BusinessLoansDetailsScreen() {
   const router = useRouter();
-  const setData = useBusinessLoanStore((s) => s.setData);
-  const addLead = useAdminStore((s) => s.addLead);
 
   const [businessType, setBusinessType] = useState('');
   const [fullName, setFullName] = useState('');
@@ -163,6 +159,8 @@ export default function BusinessLoansDetailsScreen() {
   const [otherText, setOtherText] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState('');
+  const [savedReference, setSavedReference] = useState<string | null>(null);
+  const submitting = useRef(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = () => {
@@ -198,6 +196,7 @@ export default function BusinessLoansDetailsScreen() {
   };
 
   const handleSubmit = async () => {
+    if (submitting.current || savedReference) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSubmitError('');
     if (!validate() || isSubmitting) return;
@@ -222,55 +221,23 @@ export default function BusinessLoansDetailsScreen() {
     };
 
     try {
+      submitting.current = true;
       setIsSubmitting(true);
-      await submitBusinessLoanLead({ ...leadData, phoneNumber: mobileNumber });
-      setData(leadData);
-      addLead({
-        userName: fullName.trim(),
-        mobile: mobileNumber,
-        email: '',
-        productType: 'business-loans',
-        provider: 'Business Loan',
-        stage: 'new',
-        outcome: 'pending',
-        priority: 'medium',
-        city: city.trim(),
-        state: state.trim(),
-        source: 'Paisa Mart',
-        creditScore: Number(cibil),
-        consentGiven: true,
-        extraDetails: {
-          'Full Name': fullName.trim(),
-          'Mobile Number': mobileNumber,
-          'CIBIL Score': cibil,
-          'Date of Birth': dateOfBirth.trim(),
-          City: city.trim(),
-          State: state.trim(),
-          'Monthly Income': monthlyIncome,
-          'Loan Amount Required': loanAmount,
-          'Existing EMI': existingEmi,
-          'Business Type': businessType,
-          'Loan Purpose': loanPurpose === 'Other' ? otherText.trim() : loanPurpose,
-          'Submission Date & Time': submittedAt,
-          'Lead Source': 'Paisa Mart',
-          Status: 'New',
-        },
-      });
+      const receipt = await submitBusinessLoanLead({ ...leadData, phoneNumber: mobileNumber });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Application Submitted! 🎉',
-        'Details submitted successfully. We will contact you shortly.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-      );
+      setSavedReference(String(receipt.id));
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not submit business loan details');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };
 
   return (
+    <>
+    <ApplicationSaved reference={savedReference} product="business loan" onDone={() => router.replace('/(tabs)')} />
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         {/* Header */}
@@ -616,5 +583,6 @@ export default function BusinessLoansDetailsScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
+    </>
   );
 }

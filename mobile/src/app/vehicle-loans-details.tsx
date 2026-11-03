@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import ApplicationSaved from '@/components/ApplicationSaved';
+import { useState, useRef } from 'react';
 import {
   ActivityIndicator,
-  Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -152,6 +152,7 @@ function VehicleDropdown({
 
 export default function VehicleLoansDetailsScreen() {
   const router = useRouter();
+  const [vehicleCondition, setVehicleCondition] = useState<'New Vehicle' | 'Used Vehicle' | ''>('');
   const [vehicleType, setVehicleType] = useState('');
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
@@ -166,9 +167,12 @@ export default function VehicleLoansDetailsScreen() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
+  const [savedReference, setSavedReference] = useState<string | null>(null);
+  const submitting = useRef(false);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    if (!vehicleCondition) newErrors.vehicleCondition = 'Please select new or used vehicle';
     if (!vehicleType) newErrors.vehicleType = 'Please select vehicle type';
     if (!fullName.trim()) newErrors.fullName = 'Please enter full name';
     if (!/^[6-9]\d{9}$/.test(mobileNumber)) newErrors.mobileNumber = 'Please enter a valid 10-digit mobile number';
@@ -189,13 +193,15 @@ export default function VehicleLoansDetailsScreen() {
   };
 
   const handleSubmit = async () => {
+    if (submitting.current || savedReference) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setSubmitError('');
     if (!validate() || isSubmitting) return;
 
-    setIsSubmitting(true);
+    submitting.current = true;
+      setIsSubmitting(true);
     try {
-      await submitVehicleLoanLead({
+      const receipt = await submitVehicleLoanLead({
         phoneNumber: mobileNumber,
         full_name: fullName.trim(),
         cibil,
@@ -206,23 +212,23 @@ export default function VehicleLoansDetailsScreen() {
         monthly_income: monthlyIncome,
         loan_amount_required: loanAmount,
         existing_emi: existingEmi,
+        vehicle_condition: vehicleCondition as 'New Vehicle' | 'Used Vehicle',
         vehicle_type: vehicleType,
       });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert(
-        'Application Submitted!',
-        'Details submitted successfully. We will contact you shortly.',
-        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
-      );
+      setSavedReference(String(receipt.id));
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : 'Could not submit vehicle loan details');
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     } finally {
+      submitting.current = false;
       setIsSubmitting(false);
     }
   };
 
   return (
+    <>
+    <ApplicationSaved reference={savedReference} product="vehicle loan" onDone={() => router.replace('/(tabs)')} />
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
       <SafeAreaView style={{ flex: 1 }} edges={['top']}>
         <LinearGradient colors={['#002561', '#003380']} style={{ paddingBottom: 20 }}>
@@ -274,6 +280,7 @@ export default function VehicleLoansDetailsScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <Animated.View entering={FadeInDown.delay(50).springify()}>
+              <ModalDropdown label="Vehicle Condition" value={vehicleCondition} options={['New Vehicle', 'Used Vehicle']} onSelect={value => setVehicleCondition(value as 'New Vehicle' | 'Used Vehicle')} error={errors.vehicleCondition} placeholder="Select new or used vehicle" />
               <VehicleDropdown
                 value={vehicleType}
                 onSelect={(type) => {
@@ -433,5 +440,6 @@ export default function VehicleLoansDetailsScreen() {
         </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
+    </>
   );
 }

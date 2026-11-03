@@ -102,6 +102,9 @@ test.serial("life insurance leads save all form fields and reject failed writes"
   };
   const life = await lifeInsuranceRouter.request("/leads", { method: "POST", ...json(lifeInput) });
   expect(life.status).toBe(200);
+  for (const premiumOtherAmount of ['', 'abc', '-100', '0', '1.5']) {
+    expect((await lifeInsuranceRouter.request('/leads', { method: 'POST', ...json({ ...lifeInput, premiumOtherAmount }) })).status).toBe(400);
+  }
   const lifeData = (await body(life)).data;
 
   const db = new Database(databasePath);
@@ -128,6 +131,7 @@ test.serial("vehicle loan submission persists its complete form and rejects inva
     monthlyIncome: "85000",
     loanAmountRequired: "1200000",
     existingEmi: "15000",
+    vehicleCondition: "Used Vehicle",
     vehicleType: "Lorry / Truck",
   };
   const invalid = await vehicleLoansRouter.request("/leads", {
@@ -157,6 +161,12 @@ test.serial("vehicle loan submission persists its complete form and rejects inva
     existingEmi: input.existingEmi,
     vehicleType: input.vehicleType,
   })) expect(row[field]).toBe(expected);
+  expect(JSON.parse(row.payload).vehicleCondition).toBe('Used Vehicle');
+  for (const vehicleCondition of [undefined, 'old', '']) {
+    expect((await vehicleLoansRouter.request('/leads', { method: 'POST', ...json({ ...input, vehicleCondition }) })).status).toBe(400);
+  }
+  const newVehicle = await body(await vehicleLoansRouter.request('/leads', { method: 'POST', ...json({ ...input, vehicleCondition: 'New Vehicle' }) }));
+  expect(newVehicle.data.vehicleCondition).toBe('New Vehicle');
   db.close();
 });
 
@@ -211,7 +221,8 @@ test.serial("business, personal, and vehicle loan stages persist with refreshed 
       monthlyIncome: "85000",
       loanAmountRequired: "1200000",
       existingEmi: "15000",
-      vehicleType: "Lorry / Truck",
+      vehicleCondition: "Used Vehicle",
+    vehicleType: "Lorry / Truck",
     }),
   }));
 
@@ -239,6 +250,22 @@ test.serial("business, personal, and vehicle loan stages persist with refreshed 
     version: submittedLifeInsurance.version,
     stage: "approved",
   })).status).toBe(400);
+  expect(submittedVehicleLoan.extraDetails['Vehicle Condition']).toBe('Used Vehicle');
+  let lifeVersion = submittedLifeInsurance.version;
+  for (const stage of ['submitted', 'approved']) {
+    const response = await ops(`/applications/${encodeURIComponent(submittedLifeInsurance.id)}`, 'PATCH', {
+      version: lifeVersion++, stage,
+      ...(stage === 'approved' ? { provider: 'Test insurer', providerDecision: 'approved', providerEvidence: 'Synthetic policy issuance record' } : {}),
+    });
+    expect(response.status).toBe(200);
+  }
+  const persistedLife = (await body(await ops('/applications'))).data.find((item: any) => item.id === submittedLifeInsurance.id);
+  expect(persistedLife.stage).toBe('approved');
+  expect(persistedLife.stageHistory.map((event: any) => event.toStage)).toEqual(['submitted', 'approved']);
+  expect(leadStageLabel('life-insurance', persistedLife.stage)).toBe('Policy Issued');
+  const finance = await body(await ops('/finance'));
+  expect(finance.available).toBe(false);
+  expect((await ops('/finance', 'POST', { payout: 1500 })).status).toBe(404);
   const targets = [
     { id: `BL-${business.data.id}`, stages: ["new", "eligibility_check", "kyc_pending", "submitted", "kyc_completed", "approved", "disbursed", "rejected"] },
     { id: `PL-LEGACY-${personal.data.id}`, stages: ["new", "eligibility_check", "kyc_pending", "submitted", "kyc_completed", "approved", "disbursed", "rejected"] },

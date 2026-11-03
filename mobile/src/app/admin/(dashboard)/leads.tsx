@@ -9,7 +9,7 @@ import {
   Modal,
   FlatList,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import {
   Search,
@@ -61,6 +61,7 @@ interface FilterState {
 
 export default function LeadsScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ product?: string }>();
   const leads = useAdminStore(s => s.leads);
   const currentAdmin = useAdminStore(s => s.currentAdmin);
   const updateLeadStage = useAdminStore(s => s.updateLeadStage);
@@ -69,7 +70,7 @@ export default function LeadsScreen() {
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     stage: 'all',
-    product: 'all',
+    product: params.product && params.product in PRODUCT_LABELS ? params.product as ProductCategory : 'all',
     outcome: 'all',
     priority: 'all',
     dateRange: 'all',
@@ -341,7 +342,7 @@ export default function LeadsScreen() {
                   onPress={() => setFilters({
                     search: '',
                     stage: 'all',
-                    product: 'all',
+                    product: params.product && params.product in PRODUCT_LABELS ? params.product as ProductCategory : 'all',
                     outcome: 'all',
                     priority: 'all',
                     dateRange: 'all',

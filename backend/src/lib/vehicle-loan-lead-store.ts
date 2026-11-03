@@ -11,6 +11,7 @@ export type VehicleLoanLeadInput = {
   monthlyIncome: string;
   loanAmountRequired: string;
   existingEmi: string;
+  vehicleCondition: 'New Vehicle' | 'Used Vehicle';
   vehicleType: string;
   source?: string;
 };
@@ -127,7 +128,7 @@ export async function saveVehicleLoanLead(
     id, normalized.phoneNumber, normalized.fullName, normalized.cibil,
     normalized.occupation, normalized.dateOfBirth, normalized.city, normalized.state,
     normalized.monthlyIncome, normalized.loanAmountRequired, normalized.existingEmi,
-    normalized.vehicleType, normalized.source, JSON.stringify(normalized), createdAt,
+    normalized.vehicleType, normalized.source ?? 'vehicle-loans-details', JSON.stringify(normalized), createdAt,
   ]);
   return { ...normalized, id, createdAt };
 }

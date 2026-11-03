@@ -358,6 +358,7 @@ export async function applications(actor: Actor) {
           "Policy Type": ["policyType", "policy_type"],
           "Premium Slab": ["premiumSlab", "premium_slab"],
           "Custom Premium Amount": ["premiumOtherAmount", "premium_other_amount"],
+          "Vehicle Condition": ["vehicleCondition", "vehicle_condition"],
           "Vehicle Type": ["vehicleType", "vehicle_type"],
           Occupation: ["occupation"],
         };
@@ -493,11 +494,13 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
     "submitted",
     "closed",
   ];
+  const serviceProducts = ["credit-cards", "bank-accounts", "insta-loans", "health-insurance", "motor-insurance", "life-insurance"];
+  const serviceStages = ["new", "submitted", lead.productType === "insta-loans" ? "disbursed" : "approved"];
   if (
     input.stage &&
     (loanProducts.includes(lead.productType)
       ? !loanStages.includes(input.stage)
-      : !existingStages.includes(input.stage))
+      : !(serviceProducts.includes(lead.productType) ? serviceStages : existingStages).includes(input.stage))
   )
     throw new OperationsError("This stage is not available for the selected product");
   if (input.assignedOwner) {
@@ -540,7 +543,7 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         !providerEvidence?.trim()
       )
         throw new OperationsError(
-          "Record provider approval and evidence before marking as sanctioned",
+          "Record provider approval and evidence before confirming this milestone",
         );
     }
     const at = new Date().toISOString();

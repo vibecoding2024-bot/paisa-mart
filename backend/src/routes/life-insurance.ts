@@ -18,7 +18,7 @@ const schema = z.object({
     "₹70,000", "₹80,000", "₹90,000", "₹1,00,000", "Others Amount",
   ]),
   premiumOtherAmount: z.string().trim().max(80).default(""),
-}).refine((value) => value.premiumSlab !== "Others Amount" || value.premiumOtherAmount.length > 0, {
+}).refine((value) => value.premiumSlab !== "Others Amount" || /^[1-9]\d{0,11}$/.test(value.premiumOtherAmount), {
   path: ["premiumOtherAmount"],
   message: "Enter the custom monthly premium amount",
 });

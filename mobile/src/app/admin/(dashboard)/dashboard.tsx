@@ -550,7 +550,7 @@ export default function DashboardScreen() {
                 <View>
                   <Text className="text-indigo-400 font-medium">Life Insurance</Text>
                   <Text className="text-slate-400 text-xs mt-1">
-                    Backend data unavailable
+                    View saved applications
                   </Text>
                 </View>
               </View>

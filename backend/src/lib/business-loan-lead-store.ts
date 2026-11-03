@@ -200,7 +200,7 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
       normalized.loanAmountRequired ?? "",
       normalized.loanPurpose,
       normalized.loanPurposeOtherText || null,
-      normalized.source,
+      normalized.source ?? 'business-loans-details',
       createdAt,
     ],
   );

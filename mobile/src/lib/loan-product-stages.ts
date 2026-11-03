@@ -1,7 +1,9 @@
+import { SERVICE_STAGE_LABELS } from './product-catalog';
 import type { LeadStage, ProductCategory } from './admin-store';
 import { HOME_LOAN_STAGE_LABELS, HOME_LOAN_STAGES } from './home-loan-stages';
 
 const LOAN_PRODUCTS: readonly ProductCategory[] = [
+  'home-loans',
   'business-loans',
   'personal-loans',
   'vehicle-loans',
@@ -47,12 +49,14 @@ export function isLoanPipelineProduct(product: ProductCategory): boolean {
 }
 
 export function leadStageLabel(product: ProductCategory, stage: LeadStage): string {
+  if (SERVICE_STAGE_LABELS[product]?.[stage]) return SERVICE_STAGE_LABELS[product][stage];
   return isLoanPipelineProduct(product)
     ? LOAN_LABEL_BY_GENERIC_STAGE[stage] ?? stage
     : GENERIC_STAGE_LABELS[stage];
 }
 
 export function leadStageOptions(product: ProductCategory): LeadStage[] {
+  if (SERVICE_STAGE_LABELS[product]) return Object.keys(SERVICE_STAGE_LABELS[product]) as LeadStage[];
   if (!isLoanPipelineProduct(product)) {
     return ['new', 'eligibility_check', 'kyc_pending', 'kyc_completed', 'submitted', 'closed'];
   }
