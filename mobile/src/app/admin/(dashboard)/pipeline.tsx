@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, FlatList } from 'react-native';
+import { View, Text, ScrollView, Pressable, FlatList, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Clock, User, AlertTriangle, ChevronRight } from 'lucide-react-native';
@@ -31,13 +31,14 @@ const PIPELINE_STAGES: LeadStage[] = [
 interface PipelineColumnProps {
   stage: LeadStage;
   label: string;
+  compact: boolean;
   leads: Lead[];
   onLeadPress: (lead: Lead) => void;
   isSelected: boolean;
   onSelect: () => void;
 }
 
-function PipelineColumn({ stage, label, leads, onLeadPress, isSelected, onSelect }: PipelineColumnProps) {
+function PipelineColumn({ stage, label, compact, leads, onLeadPress, isSelected, onSelect }: PipelineColumnProps) {
   const stuckLeads = leads.filter(l => {
     const hoursSinceUpdate = (Date.now() - new Date(l.updatedAt).getTime()) / (1000 * 60 * 60);
     return hoursSinceUpdate > 48 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
@@ -76,7 +77,7 @@ function PipelineColumn({ stage, label, leads, onLeadPress, isSelected, onSelect
       </View>
 
       {/* Column Content */}
-      <View className="bg-slate-800/50 rounded-b-xl p-2 min-h-[300px]">
+      <ScrollView className="bg-slate-800/50 rounded-b-xl" style={{ flexGrow: 0, ...(compact ? { height: 230 } : {}) }} contentContainerStyle={{ padding: 8, minHeight: compact ? 230 : 300 }}>
         {leads.slice(0, 5).map((lead, index) => {
           const hoursSinceUpdate = (Date.now() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60);
           const isStuck = hoursSinceUpdate > 48;
@@ -123,12 +124,13 @@ function PipelineColumn({ stage, label, leads, onLeadPress, isSelected, onSelect
             <Text className="text-slate-500 text-xs">No leads</Text>
           </View>
         )}
-      </View>
+      </ScrollView>
     </Pressable>
   );
 }
 
 export default function PipelineScreen() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const leads = useAdminStore(s => s.leads);
   const [selectedProduct, setSelectedProduct] = useState<ProductCategory | 'all'>('all');
@@ -195,6 +197,7 @@ export default function PipelineScreen() {
               key={stage}
               stage={stage}
               label={stageLabel(stage)}
+              compact={width < 768}
               leads={leadsByStage[stage]}
               onLeadPress={handleLeadPress}
               isSelected={selectedStage === stage}
