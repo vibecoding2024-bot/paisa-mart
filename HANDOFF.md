@@ -1,13 +1,13 @@
 # Paisa Mart PR #6 — AWS EC2 handoff
 
-Updated November 4, 2026 (Asia/Calcutta). **Non-financial implementation completed and verified locally. Draft review candidate; no merge, upload, service restart on EC2, production migration or deployment.**
+Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed with the disclosed baseline/legacy limitations below. PR remains draft pending user merge approval. No merge, upload, service restart on EC2, production migration or deployment.**
 
 ## Exact source and preserved checkouts
 
 - PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/6 — remains draft.
 - Branch: `feature/loan-requirements-review-20261103`; isolated checkout: `.requirements-review`.
-- Tested implementation commit: `7ed7f3f0cc6bcbc846de5447bdd0fda30854a18c`. This handoff is a subsequent documentation-only commit; use the PR head for the handoff and this exact commit for tested runtime source.
-- Resumed from clean PR head `bd245a5f4f553679f6ccec16704482419dc5d09a`. The interrupted work had evidence scripts/logs but no partial source edits to overwrite.
+- Final tested implementation/tooling commit: `fe7123f9a7ccf694106d2655a4a531b7d9242495`. This handoff is a subsequent documentation-only commit; use the final PR head for merge approval and pass that full approved head to the post-merge packager. The runtime/build source is this exact implementation commit.
+- Final review started at the requested clean PR head `66ca4e3320d2bc00fbc508a65ccbc55b4f315471`; earlier implementation evidence from `7ed7f3f` was reused. Existing work was inspected before editing; no partial changes were overwritten.
 - Fetched `origin/main` remains `17eac94b39b708ee9e0979de0bda4efd551e6d24`, matching the user-confirmed dashboard release `20261021-17eac94b-dashboard`.
 - Original dirty main remains `facbc4c5b5014937f7b218f9f5eda0b78c908f92` (ahead 1 / behind 46). Its HEAD and hashes of every previously tracked dirty file are unchanged. No reset, clean, stash, forced checkout or dirty-main merge.
 - The original sibling implementation `../paisa-mart-requirements-20261101`, branch `feature/loan-requirements-20261101` at `110bda741f3df72e9c59e3b755605a2852b64165`, and detached `.dash` baseline were preserved.
@@ -40,7 +40,7 @@ Sources already extracted and visually inspected:
 | N14 | Life Insurance Leads → Logins → Policy Issued | A2–3 | **Complete** for saved applications: new API source is connected to admin, milestones persist, issuance requires recorded provider evidence. Dedicated navigation opens the existing saved-leads UI instead of the previously blocked local-only demo. |
 | N15 | All 15 customer modules reflected in admin | C3 | **Complete**: all 15 catalogue modules appear in admin. Ten now have connected application sources; the other five show unavailable processing, without fabricated counts or success. |
 | N16 | Referral box wording | A3 | **Complete**: exact “Earn up to ₹1 Lakh and Reduce Your Expenses”; referral share text no longer promises ₹500. Existing layout/styles retained. |
-| N17 | Prevent false success and repeated clicks | Conversation | **Complete** for implemented forms: server-receipt-only confirmations and immediate submit locks. The five new service APIs also enforce atomic idempotency keys; identical in-form retries return the original reference, conflicting payload/key returns 409. A new page/session can create a new intentional application; cross-session request-key persistence is not claimed. |
+| N17 | Prevent false success and repeated clicks | Conversation | **Complete for confirmed receipt/repeat-click requirements**: all implemented forms await server receipts and use immediate submit locks. The five new service APIs also use atomic keys, persisted across reloads; uncertain changed-payload retries are blocked and same-payload retries return the original reference. Legacy Business/Life/Vehicle lead APIs retain per-form locks without server replay idempotency; a lost response followed by a fresh retry can create another lead. Different devices or deliberately cleared storage are not globally deduplicated by phone number. |
 | N18 | Dashboard counts, assignments, Home refresh, history, persistence | Conversation | **Complete** in isolated SQLite preview: automated regressions and browser changes/sign-out/sign-in pass. Original Overview spacing remains intact. |
 | F01 | Executive review then manager approval; customer payout visible only afterward | A1–3 | **Awaiting business decision**: financial workflow remains disabled; responsibilities/role mapping and payout policy require approval before implementing financial state transitions. |
 | F02 | Manual revenue; manual/automatic TDS and revenue; authorization only on customer payout | A1–3 | **Awaiting business decision**: no revenue/TDS calculation or write path enabled. The ₹10,000 / 5% / ₹9,500 example is not treated as a universal rule or tax basis. |
@@ -70,9 +70,26 @@ Gold Loans, Real Estate, Cash on Credit Card, Recharge & Pay Bills, and Travel &
 - Existing customer/admin authentication contracts are unchanged. Admin page reload retains the existing requirement to sign in again; saved applications and processing history survive that sign-in. No silent-login behaviour was added.
 - Unapproved payout/TDS/revenue calculations, incentive/payout mutations and customer withdrawal remain disabled. Provider processing milestones do not enable financial payouts.
 
+## Final implementation review of the 11 runtime files
+
+Reviewed authentication, customer data exposure, administrator/operations/viewer permissions, additive SQLite migrations, duplicate handling, audit atomicity and disabled financial actions against the deployed dashboard source.
+
+Four review findings were corrected:
+
+1. **Uncertain service submissions:** the five-service client previously minted another key when details changed after an uncertain response. It now persists a SHA256 fingerprint and random key (no duplicate contact/medical payload), retains that key across reloads, blocks changed details until the earlier submission is resolved, and permits correction after a definite validation rejection. Immediate concurrent submissions remain locked.
+2. **Receipt isolation:** a UUID alone previously revealed receipt metadata. Receipt reads now require the submitting device's separate private key; missing keys receive 401 and mismatches 404. Responses contain only ID/reference/time, never customer/medical details, and are not cacheable. Copied confirmation links on another device cannot show success.
+3. **Provider evidence:** a completed service milestone could retain its final stage after evidence was cleared in a later edit. All edits now preserve required provider/evidence/decision invariants, or explicitly move back to a processing stage. Existing Personal/loan transition behavior remains.
+4. **Audit reconstruction:** updates now record exact before/after metadata values in the admin-only audit log. Regression coverage proves an audit-write failure rolls back both application changes and optimistic version; previous-stage history is preserved.
+
+The existing customer forms use public guest intake by design; a submitted phone number is contact data, not proof of authenticated account ownership. No customer list/detail/update/delete API is added. Service receipt access is possession-based and device-bound; it does not introduce a new customer account authorization model. Admin APIs verify signed tokens and current active staff roles on each request; viewer writes, privileged staff/export/audit operations and finance mutation attempts remain denied. Viewer projections omit sensitive medical/policy fields, evidence and history, and mask contact numbers. Personal authenticated receipt/status ownership checks are unchanged.
+
+SQLite upgrades were run twice against a populated October-schema fixture. Existing Business values, its NOT NULL amount constraint, Personal data and audit rows survived; seven new intake tables were empty and integrity remained `ok`. No production database was opened. Migration and code rollback preserve additive schema and later submissions.
+
+No merge blocker remains in the reviewed non-financial SQLite scope. The legacy Business/Life/Vehicle endpoints have only per-form repeat-click suppression, not durable server replay deduplication; this retained lead-intake limitation is explicit and must not be described as universal duplicate protection. Provider automation, cross-device identity/deduplication and unapproved payout rules are not fabricated. These intake limitations do not enable financial actions.
+
 ## Verification results
 
-All automated test files ran in separate Bun processes against isolated local SQLite databases.
+The earlier 59-test / 212-browser-check evidence below is retained from implementation `7ed7f3f`; it was **not all rerun** during final review. Unchanged coverage was reused as requested. Affected regression files ran in separate Bun processes against isolated SQLite databases.
 
 | Check | Result |
 |---|---|
@@ -94,6 +111,17 @@ Browser coverage: original calendars/forms, actual references, failed submission
 Local preview: `http://127.0.0.1:4796/__preview`, synthetic database `.preview/services-review-20261104.sqlite`. The prior preview database was preserved. Browser requests outside localhost were blocked. The local preview process was restarted to load source; production services were not touched.
 
 Evidence: `.build-tools/pr6-services-20261104/` contains logs, browser results/screenshots, compiler comparison, preservation checks, runtime-file list and build manifest. Earlier PDF and preservation evidence remains in `.build-tools/requirements-audit-20261103/`; compiler root-cause evidence remains in `.build-tools/pr6-final-review-20261104/`.
+
+## Final review verification (affected checks only)
+
+- **39 application regression tests passed, 522 assertions**: services 11, SQLite upgrade 1, durable client 2, receipt API 3, admin operations 11, Business/Life/Vehicle 5, deployed Personal application behavior 6. These overlap earlier evidence and are not added to 59 as if all were distinct.
+- **29 maintained packaging/installer fixture tests passed**: dirty/feature/unreviewed-tree/scope refusal, exact archive members/checksums, no overwrite, verified backups, update/rollback failure/interruption recovery and isolated migration rehearsal. PM2 and builds are simulated in these tests; this is not live EC2 validation.
+- **25 additional browser checks passed**, zero runtime errors, at 1440×1000 and 390×844: saved-but-lost response, changed uncertain retry refusal, same key/reference after reload and repeated clicks, no local contact/medical payload, private receipt reload, copied-link rejection, missing-key API rejection and Back to Home. Eight screenshots captured; affected desktop/mobile form/error/confirmation spacing inspected. A screenshot-animation timing assertion in the harness was corrected and the final complete run passed; no UI implementation was changed for it.
+- Mobile TypeScript, focused strict backend types, fresh localhost Expo web export and Bun backend bundle passed. The baseline full-backend compiler limitation below is unchanged; it was not needlessly rerun.
+- Actual recorded October dashboard/Personal archives were read and verified; 37 baseline source entries and exactly four Personal files matched. The actual clean feature checkout was rejected by the production source guard before creating output. Exactly **11 runtime backend files** remain in scope.
+- Final review preview: `http://127.0.0.1:4797/__preview`, new synthetic `.preview/final-review-20261104.sqlite`. The older previews/databases remain intact. No existing production service was restarted.
+
+Evidence: `.build-tools/pr6-final-implementation/verification.json`, `checks.json`, per-suite logs, `browser/results.json`, eight screenshots and `review-build-manifest.json`. Harnesses, local previews and generated artifacts remain outside the PR. Only maintained regression tests and release tooling are tracked.
 
 ## Backend compiler crash — baseline comparison
 
@@ -153,47 +181,36 @@ Rollback must restore only the affected code from a separately verified backup, 
 
 ## Review build checksums — DO NOT UPLOAD
 
-Source `7ed7f3f0cc6bcbc846de5447bdd0fda30854a18c`. These are local review builds using `http://127.0.0.1:4796`, **not production release artifacts**.
+Source `fe7123f9a7ccf694106d2655a4a531b7d9242495`. These new local review builds use `http://127.0.0.1:4797`, **not production release configuration**. They supersede the review hashes above/prior handoffs for the changed runtime source. The previous 4796 export remains intact; the ignored local backend review bundle was rebuilt.
 
 | Local review file | SHA256 |
 |---|---|
-| `.requirements-review/.preview/export/index.html` | `3919c34007517dda3ef8bbecc7dcb426c2d381253783ee3311d53a60f6dd3044` |
-| `.requirements-review/.preview/export/_expo/static/js/web/index-53196a0eb7a4a51217349e28a80d9106.js` | `e26e1665ddb694a14328b04cfaf8c9a84e427c4e9bf097b161ea39f3995e6248` |
-| `.requirements-review/.preview/backend-build/index.js` | `387f56eb5275a5ce8033708f0822367a134b4a9f68838210f61ca150f514189c` |
-| `.build-tools/pr6-services-20261104/review-build-manifest.json` | `30b73cd94360c6a21aefd2af7fe3dbf7bb849f32b1ef35c73b0737bd9f085437` |
+| `.requirements-review/.preview/final-review-export/index.html` | `d77d5d4cb17af0f7fb4befd60d7002981c7b1df2079135a35344e1a852d4711e` |
+| `.requirements-review/.preview/final-review-export/_expo/static/js/web/index-63c28e1c48ddcf95ca56c2564b6a8ea7.js` | `5bf2600cdd28115160b4370e51e4e8b4a7220cff2047907e6a3a2008a3b01716` |
+| `.requirements-review/.preview/backend-build/index.js` | `65fa7fdbd4717072667482f34ba58017e96f33849de6096938a221ec0cbe307c` |
+| `.build-tools/pr6-final-implementation/review-build-manifest.json` | `d605b5c1133a71eedb67d1cc6fef21e918f99e0bcf7bbf6395e3f75d5a32b4e5` |
 
 ## Guarded FileZilla → EC2 release preparation
 
-No final release bundle or upload directory has been prepared for this feature. Final packaging must follow separately approved merge and build from clean merged main. The existing maintained scripts were inspected:
+The exact post-merge commands are maintained in **[deployment/requirements/README.md](deployment/requirements/README.md)**. New maintained `prepare_release.py` and `backend-update.py` adapt the existing guarded process to the 11-file delta and October 21 baseline, with 29 safety tests. Existing October scripts/artifacts remain unchanged.
 
-- `deployment/dashboard/build_production_release.py`: clean source, explicit production API, fresh Expo export, source/hash checks.
-- `deployment/dashboard/prepare_home_loan_release.py` and `verify_home_loan_release.py`: frontend packaging/verification.
-- `deployment/dashboard/package_backend.py` and `release_validation.py`: **currently restricted to the old three-file dashboard delta against the October Personal baseline**. They correctly reject this new scope; do not bypass or reuse them as a November installer.
-- `deployment/dashboard/backend-update.py`: staged source/PM2/health verification, locked backup/update flow and code rollback. Its candidate manifest/migration path must be reviewed for the new 11-file scope and October 21 baseline before packaging.
-- `stage-frontend.py` writes a release directory; it is not a read-only verification command.
+The packager requires clean fetched merged main, reviewed ancestry and an identical reviewed tree; verifies both retained October archives and all four Personal files; builds fresh production-configured frontend output; emits exactly 11 LF backend source files; verifies archive contents and SHA256 checksums; and refuses existing output. The updater verifies current process identity, secret presence and all seven database override variables without printing secrets. Its later authorized update creates verified source/config/PM2/SQLite backups and rehearses migrations on a disposable copy before stopping or changing live code.
 
-After merge approval, release preparation must adapt/test the guarded packaging for exactly these 11 runtime files, compare the complete deployed baseline, explicitly preserve the four Personal files, verify additive migrations on a local database copy, and create a **new unique release folder** with manifest, archives and SHA256SUMS. No current production checksum or release name can be supplied before that build exists.
+The README separates local preparation, separately approved FileZilla upload, read-only live baseline verification, later authorized activation and rollback. It includes the recorded October 21 frontend index checksum, checksum-root verification, exact actual script flags and backup locations. Rollback preserves all application/audit rows, additive schema, Personal files and secrets. Installed `verify.py` is documented; installation of deploy/rollback tools is not assumed, and the procedure uses checksum-verified packaged tools. `FINAL-GOOD-20261006` is never selected or modified.
 
-After separate upload approval, use the established FileZilla SFTP workflow: verify the current EC2 host/instance/Region and host key; port 22, `ec2-user`, existing authorized key; Binary transfer mode. Upload only the new verified release folder beneath `/home/ec2-user/paisa-mart-deployment/incoming/`; stop if its destination exists. Never upload the raw preview, source checkout, database or secrets, or directly into `backend/public`, `backend/src`, `.frontend-releases` or `FINAL-GOOD-20261006`. Do not upload the old October folders again.
-
-The only currently documented installed toolkit check is read-only:
-
-```bash
-cd /home/ec2-user/paisa-mart-deployment
-python3 verify.py
-```
-
-Before any deployment, inspect installed toolkit versions, active release/index hash, live source hashes, effective database path/override absence and exact PM2 process identity using the read-only guards from the actual final release. The October guard must additionally check Life/Vehicle database overrides. Do not print environment secrets. Local copies of deploy.py/rollback.py do not prove they are installed on EC2. No upload, update, migration, restart, rollback or deploy command is authorized by this handoff, and none was run.
+**No final production archive/upload directory was built from this feature branch.** Final release paths and hashes must be generated after an approved merge; current review hashes cannot substitute for them. No live baseline verification, upload, restart, migration or deployment has occurred.
 
 ## Remaining blockers and business decisions
 
 **Implementation:** all confirmed non-financial requirements represented above are complete in the tested SQLite preview. External provider automation was not specified and is not fabricated. No payout calculation is enabled.
 
-**Review/release gates:** PR #6 remains draft for final review; separate merge approval; acknowledged pre-existing full-backend typecheck limitation; final guarded packaging from merged main for the 11-file delta; fresh read-only EC2 baseline verification; then separate upload/deployment authorization. No production readiness claim is based on a hosting preview check.
+**Verdict: ready for user merge review in the confirmed SQLite scope**, with the documented pre-existing full-backend compiler and legacy lead retry limitations. PR #6 remains draft; no merge is authorized. Release gates are separate merge approval, clean merged-main build/verification, fresh live EC2 baseline checks, then separate upload/deployment authorization. PostgreSQL is unverified and excluded; any live override stops this SQLite release. No readiness claim relies on hosting previews.
 
 **Business confirmation only:** meaning of deducted share; whether Home/Personal/Business examples are fixed payouts or rates; the Business example's Personal wording; revenue/TDS basis and manual/automatic rules; insurance percentage bases/tiers and Life admin share; executive/manager role mapping and authorization policy. F01–F12 remain disabled pending that confirmation.
 
 ## Exact PR file changes versus origin/main
+
+62 tracked files; 11 are backend runtime files. Final review adds maintained tests/tooling, not temporary investigations or local preview files.
 
 - `HANDOFF.md`
 - `backend/.gitignore`
@@ -210,7 +227,12 @@ Before any deployment, inspect installed toolkit versions, active release/index 
 - `backend/src/routes/loan-insurance-regression.test.ts`
 - `backend/src/routes/service-applications.test.ts`
 - `backend/src/routes/service-applications.ts`
+- `backend/src/routes/sqlite-upgrade.test.ts`
 - `backend/src/routes/vehicle-loans.ts`
+- `deployment/requirements/README.md`
+- `deployment/requirements/backend-update.py`
+- `deployment/requirements/prepare_release.py`
+- `deployment/requirements/test_prepare_release.py`
 - `mobile/src/app/(tabs)/earnings.tsx`
 - `mobile/src/app/(tabs)/index.tsx`
 - `mobile/src/app/(tabs)/products.tsx`
@@ -246,7 +268,9 @@ Before any deployment, inspect installed toolkit versions, active release/index 
 - `mobile/src/lib/loan-product-stages.ts`
 - `mobile/src/lib/product-catalog.ts`
 - `mobile/src/lib/service-application-api.ts`
+- `mobile/src/lib/service-submission.ts`
 - `mobile/src/lib/use-service-submission.ts`
 - `mobile/src/lib/vehicle-loan-api.ts`
 - `scripts/payout-guard.test.ts`
 - `scripts/service-application-api.test.ts`
+- `scripts/service-submission.test.ts`
