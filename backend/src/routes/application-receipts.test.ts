@@ -1,7 +1,11 @@
-import { afterEach, expect, test } from 'bun:test';
-import { submitBusinessLoanLead } from '../../../mobile/src/lib/business-loan-api';
-import { submitLifeInsuranceLead } from '../../../mobile/src/lib/life-insurance-api';
-import { submitVehicleLoanLead } from '../../../mobile/src/lib/vehicle-loan-api';
+import { afterEach, expect, mock, test } from 'bun:test';
+import { createHash } from 'node:crypto';
+const storage = new Map<string,string>();
+mock.module('@react-native-async-storage/async-storage',()=>({default:{getItem:async(k:string)=>storage.get(k)??null,setItem:async(k:string,v:string)=>{storage.set(k,v)},removeItem:async(k:string)=>{storage.delete(k)}}}));
+mock.module('expo-crypto',()=>({randomUUID:()=>crypto.randomUUID(),CryptoDigestAlgorithm:{SHA256:'sha256'},digestStringAsync:async (_algorithm:string,value:string)=>createHash('sha256').update(value).digest('hex')}));
+const { submitBusinessLoanLead } = await import('../../../mobile/src/lib/business-loan-api');
+const { submitLifeInsuranceLead } = await import('../../../mobile/src/lib/life-insurance-api');
+const { submitVehicleLoanLead } = await import('../../../mobile/src/lib/vehicle-loan-api');
 import { PRODUCT_MODULES, PAYOUT_CALCULATIONS_ENABLED } from '../../../mobile/src/lib/product-catalog';
 import { leadStageLabel, leadStageOptions } from '../../../mobile/src/lib/loan-product-stages';
 

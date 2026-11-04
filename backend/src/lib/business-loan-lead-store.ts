@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { initializeLeadIdempotency, initializePgLeadIdempotency, leadRequestHash, replayLeadReceipt } from './service-application-store';
 
 export type BusinessLoanLeadInput = {
   phoneNumber: string;
@@ -60,6 +61,8 @@ function normalizePhone(phoneNumber: string): string {
   return phoneNumber.replace(/\D/g, "").slice(-10);
 }
 
+initializeLeadIdempotency(sqlite, 'business_loan_leads');
+
 function now() {
   return new Date().toISOString();
 }
@@ -104,10 +107,11 @@ async function getPgClient() {
   ]) {
     await sql.unsafe(`ALTER TABLE business_loan_leads ADD COLUMN IF NOT EXISTS ${column} TEXT`);
   }
+  await initializePgLeadIdempotency(sql, 'business_loan_leads');
   return sql;
 }
 
-export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promise<BusinessLoanLeadRow> {
+export async function saveBusinessLoanLead(input: BusinessLoanLeadInput, key?: string): Promise<BusinessLoanLeadRow> {
   const normalized: BusinessLoanLeadInput = {
     ...input,
     phoneNumber: normalizePhone(input.phoneNumber),
@@ -123,6 +127,7 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
     throw new Error("A valid phone number is required");
   }
 
+  const hash = leadRequestHash(normalized);
   const sql = await getPgClient();
   if (sql) {
     const rows = await sql`
@@ -140,7 +145,7 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
         loan_purpose,
         loan_purpose_other_text,
         source,
-        payload
+        payload, idempotency_key, request_hash
       )
       VALUES (
         ${normalized.phoneNumber},
@@ -156,8 +161,9 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
         ${normalized.loanPurpose},
         ${normalized.loanPurposeOtherText || null},
         ${normalized.source},
-        ${sql.json(normalized)}
+        ${sql.json(normalized)}, ${key ?? null}, ${key ? hash : null}
       )
+      ON CONFLICT(idempotency_key) DO NOTHING
       RETURNING
         id::text,
         phone_number AS "phoneNumber",
@@ -175,6 +181,10 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
         source,
         created_at AS "createdAt"
     `;
+    if (key) {
+      const saved = await sql`SELECT id::text, created_at AS "createdAt", request_hash FROM business_loan_leads WHERE idempotency_key=${key}`;
+      return { ...normalized, ...replayLeadReceipt(saved[0], hash) };
+    }
     return { ...normalized, ...rows[0] } as BusinessLoanLeadRow;
   }
 
@@ -184,8 +194,8 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
     `INSERT INTO business_loan_leads (
       id,phoneNumber,fullName,cibil,dateOfBirth,city,state,monthlyIncome,existingEmi,
       businessType,loanAmountRequired,loanPurpose,
-      loanPurposeOtherText,source,createdAt
-    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      loanPurposeOtherText,source,createdAt,idempotency_key,request_hash
+    ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(idempotency_key) DO NOTHING`,
     [
       id,
       normalized.phoneNumber,
@@ -202,8 +212,11 @@ export async function saveBusinessLoanLead(input: BusinessLoanLeadInput): Promis
       normalized.loanPurposeOtherText || null,
       normalized.source ?? 'business-loans-details',
       createdAt,
+      key ?? null, key ? hash : null,
     ],
   );
+
+  if (key) return { ...normalized, ...replayLeadReceipt(sqlite!.query('SELECT id, createdAt, request_hash FROM business_loan_leads WHERE idempotency_key=?').get(key), hash) };
 
   return {
     ...normalized,

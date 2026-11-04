@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { saveBusinessLoanLead } from "../lib/business-loan-lead-store";
+import { SubmissionConflict } from '../lib/service-application-store';
 
 const businessLoansRouter = new Hono();
 
@@ -35,6 +36,9 @@ const leadSchema = z.object({
 });
 
 businessLoansRouter.post("/leads", async (c) => {
+  const key = c.req.header('Idempotency-Key');
+  // The deployed Business client predates request keys; retain its API contract.
+  if (key !== undefined && !/^[a-zA-Z0-9-]{16,128}$/.test(key)) return c.json({ success:false, message:'Invalid submission key' },400);
   const body = await c.req.json().catch(() => ({}));
   const parsed = leadSchema.safeParse(body);
 
@@ -46,10 +50,10 @@ businessLoansRouter.post("/leads", async (c) => {
   }
 
   try {
-    const lead = await saveBusinessLoanLead(parsed.data);
+    const lead = await saveBusinessLoanLead(parsed.data, key);
     return c.json({ success: true, data: lead });
   } catch (error) {
-    console.error("[BUSINESS LOAN LEAD] save failed", error);
+    if (error instanceof SubmissionConflict) return c.json({ success:false, message:error.message },409);
     return c.json({ success: false, message: "Could not save business loan details" }, 500);
   }
 });

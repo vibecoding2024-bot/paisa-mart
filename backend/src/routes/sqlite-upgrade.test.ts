@@ -12,6 +12,7 @@ test('upgrade from populated October SQLite preserves rows and constraints and i
     businessType TEXT NOT NULL, loanAmountRequired TEXT NOT NULL, loanPurpose TEXT NOT NULL,
     loanPurposeOtherText TEXT, source TEXT NOT NULL DEFAULT 'business-loans-details', createdAt TEXT NOT NULL)`);
   db.run("INSERT INTO business_loan_leads VALUES ('existing','9876543210','Retail','100000','Expansion',NULL,'business-loans-details','2026-10-21T00:00:00.000Z')");
+  db.run("INSERT INTO business_loan_leads SELECT 'existing-second',phoneNumber,businessType,loanAmountRequired,loanPurpose,loanPurposeOtherText,source,createdAt FROM business_loan_leads WHERE id='existing'");
   db.run('CREATE TABLE personal_loan_applications(id TEXT PRIMARY KEY, payload TEXT NOT NULL)');
   db.run("INSERT INTO personal_loan_applications VALUES ('preserved','existing customer data')");
   db.run('CREATE TABLE admin_audit(id TEXT PRIMARY KEY, actor TEXT NOT NULL, at TEXT NOT NULL, action TEXT NOT NULL, entity TEXT NOT NULL, details TEXT NOT NULL)');
@@ -30,6 +31,13 @@ test('upgrade from populated October SQLite preserves rows and constraints and i
   const row=db.query('SELECT * FROM business_loan_leads').get() as any;
   for(const [key,value] of Object.entries(old)) expect(row[key]).toBe(value);
   expect(row.fullName).toBeNull();
+  expect(db.query('SELECT count(*) AS n FROM business_loan_leads WHERE idempotency_key IS NULL AND request_hash IS NULL').get()).toEqual({n:2});
+  for (const table of ['business_loan_leads','life_insurance_leads','vehicle_loan_leads']) {
+    const columns=db.query(`PRAGMA table_info(${table})`).all() as {name:string}[];
+    expect(columns.some(c=>c.name==='idempotency_key')).toBe(true);
+    expect(columns.some(c=>c.name==='request_hash')).toBe(true);
+    expect((db.query(`PRAGMA index_list(${table})`).all() as any[]).some(i=>i.name===table+'_submission_key'&&i.unique===1)).toBe(true);
+  }
   expect(db.query('SELECT payload FROM personal_loan_applications').get()).toEqual({payload:'existing customer data'});
   expect(db.query('SELECT action FROM admin_audit').get()).toEqual({action:'existing action'});
   expect(db.query('PRAGMA integrity_check').all()).toEqual([{integrity_check:'ok'}]);

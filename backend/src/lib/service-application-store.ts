@@ -32,6 +32,28 @@ export async function initializeServiceApplications() {
   await ready;
 }
 export class SubmissionConflict extends Error {}
+const legacyTables = ['business_loan_leads', 'life_insurance_leads', 'vehicle_loan_leads'];
+export function initializeLeadIdempotency(database: Database | null, table: string) {
+  if (!legacyTables.includes(table)) throw new Error('Unsupported lead source');
+  if (!database) return;
+  const columns = new Set((database.query(`PRAGMA table_info(${table})`).all() as {name:string}[]).map(c => c.name));
+  for (const column of ['idempotency_key', 'request_hash'])
+    if (!columns.has(column)) database.run(`ALTER TABLE ${table} ADD COLUMN ${column} TEXT`);
+  database.run(`CREATE UNIQUE INDEX IF NOT EXISTS ${table}_submission_key ON ${table}(idempotency_key)`);
+}
+export async function initializePgLeadIdempotency(client: any, table: string) {
+  if (!legacyTables.includes(table)) throw new Error('Unsupported lead source');
+  for (const column of ['idempotency_key', 'request_hash'])
+    await client.unsafe(`ALTER TABLE ${table} ADD COLUMN IF NOT EXISTS ${column} TEXT`);
+  await client.unsafe(`CREATE UNIQUE INDEX IF NOT EXISTS ${table}_submission_key ON ${table}(idempotency_key)`);
+}
+export function leadRequestHash(input: object) {
+  return createHash('sha256').update(JSON.stringify(input)).digest('hex');
+}
+export function replayLeadReceipt(row: any, hash: string): { id: string; createdAt: string } {
+  if (!row || row.request_hash !== hash) throw new SubmissionConflict('Submission details changed. Retry with the original details.');
+  return { id: String(row.id), createdAt: row.createdAt instanceof Date ? row.createdAt.toISOString() : row.createdAt };
+}
 function source(product: ServiceProduct) {
   const value = SERVICE_SOURCES.find(s => s.kind === product);
   if (!value) throw new Error('Unsupported application type');

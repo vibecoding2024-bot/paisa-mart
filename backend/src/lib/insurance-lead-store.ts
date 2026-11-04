@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { initializeLeadIdempotency, initializePgLeadIdempotency, leadRequestHash, replayLeadReceipt } from './service-application-store';
 
 export type LifeInsuranceLeadInput = {
   phoneNumber: string;
@@ -41,6 +42,7 @@ sqlite?.run(`CREATE TABLE IF NOT EXISTS life_insurance_leads (
   payload TEXT NOT NULL DEFAULT '{}',
   createdAt TEXT NOT NULL
 )`);
+initializeLeadIdempotency(sqlite, 'life_insurance_leads');
 async function getPgClient(environment: string, ddl: string) {
   const url = databaseUrl(environment);
   if (!url) return null;
@@ -54,6 +56,7 @@ async function getPgClient(environment: string, ddl: string) {
   }
   const sql = await client;
   await sql.unsafe(ddl);
+  await initializePgLeadIdempotency(sql, 'life_insurance_leads');
   return sql;
 }
 
@@ -65,12 +68,13 @@ function normalize<T extends { phoneNumber: string; fullName: string }>(
   return { ...input, phoneNumber, fullName: input.fullName.trim() };
 }
 
-export async function saveLifeInsuranceLead(input: LifeInsuranceLeadInput): Promise<InsuranceLeadRow> {
+export async function saveLifeInsuranceLead(input: LifeInsuranceLeadInput, key?: string): Promise<InsuranceLeadRow> {
   const normalized = normalize(input);
   const id = crypto.randomUUID();
   const createdAt = new Date().toISOString();
   const source = "life-insurance-details";
   const payload = { ...normalized, source };
+  const hash = leadRequestHash(normalized);
   const sql = await getPgClient("LIFE_INSURANCE_DATABASE_URL", `CREATE TABLE IF NOT EXISTS life_insurance_leads (
     id TEXT PRIMARY KEY, phone_number TEXT NOT NULL, full_name TEXT NOT NULL,
     selected_life_insurer TEXT NOT NULL, policy_type TEXT NOT NULL,
@@ -80,18 +84,23 @@ export async function saveLifeInsuranceLead(input: LifeInsuranceLeadInput): Prom
   )`);
   if (sql) {
     await sql`INSERT INTO life_insurance_leads
-      (id, phone_number, full_name, selected_life_insurer, policy_type, premium_slab, premium_other_amount, source, payload, created_at)
+      (id, phone_number, full_name, selected_life_insurer, policy_type, premium_slab, premium_other_amount, source, payload, created_at, idempotency_key, request_hash)
       VALUES (${id}, ${normalized.phoneNumber}, ${normalized.fullName}, ${normalized.selectedLifeInsurer},
         ${normalized.policyType}, ${normalized.premiumSlab}, ${normalized.premiumOtherAmount}, ${source},
-        ${sql.json(payload)}, ${createdAt})`;
+        ${sql.json(payload)}, ${createdAt}, ${key ?? null}, ${key ? hash : null}) ON CONFLICT(idempotency_key) DO NOTHING`;
+    if (key) {
+      const rows = await sql`SELECT id, created_at AS "createdAt", request_hash FROM life_insurance_leads WHERE idempotency_key=${key}`;
+      return { ...payload, ...replayLeadReceipt(rows[0], hash) };
+    }
   } else {
     sqlite!.run(`INSERT INTO life_insurance_leads
-      (id, phoneNumber, fullName, selectedLifeInsurer, policyType, premiumSlab, premiumOtherAmount, source, payload, createdAt)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+      (id, phoneNumber, fullName, selectedLifeInsurer, policyType, premiumSlab, premiumOtherAmount, source, payload, createdAt, idempotency_key, request_hash)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING`, [
       id, normalized.phoneNumber, normalized.fullName, normalized.selectedLifeInsurer,
       normalized.policyType, normalized.premiumSlab, normalized.premiumOtherAmount,
-      source, JSON.stringify(payload), createdAt,
+      source, JSON.stringify(payload), createdAt, key ?? null, key ? hash : null,
     ]);
+    if (key) return { ...payload, ...replayLeadReceipt(sqlite!.query('SELECT id, createdAt, request_hash FROM life_insurance_leads WHERE idempotency_key=?').get(key), hash) };
   }
   return { ...payload, id, createdAt };
 }

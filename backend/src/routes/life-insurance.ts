@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { saveLifeInsuranceLead } from "../lib/insurance-lead-store";
+import { SubmissionConflict } from '../lib/service-application-store';
 
 const router = new Hono();
 const schema = z.object({
@@ -24,13 +25,15 @@ const schema = z.object({
 });
 
 router.post("/leads", async (c) => {
+  const key = c.req.header('Idempotency-Key');
+  if (!key || !/^[a-zA-Z0-9-]{16,128}$/.test(key)) return c.json({ success:false, message:'A submission key is required' },400);
   const parsed = schema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ success: false, message: "Invalid life insurance details" }, 400);
   try {
-    const data = await saveLifeInsuranceLead(parsed.data);
+    const data = await saveLifeInsuranceLead(parsed.data, key);
     return c.json({ success: true, data });
   } catch (error) {
-    console.error("[LIFE INSURANCE LEAD] save failed", error);
+    if (error instanceof SubmissionConflict) return c.json({ success:false, message:error.message },409);
     return c.json({ success: false, message: "Could not save life insurance details" }, 500);
   }
 });

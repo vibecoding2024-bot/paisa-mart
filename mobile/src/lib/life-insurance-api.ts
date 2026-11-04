@@ -1,4 +1,6 @@
 import type { PolicyType, PremiumSlab } from './life-insurance-store';
+import { submitDurableApplication } from './service-submission';
+import { ServiceSubmissionError } from './service-application-api';
 
 const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
@@ -14,14 +16,16 @@ export async function submitLifeInsuranceLead(input: {
   premiumSlab: PremiumSlab;
   premiumOtherAmount: string;
 }) {
+  return submitDurableApplication('life-insurance', input, async key => {
   const response = await fetch(`${BACKEND_URL.replace(/\/$/, '')}/api/life-insurance/leads`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
     body: JSON.stringify(input),
   });
   const body = await response.json().catch(() => null);
   if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string' || !body.data.id) {
-    throw new Error(body?.message || 'Could not submit life insurance details');
+    throw new ServiceSubmissionError(body?.message || 'Could not submit life insurance details', response.status);
   }
   return body.data as { id: string; createdAt: string };
+  });
 }

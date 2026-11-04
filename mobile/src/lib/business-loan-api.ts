@@ -1,4 +1,6 @@
 import type { BusinessLoanData } from './business-loan-store';
+import { submitDurableApplication } from './service-submission';
+import { ServiceSubmissionError } from './service-application-api';
 
 const BACKEND_URL =
   process.env.EXPO_PUBLIC_BACKEND_URL ||
@@ -15,10 +17,7 @@ function normalizePhone(phoneNumber: string): string {
 }
 
 export async function submitBusinessLoanLead(payload: BusinessLoanLeadPayload) {
-  const response = await fetch(`${BACKEND_URL.replace(/\/$/, '')}/api/business-loans/leads`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
+  const input = {
       phoneNumber: normalizePhone(payload.phoneNumber),
       fullName: payload.full_name,
       mobileNumber: payload.mobile_number,
@@ -33,13 +32,19 @@ export async function submitBusinessLoanLead(payload: BusinessLoanLeadPayload) {
       loanPurpose: payload.loan_purpose,
       loanPurposeOtherText: payload.loan_purpose_other_text,
       source: 'business-loans-details',
-    }),
+    };
+  return submitDurableApplication('business-loans', input, async key => {
+  const response = await fetch(`${BACKEND_URL.replace(/\/$/, '')}/api/business-loans/leads`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Idempotency-Key': key },
+    body: JSON.stringify(input),
   });
 
   const body = await response.json().catch(() => ({}));
   if (!response.ok || body?.success !== true || typeof body.data?.id !== 'string' || !body.data.id) {
-    throw new Error(body.message || 'Could not submit business loan details');
+    throw new ServiceSubmissionError(body.message || 'Could not submit business loan details', response.status);
   }
 
   return body.data;
+  });
 }

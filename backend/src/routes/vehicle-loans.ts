@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { saveVehicleLoanLead } from "../lib/vehicle-loan-lead-store";
+import { SubmissionConflict } from '../lib/service-application-store';
 
 const router = new Hono();
 const dateOfBirthSchema = z.string().refine((value) => {
@@ -33,14 +34,16 @@ const schema = z.object({
 });
 
 router.post("/leads", async (c) => {
+  const key = c.req.header('Idempotency-Key');
+  if (!key || !/^[a-zA-Z0-9-]{16,128}$/.test(key)) return c.json({ success:false, message:'A submission key is required' },400);
   const parsed = schema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) {
     return c.json({ success: false, message: "Invalid vehicle loan details" }, 400);
   }
   try {
-    return c.json({ success: true, data: await saveVehicleLoanLead(parsed.data) });
+    return c.json({ success: true, data: await saveVehicleLoanLead(parsed.data, key) });
   } catch (error) {
-    console.error("[VEHICLE LOAN LEAD] save failed", error);
+    if (error instanceof SubmissionConflict) return c.json({ success:false, message:error.message },409);
     return c.json({ success: false, message: "Could not save vehicle loan details" }, 500);
   }
 });

@@ -1,4 +1,5 @@
 import { Database } from "bun:sqlite";
+import { initializeLeadIdempotency, initializePgLeadIdempotency, leadRequestHash, replayLeadReceipt } from './service-application-store';
 
 export type VehicleLoanLeadInput = {
   phoneNumber: string;
@@ -50,6 +51,7 @@ sqlite?.run(`CREATE TABLE IF NOT EXISTS vehicle_loan_leads (
   payload TEXT NOT NULL DEFAULT '{}',
   createdAt TEXT NOT NULL
 )`);
+initializeLeadIdempotency(sqlite, 'vehicle_loan_leads');
 
 async function getPgClient() {
   if (!dbUrl) return null;
@@ -77,11 +79,13 @@ async function getPgClient() {
     payload JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`;
+  await initializePgLeadIdempotency(sql, 'vehicle_loan_leads');
   return sql;
 }
 
 export async function saveVehicleLoanLead(
   input: VehicleLoanLeadInput,
+  key?: string,
 ): Promise<VehicleLoanLeadRow> {
   const normalized: VehicleLoanLeadInput = {
     ...input,
@@ -98,37 +102,44 @@ export async function saveVehicleLoanLead(
   }
 
   const createdAt = new Date().toISOString();
+  const hash = leadRequestHash(normalized);
   const sql = await getPgClient();
   if (sql) {
     const rows = await sql`
       INSERT INTO vehicle_loan_leads (
         phone_number, full_name, cibil, occupation, date_of_birth, city, state,
-        monthly_income, loan_amount_required, existing_emi, vehicle_type, source, payload
+        monthly_income, loan_amount_required, existing_emi, vehicle_type, source, payload, idempotency_key, request_hash
       ) VALUES (
         ${normalized.phoneNumber}, ${normalized.fullName}, ${normalized.cibil},
         ${normalized.occupation}, ${normalized.dateOfBirth}, ${normalized.city},
         ${normalized.state}, ${normalized.monthlyIncome}, ${normalized.loanAmountRequired},
         ${normalized.existingEmi}, ${normalized.vehicleType}, ${normalized.source},
-        ${sql.json(normalized)}
+        ${sql.json(normalized)}, ${key ?? null}, ${key ? hash : null}
       )
+      ON CONFLICT(idempotency_key) DO NOTHING
       RETURNING id::text, phone_number AS "phoneNumber", full_name AS "fullName",
         cibil, occupation, date_of_birth AS "dateOfBirth", city, state,
         monthly_income AS "monthlyIncome", loan_amount_required AS "loanAmountRequired",
         existing_emi AS "existingEmi", vehicle_type AS "vehicleType", source,
         created_at AS "createdAt"
     `;
+    if (key) {
+      const saved = await sql`SELECT id::text, created_at AS "createdAt", request_hash FROM vehicle_loan_leads WHERE idempotency_key=${key}`;
+      return { ...normalized, ...replayLeadReceipt(saved[0], hash) };
+    }
     return { ...normalized, ...rows[0] } as VehicleLoanLeadRow;
   }
 
   const id = crypto.randomUUID();
   sqlite!.run(`INSERT INTO vehicle_loan_leads (
     id, phoneNumber, fullName, cibil, occupation, dateOfBirth, city, state,
-    monthlyIncome, loanAmountRequired, existingEmi, vehicleType, source, payload, createdAt
-  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+    monthlyIncome, loanAmountRequired, existingEmi, vehicleType, source, payload, createdAt, idempotency_key, request_hash
+  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(idempotency_key) DO NOTHING`, [
     id, normalized.phoneNumber, normalized.fullName, normalized.cibil,
     normalized.occupation, normalized.dateOfBirth, normalized.city, normalized.state,
     normalized.monthlyIncome, normalized.loanAmountRequired, normalized.existingEmi,
-    normalized.vehicleType, normalized.source ?? 'vehicle-loans-details', JSON.stringify(normalized), createdAt,
+    normalized.vehicleType, normalized.source ?? 'vehicle-loans-details', JSON.stringify(normalized), createdAt, key ?? null, key ? hash : null,
   ]);
+  if (key) return { ...normalized, ...replayLeadReceipt(sqlite!.query('SELECT id, createdAt, request_hash FROM vehicle_loan_leads WHERE idempotency_key=?').get(key), hash) };
   return { ...normalized, id, createdAt };
 }

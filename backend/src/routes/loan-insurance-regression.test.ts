@@ -27,6 +27,7 @@ const { leadStageLabel, leadStageOptions } = await import("../../../mobile/src/l
 const json = (data: unknown, token?: string) => ({
   headers: {
     "Content-Type": "application/json",
+    "Idempotency-Key": crypto.randomUUID(),
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
   },
   body: JSON.stringify(data),

@@ -2,9 +2,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID, digestStringAsync, CryptoDigestAlgorithm } from 'expo-crypto';
 import { submitServiceApplication, ServiceSubmissionError, type ServiceProduct } from './service-application-api';
 
-const active = new Set<ServiceProduct>();
+const active = new Set<string>();
 /** Persist only a fingerprint/key, never a duplicate local health/contact payload. */
-export async function submitDurableService(product: ServiceProduct, input: Record<string, unknown>) {
+export async function submitDurableApplication<T extends { id: string }>(product: string, input: object, send: (key: string) => Promise<T>): Promise<T> {
   if (active.has(product)) throw new Error('A submission is already in progress.');
   active.add(product);
   const storageKey = `service-pending:${product}`;
@@ -16,7 +16,7 @@ export async function submitDurableService(product: ServiceProduct, input: Recor
     const key = pending?.fingerprint === fingerprint ? pending.key : randomUUID();
     await AsyncStorage.setItem(storageKey, JSON.stringify({ key, fingerprint }));
     try {
-      const saved = await submitServiceApplication(product, input, key);
+      const saved = await send(key);
       await AsyncStorage.setItem(`service-receipt:${product}:${saved.id}`, key);
       await AsyncStorage.setItem(storageKey, JSON.stringify({ key, fingerprint, confirmed: true }));
       return saved;
@@ -26,4 +26,8 @@ export async function submitDurableService(product: ServiceProduct, input: Recor
       throw error;
     }
   } finally { active.delete(product); }
+}
+
+export function submitDurableService(product: ServiceProduct, input: Record<string, unknown>) {
+  return submitDurableApplication(product, input, key => submitServiceApplication(product, input, key));
 }

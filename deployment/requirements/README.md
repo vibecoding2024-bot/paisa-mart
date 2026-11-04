@@ -26,8 +26,10 @@ if ((Test-Path -LiteralPath $source) -or (Test-Path -LiteralPath $output)) {
 git -C $repo worktree add --detach $source origin/main
 if ($LASTEXITCODE -ne 0) { throw 'Worktree creation failed' }
 Set-Location -LiteralPath $source
-npm ci
-if ($LASTEXITCODE -ne 0) { throw 'Locked dependency installation failed; do not update the lockfile' }
+$dependencyStage = Join-Path $repo ('release/pr6-dependencies-' + $merged.Substring(0,8) + '-' + $stamp)
+$bun = Join-Path $repo '.build-tools/bun-runtime/bun-windows-x64/bun.exe'
+python -B deployment/requirements/install_dependencies.py --staging $dependencyStage --bun $bun
+if ($LASTEXITCODE -ne 0) { throw 'Frozen dependency installation failed; do not change locks or reuse partial output' }
 python -B -m unittest discover -s deployment/requirements -p 'test_*.py'
 if ($LASTEXITCODE -ne 0) { throw 'Packaging safety checks failed' }
 python -B deployment/requirements/prepare_release.py `
@@ -41,7 +43,9 @@ if ($LASTEXITCODE -ne 0) { throw 'Release preparation failed; do not upload part
 Get-Content -LiteralPath (Join-Path $output 'verification.json')
 ```
 
-`npm ci` uses the tracked root workspace `package-lock.json`, which includes `mobile/node_modules/expo`; no package/dependency update is authorized. A fresh locked dependency installation was not rerun during source review; if its environment differs from the recorded Node 24.17.0 / available compiler 5.9.3 environment or any command fails, review and validate that environment before release. Do not transplant dependency directories out of another working checkout.
+The root npm lockfile contains empty dependency entries and `npm ci` fails with `Invalid Version` (also with legacy peer resolution). Use the maintained installer above. It installs each workspace in a new isolated staging directory with Bun's `--frozen-lockfile --ignore-scripts`, verifies the committed manifest/lock/patch hashes before and after installation, then copies fresh dependencies into the new checkout. Existing dependency trees and staging directories are refused; no dependencies are moved out of another checkout. The receipt is `<dependencyStage>/dependency-install.json`. Tested tools are Bun 1.4.2 and Node 24.17.0.
+
+The mobile Bun lock was reconciled with the already-committed manifest: Expo Router 6.0.24, MSG91 2.1.0 and Expo Local Authentication 17.0.9, plus their locked transitive entries. No package.json or runtime backend dependency was changed. The old available preview dependency tree had Router 6.0.14 and omitted those two declared packages; final release validation must use the freshly installed frozen tree. The root npm lock remains unchanged and is not used for this release.
 
 The entry point performs a fresh Expo export with all three API variables set to `https://paisa-mart.com`, dotenv loading disabled and the existing frontend shell packaging/validation. It emits LF Git source for the exact 11-file backend delta, verifies archives by reading their members and hashes back, validates the four Personal source files against the approved October archive, and refuses existing output. Old three-/seven-file bundles are not used as installers.
 
@@ -90,7 +94,7 @@ python3 -B backend/backend-update.py update --execute
 
 The updater acquires the existing process lock and refuses drift/reused backup paths. Before stopping the process, it creates `/home/ec2-user/paisa-mart-data/backups/backend-before-<release_name>` with mode 0700, copies source/package/locks and protected `.env`/PM2 metadata, creates a consistent SQLite backup using SQLite's backup API with a read-only source connection, verifies integrity and hashes, and rehearses candidate migrations against a **separate disposable database/source copy**. Rehearsal checks all original table row counts and integrity. This is performed only by the authorized update command; read-only verification creates no backup/migration.
 
-The migration imports Business/Life/Vehicle stores, initializes the five new service tables and calls the existing admin migration. Changes are additive: nullable Business fields plus Life/Vehicle/five-service tables; no data deletion or payout calculation. After a final drift check, the updater stops only the identified PM2 process, atomically writes the 11 files, applies the same migration against SQLite, restarts that same process and checks health. On failure/interruption it attempts verified code restoration and health recovery. An unconfirmed recovery is a hard stop requiring inspection, not permission for a blind retry.
+The migration imports Business/Life/Vehicle stores, initializes the five new service tables and calls the existing admin migration. Changes are additive: nullable Business fields plus Life/Vehicle/five-service tables, and nullable submission-key/hash columns with unique key indexes on Business/Life/Vehicle. Existing rows retain NULL keys; no application is deduplicated or deleted by phone number. No payout calculation is enabled. After a final drift check, the updater stops only the identified PM2 process, atomically writes the 11 files, applies the same migration against SQLite, restarts that same process and checks health. On failure/interruption it attempts verified code restoration and health recovery. An unconfirmed recovery is a hard stop requiring inspection, not permission for a blind retry.
 
 Verify authenticated admin/customer behavior and the four Personal hashes using the recorded manifest before frontend activation. Then, under that same explicit deployment approval:
 
