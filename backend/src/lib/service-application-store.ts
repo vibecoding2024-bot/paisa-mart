@@ -54,10 +54,10 @@ export async function saveServiceApplication(product: ServiceProduct, input: {
   if (!row || row.request_hash !== hash) throw new SubmissionConflict('Submission details changed. Start a new submission.');
   return { id: row.id as string, referenceNumber: `${prefix}-${row.id}`, createdAt: row.created_at as string };
 }
-export async function serviceReceipt(product: ServiceProduct, id: string) {
+export async function serviceReceipt(product: ServiceProduct, id: string, key: string) {
   await initializeServiceApplications();
   const { table, prefix } = source(product);
-  const row = (await query(`SELECT id,created_at FROM ${table} WHERE id=?`, [id]))[0];
+  const row = (await query(`SELECT id,created_at FROM ${table} WHERE id=? AND idempotency_key=?`, [id, key]))[0];
   // A receipt contains no applicant, contact, policy or health information.
   return row ? { id: row.id, referenceNumber: `${prefix}-${row.id}`, createdAt: row.created_at } : null;
 }

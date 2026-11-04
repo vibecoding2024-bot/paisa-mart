@@ -1,5 +1,8 @@
 import { afterAll, expect, mock, test } from 'bun:test';
-import { submitServiceApplication, verifyServiceReceipt, type ServiceProduct } from '../mobile/src/lib/service-application-api';
+const storage = new Map<string,string>();
+mock.module('@react-native-async-storage/async-storage',()=>({default:{getItem:async(k:string)=>storage.get(k)??null,setItem:async(k:string,v:string)=>{storage.set(k,v)},removeItem:async(k:string)=>{storage.delete(k)}}}));
+const { submitServiceApplication, verifyServiceReceipt } = await import('../mobile/src/lib/service-application-api');
+import type { ServiceProduct } from '../mobile/src/lib/service-application-api';
 const original = globalThis.fetch;
 afterAll(() => { globalThis.fetch = original; });
 const data = { id: crypto.randomUUID(), referenceNumber: 'HI-real-reference', createdAt: new Date().toISOString() };
@@ -23,6 +26,9 @@ test('errors, non-JSON and incomplete or blank receipts cannot produce success',
 });
 test('confirmation checks the backend receipt and rejects nonexistent applications', async () => {
   globalThis.fetch = mock(async () => Response.json({success:true,data})) as any;
+  await expect(verifyServiceReceipt('motor-insurance',data.id)).rejects.toThrow('receipt');
+  storage.set('service-receipt:motor-insurance:'+data.id,'private-receipt-key');
+  globalThis.fetch = mock(async (_url:any, options:any) => { expect(options.headers.Authorization).toBe('Bearer private-receipt-key'); return Response.json({success:true,data}); }) as any;
   expect(await verifyServiceReceipt('motor-insurance',data.id)).toEqual(data);
   globalThis.fetch = mock(async () => Response.json({success:false},{status:404})) as any;
   await expect(verifyServiceReceipt('motor-insurance','fake')).rejects.toThrow();

@@ -548,8 +548,12 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         "Application changed. Refresh and try again.",
         409,
       );
-    if (input.stage === "approved" || (lead.productType === 'insta-loans' && input.stage === 'disbursed')) {
-      const requiredDecision = input.stage === 'disbursed' ? 'disbursed' : 'approved';
+    // A final service milestone must retain its evidence on later edits too.
+    // Existing loan transition rules, including Personal Loan, stay unchanged.
+    const effectiveStage = serviceProducts.includes(lead.productType)
+      ? input.stage ?? current.stage : input.stage;
+    if (effectiveStage === "approved" || (lead.productType === 'insta-loans' && effectiveStage === 'disbursed')) {
+      const requiredDecision = effectiveStage === 'disbursed' ? 'disbursed' : 'approved';
       const providerDecision =
         input.providerDecision ?? current.providerDecision ?? "unconfirmed";
       const provider = input.provider ?? current.provider;
@@ -631,6 +635,9 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         ),
         fromVersion: version,
         toVersion: version + 1,
+        changes: Object.fromEntries(Object.keys(input)
+          .filter(key => key !== 'version' && key !== 'note')
+          .map(key => [key, { before: current[key] ?? (key === 'stage' ? 'new' : null), after: next[key] }])),
       },
       tx,
     );

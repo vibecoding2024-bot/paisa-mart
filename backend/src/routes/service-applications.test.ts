@@ -42,7 +42,7 @@ for (const source of SERVICE_SOURCES) test.serial(`${source.kind}: full details 
   expect(row.phone_number).toBe(common.phoneNumber);
   expect((db.query(`SELECT COUNT(*) AS n FROM ${source.table}`).get() as any).n).toBe(1);
   expect((await submit(source.kind, { ...inputs[source.kind], fullName: 'Changed' }, key)).status).toBe(409);
-  const receipt = await body(await router.request(`/${source.kind}/receipts/${a.data.id}`));
+  const receipt = await body(await router.request(`/${source.kind}/receipts/${a.data.id}`, { headers: { Authorization: `Bearer ${key}` } }));
   expect(receipt.data).toEqual(a.data);
   expect(Object.keys(receipt.data).sort()).toEqual(['createdAt','id','referenceNumber']);
 });
@@ -57,7 +57,7 @@ test.serial('all five reject invalid input and failed writes without a success r
     expect(await body(failed)).toEqual({ success: false, message: 'Could not save your application. Please retry.' });
     db.run('DROP TRIGGER fail_write');
   }
-  expect((await router.request('/motor-insurance/receipts/' + crypto.randomUUID())).status).toBe(404);
+  expect((await router.request('/motor-insurance/receipts/' + crypto.randomUUID(), { headers: { Authorization: 'Bearer '+crypto.randomUUID() } })).status).toBe(404);
   expect((await submit('toString', common)).status).toBe(404);
 });
 test.serial('health conditional fields and motor date/type fields are validated', async () => {
@@ -117,5 +117,34 @@ test.serial('existing admin/viewer permissions and sensitive-field redaction cov
     expect(lead.extraDetails['Pre-existing Disease']).toBeUndefined();
     expect(lead.extraDetails['Vehicle Number']).toBeUndefined();
     expect((await ops(viewer, `/applications/${lead.id}`, 'PATCH', { version: lead.version, stage: 'new' })).status).toBe(403);
+  }
+});
+
+test.serial('receipts require the matching private submission key and expose no customer fields', async () => {
+  const key = crypto.randomUUID();
+  const saved = (await body(await submit('health-insurance', inputs['health-insurance'], key))).data;
+  const path = '/health-insurance/receipts/' + saved.id;
+  expect((await router.request(path)).status).toBe(401);
+  expect((await router.request(path, { headers: { Authorization: 'Bearer ' + crypto.randomUUID() } })).status).toBe(404);
+  const response = await router.request(path, { headers: { Authorization: 'Bearer ' + key } });
+  expect(response.status).toBe(200);
+  expect(response.headers.get('Cache-Control')).toBe('no-store');
+  expect(Object.keys((await body(response)).data).sort()).toEqual(['createdAt','id','referenceNumber']);
+});
+test.serial('final milestones cannot lose evidence and audit retains exact before/after values atomically', async () => {
+  const token = await login();
+  for (const source of SERVICE_SOURCES) {
+    const id = receipts[source.kind].referenceNumber;
+    for (const change of [{providerEvidence:''},{providerDecision:'unconfirmed'}])
+      expect((await ops(token, `/applications/${id}`, 'PATCH', {version:2,...change})).status).toBe(400);
+    expect((await ops(token, `/applications/${id}`, 'PATCH', {version:2,stage:'submitted',providerDecision:'unconfirmed',providerEvidence:''})).status).toBe(200);
+    const events = (await body(await ops(token, '/audit'))).data.filter((event:any)=>event.entityId===id);
+    expect(events[0].details.changes.providerEvidence).toEqual({before:'Test provider document',after:''});
+    expect(events[0].details.changes.stage).toEqual({before:source.kind==='insta-loans'?'disbursed':'approved',after:'submitted'});
+    db.run("CREATE TRIGGER fail_audit BEFORE INSERT ON admin_audit BEGIN SELECT RAISE(FAIL, 'test failure'); END");
+    expect((await ops(token, `/applications/${id}`, 'PATCH', {version:3,assignedOwner:''})).status).toBe(503);
+    db.run('DROP TRIGGER fail_audit');
+    const lead=(await body(await ops(token,'/applications'))).data.find((x:any)=>x.id===id);
+    expect(lead.version).toBe(3);expect(lead.assignedOwner).toBe('admin@example.test');
   }
 });

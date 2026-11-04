@@ -60,9 +60,11 @@ serviceApplicationsRouter.post('/:product/applications', async c => {
 });
 serviceApplicationsRouter.get('/:product/receipts/:id', async c => {
   const { product, id } = c.req.param();
+  const key = c.req.header('Authorization')?.match(/^Bearer ([a-zA-Z0-9-]{16,128})$/)?.[1];
+  if (!key) return c.json({ success: false, message: 'Application receipt required' }, 401);
   if (!Object.hasOwn(schemas, product) || !z.string().uuid().safeParse(id).success) return c.json({ success: false }, 404);
   try {
-    const data = await serviceReceipt(product as ServiceProduct, id);
+    const data = await serviceReceipt(product as ServiceProduct, id, key);
     return data ? c.json({ success: true, data }) : c.json({ success: false, message: 'Saved application not found' }, 404);
   } catch { return c.json({ success: false, message: 'Unable to verify the saved application' }, 503); }
 });
