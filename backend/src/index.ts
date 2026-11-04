@@ -14,6 +14,7 @@ import { personalLoansRouter } from "./routes/personal-loans";
 import { businessLoansRouter } from "./routes/business-loans";
 import { lifeInsuranceRouter } from "./routes/life-insurance";
 import { vehicleLoansRouter } from "./routes/vehicle-loans";
+import { serviceApplicationsRouter } from "./routes/service-applications";
 import { homeLoansRouter } from "./routes/home-loans";
 import { adminRouter } from "./routes/admin";
 
@@ -237,6 +238,7 @@ app.route("/api/personal-loans", personalLoansRouter);
 app.route("/api/business-loans", businessLoansRouter);
 app.route("/api/life-insurance", lifeInsuranceRouter);
 app.route("/api/vehicle-loans", vehicleLoansRouter);
+app.route("/api/services", serviceApplicationsRouter);
 app.route("/api/home-loans", homeLoansRouter);
 app.route("/api/admin", adminRouter);
 

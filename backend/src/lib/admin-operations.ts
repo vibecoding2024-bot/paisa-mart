@@ -1,5 +1,6 @@
 import { Database } from "bun:sqlite";
 import type { AuthClaims } from "./auth-token";
+import { SERVICE_SOURCES, initializeServiceApplications } from './service-application-store';
 
 export type Role = "admin" | "ops" | "viewer";
 export type Actor = { id: string; email: string; role: Role };
@@ -223,6 +224,7 @@ export async function saveStaff(input: any, actor: Actor) {
   });
 }
 const sources = [
+  ...SERVICE_SOURCES.map(source => ({ ...source, env: 'HOME_LOANS_DATABASE_URL' })),
   {
     table: "home_loan_leads",
     kind: "home-loans",
@@ -285,6 +287,7 @@ const homeMap: Record<string, string> = {
 };
 export async function applications(actor: Actor) {
   await migrate();
+  await initializeServiceApplications();
   const rows: any[] = [];
   const availability: Record<string, string> = {};
   const metadata = new Map(
@@ -361,6 +364,19 @@ export async function applications(actor: Actor) {
           "Vehicle Condition": ["vehicleCondition", "vehicle_condition"],
           "Vehicle Type": ["vehicleType", "vehicle_type"],
           Occupation: ["occupation"],
+          "Product": ["productName"],
+          "Selected Members": ["selectedMembers"],
+          "Elder Age": ["elderAge"],
+          "Children Count": ["childrenCount"],
+          "Pincode": ["pincode"],
+          "Pre-existing Disease": ["preExistingDisease"],
+          "Vehicle Category": ["vehicleCategory"],
+          "Vehicle Type Details": ["vehicleTypeOther"],
+          "Insurance Type": ["insuranceType"],
+          "Model Year": ["modelYear"],
+          "Vehicle Number": ["vehicleNumber"],
+          "Registration Year": ["registrationYear"],
+          "Insurance Expiry Date": ["insuranceExpiryDate"],
         };
         for (const [label, [camel, snake]] of Object.entries(detailFields)) {
           const value = field(camel, snake);
@@ -376,7 +392,7 @@ export async function applications(actor: Actor) {
         mobile: actor.role === "viewer" ? "******" + phone.slice(-4) : phone,
         email: "",
         productType: source.kind,
-        provider: op.provider || "Not recorded",
+        provider: op.provider || field("provider") || "Not recorded",
         providerDecision: op.providerDecision ?? "unconfirmed",
         providerEvidence:
           actor.role === "viewer" ? "" : (op.providerEvidence ?? ""),
@@ -532,18 +548,21 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
         "Application changed. Refresh and try again.",
         409,
       );
-    if (input.stage === "approved") {
+    if (input.stage === "approved" || (lead.productType === 'insta-loans' && input.stage === 'disbursed')) {
+      const requiredDecision = input.stage === 'disbursed' ? 'disbursed' : 'approved';
       const providerDecision =
         input.providerDecision ?? current.providerDecision ?? "unconfirmed";
       const provider = input.provider ?? current.provider;
       const providerEvidence = input.providerEvidence ?? current.providerEvidence;
       if (
-        providerDecision !== "approved" ||
+        providerDecision !== requiredDecision ||
         !provider?.trim() ||
         !providerEvidence?.trim()
       )
         throw new OperationsError(
-          "Record provider approval and evidence before confirming this milestone",
+          requiredDecision === 'disbursed'
+            ? "Record provider disbursement and evidence before confirming this milestone"
+            : "Record provider approval and evidence before confirming this milestone",
         );
     }
     const at = new Date().toISOString();

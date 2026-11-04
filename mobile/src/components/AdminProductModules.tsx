@@ -4,6 +4,11 @@ import { PRODUCT_MODULES, SERVICE_STAGE_LABELS } from '../lib/product-catalog';
 import { useAdminStore } from '@/lib/admin-store';
 
 const SOURCES: Record<string, string[]> = {
+  'credit-cards': ['credit_card_applications'],
+  'bank-accounts': ['bank_account_applications'],
+  'insta-loans': ['insta_loan_applications'],
+  'health-insurance': ['health_insurance_applications'],
+  'motor-insurance': ['motor_insurance_applications'],
   'home-loans': ['home_loan_leads'],
   'personal-loans': ['personal_loan_applications', 'personal_loan_leads'],
   'business-loans': ['business_loan_leads'],

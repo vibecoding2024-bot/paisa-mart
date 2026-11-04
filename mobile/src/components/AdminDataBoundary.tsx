@@ -13,9 +13,6 @@ export default function AdminDataBoundary({
   const unsupported = [
     "whatsapp-leads",
     "open-plots-leads",
-    "vehicle-insurance-leads",
-    "health-insurance",
-    "motor-insurance",
   ].some((p) => pathname.endsWith("/" + p));
   const refresh = useAdminStore((s) => s.refresh),
     loading = useAdminStore((s) => s.loading),
