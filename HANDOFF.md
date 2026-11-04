@@ -1,6 +1,6 @@
 # Paisa Mart PR #6 — AWS EC2 handoff
 
-Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed with the disclosed baseline/legacy limitations below. A remote PR-head mismatch currently blocks merge readiness; PR remains draft. No merge, upload, service restart on EC2, production migration or deployment.**
+Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed with the disclosed baseline/legacy limitations below. GitHub's transient PR-head mismatch resolved; PR remains draft for user merge review. No merge, upload, service restart on EC2, production migration or deployment.**
 
 ## Exact source and preserved checkouts
 
@@ -13,7 +13,7 @@ Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed w
 - The original sibling implementation `../paisa-mart-requirements-20261101`, branch `feature/loan-requirements-20261101` at `110bda741f3df72e9c59e3b755605a2852b64165`, and detached `.dash` baseline were preserved.
 - Dependencies were reused and restored by the existing guarded try/finally build helper. Temporary investigations, browser harnesses, screenshots, synthetic databases and local preview exports stay outside the PR.
 - GitHub metadata was checked before this update: PR open/draft/unmerged, exact expected prior head and main base, no returned main branch rules. No hosting check, hosting configuration or hosting deployment was investigated or changed in this resumed work. Netlify/Vercel preview results are excluded from AWS readiness.
-- Final remote check: the source branch was successfully pushed to `54cba928702b742418a608fba11b8c892ab6134c` (implementation plus handoff), confirmed by both Git refs and GitHub's branch API. GitHub's PR API and `refs/pull/6/head` still reported `66ca4e3320d2bc00fbc508a65ccbc55b4f315471`. This documentation-only follow-up records that discrepancy. **Before merge approval, PR #6 must resolve to the latest published feature-branch head, including this handoff update.** No force push, close/reopen, merge or bypass was attempted. The draft description links the tested implementation and review evidence.
+- GitHub briefly continued reporting PR head `66ca4e3` after branch pushes. A subsequent remote check confirmed that PR #6 and its source branch both resolved to `9cfc506cd47ce5e3778fe51c94ed8b230fef79cf`; the mismatch resolved without force push, close/reopen, merge or bypass. This follow-up changes only documentation. **Before merge approval, recheck that PR #6 matches the latest published feature-branch head, including this handoff update.** The draft description links the tested implementation and review evidence.
 - Non-hosting check runs/statuses for the published review commit: none returned. Main rules: empty; classic branch-protection endpoint: 404 (none returned). GitHub reported mergeable but an overall `unstable` state; ignored hosting preview results are not used to establish AWS readiness. Missing remote checks do not replace the recorded local verification.
 
 ## Requirements, deduplicated against both PDFs
@@ -206,7 +206,7 @@ The README separates local preparation, separately approved FileZilla upload, re
 
 **Implementation:** all confirmed non-financial requirements represented above are complete in the tested SQLite preview. External provider automation was not specified and is not fabricated. No payout calculation is enabled.
 
-**Verdict: implementation review passed in the confirmed SQLite scope; PR is not yet merge-ready until its head matches the latest published reviewed branch.** The documented pre-existing full-backend compiler and legacy lead retry limitations remain. PR #6 stays draft; no merge is authorized. After the remote-head gate, release gates are separate merge approval, clean merged-main build/verification, fresh live EC2 baseline checks, then separate upload/deployment authorization. PostgreSQL is unverified and excluded; any live override stops this SQLite release. No readiness claim relies on hosting previews.
+**Verdict: ready for user merge review in the confirmed SQLite scope**, with the documented pre-existing full-backend compiler and legacy lead retry limitations. The transient remote-head mismatch resolved; matching the latest published head remains a required final pre-merge check. PR #6 stays draft; no merge is authorized. Release gates are separate merge approval, clean merged-main build/verification, fresh live EC2 baseline checks, then separate upload/deployment authorization. PostgreSQL is unverified and excluded; any live override stops this SQLite release. No readiness claim relies on hosting previews.
 
 **Business confirmation only:** meaning of deducted share; whether Home/Personal/Business examples are fixed payouts or rates; the Business example's Personal wording; revenue/TDS basis and manual/automatic rules; insurance percentage bases/tiers and Life admin share; executive/manager role mapping and authorization policy. F01–F12 remain disabled pending that confirmation.
 
