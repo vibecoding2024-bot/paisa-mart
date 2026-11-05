@@ -7,7 +7,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -24,8 +23,10 @@ import {
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
-import { useHealthInsuranceStore, InsuranceMember, MEMBER_LABELS } from '@/lib/health-insurance-store';
+import { InsuranceMember, MEMBER_LABELS } from '@/lib/health-insurance-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { useServiceSubmission } from '@/lib/use-service-submission';
+import ApplicationSaved from '@/components/ApplicationSaved';
 
 function FieldLabel({ text, required }: { text: string; required?: boolean }) {
   return (
@@ -47,7 +48,7 @@ function ErrorMsg({ msg }: { msg: string }) {
 export default function HealthInsuranceDetailsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ members: string; insurer: string }>();
-  const addApplication = useHealthInsuranceStore((s) => s.addApplication);
+  const submission = useServiceSubmission('health-insurance');
   const profile = useUserProfileStore((s) => s.profile);
 
   const selectedMembers: InsuranceMember[] = useMemo(() => {
@@ -82,42 +83,22 @@ export default function HealthInsuranceDetailsScreen() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleViewPlans = () => {
+  const handleViewPlans = async () => {
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
-    const userName = profile?.name || 'User';
-    const phoneNumber = profile?.phoneNumber || '—';
-
-    addApplication({
-      user_name: userName,
-      phone_number: phoneNumber,
-      selected_health_insurer: params.insurer || '',
-      selected_members: selectedMembers,
-      elder_age: showAge ? elderAge : '',
-      children_count: showChildren ? childrenCount : 0,
+    await submission.submit({
+      fullName: profile?.name || '',
+      phoneNumber: profile?.phoneNumber || '',
+      provider: params.insurer || '',
+      selectedMembers,
+      elderAge: showAge ? elderAge : '',
+      childrenCount: showChildren ? childrenCount : 0,
       pincode,
-      pre_existing_disease: preExisting,
+      preExistingDisease: preExisting,
     });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    Alert.alert(
-      'Application Submitted!',
-      'Your health insurance query has been received. Our team will review your details and reach out with tailored plans.',
-      [
-        {
-          text: 'View Plans',
-          onPress: () =>
-            router.replace({
-              pathname: '/(tabs)/products',
-              params: { category: 'health-insurance' },
-            }),
-        },
-      ]
-    );
   };
 
   const memberSummary = selectedMembers.map((m) => MEMBER_LABELS[m]).join(', ');
@@ -184,6 +165,7 @@ export default function HealthInsuranceDetailsScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {submission.error ? <Text accessibilityRole="alert" style={{ color: '#DC2626', marginBottom: 16 }}>{submission.error}</Text> : null}
           {/* Subtitle */}
           <Animated.View entering={FadeInDown.delay(80).springify()}>
             <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 20 }}>
@@ -485,6 +467,8 @@ export default function HealthInsuranceDetailsScreen() {
           </Pressable>
           <Pressable
             onPress={handleViewPlans}
+            disabled={submission.busy || !!submission.saved}
+            accessibilityRole="button"
             style={{ flex: 2, borderRadius: 14, overflow: 'hidden' }}
           >
             <LinearGradient
@@ -498,12 +482,13 @@ export default function HealthInsuranceDetailsScreen() {
               }}
             >
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 }}>
-                View Plans
+                {submission.busy ? 'Submitting…' : 'View Plans'}
               </Text>
             </LinearGradient>
           </Pressable>
         </View>
       </View>
+      <ApplicationSaved reference={submission.saved?.referenceNumber ?? null} product="health insurance" onDone={() => router.replace('/(tabs)')} />
     </KeyboardAvoidingView>
   );
 }

@@ -12,8 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { ChevronLeft, User, Phone, Car, Calendar, Clock, MapPin } from 'lucide-react-native';
-import * as Haptics from '@/lib/haptics';
-import { useVehicleInsuranceLeadsStore } from '@/lib/vehicle-insurance-leads-store';
+import { useServiceSubmission } from '@/lib/use-service-submission';
 
 export default function VehicleDetailsScreen() {
   const router = useRouter();
@@ -22,7 +21,7 @@ export default function VehicleDetailsScreen() {
     vehicleType: string;
   }>();
 
-  const addLead = useVehicleInsuranceLeadsStore((s) => s.addLead);
+  const submission = useServiceSubmission('motor-insurance');
 
   const [ownerName, setOwnerName] = useState('');
   const [mobile, setMobile] = useState('');
@@ -31,28 +30,25 @@ export default function VehicleDetailsScreen() {
   const [insuranceExpiryDate, setInsuranceExpiryDate] = useState('');
   const [city, setCity] = useState('');
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!isFormValid) return;
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    // Create lead
-    const newLead = addLead({
+    const saved = await submission.submit({
+      form: 'quote',
+      fullName: ownerName.trim(),
+      phoneNumber: mobile.trim(),
+      provider: '',
       vehicleCategory: params.category,
       vehicleType: params.vehicleType,
       vehicleNumber: vehicleNumber.trim().toUpperCase(),
       registrationYear: registrationYear.trim(),
       insuranceExpiryDate: insuranceExpiryDate.trim(),
-      ownerName: ownerName.trim(),
-      mobile: mobile.trim(),
       city: city.trim(),
-      timestamp: new Date().toISOString(),
     });
-
-    // Navigate to success screen
+    if (!saved) return;
     router.push({
       pathname: '/vehicle-insurance/success',
-      params: { leadId: newLead.id },
+      params: { leadId: saved.id },
     } as any);
   };
 
@@ -89,6 +85,7 @@ export default function VehicleDetailsScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: 20 }}
         >
+          {submission.error ? <Text accessibilityRole="alert" className="text-red-600 mb-4">{submission.error}</Text> : null}
           {/* Title Section */}
           <Animated.View entering={FadeInDown.delay(100)} className="mb-6">
             <Text className="text-gray-900 font-bold text-2xl text-center mb-2">
@@ -212,7 +209,8 @@ export default function VehicleDetailsScreen() {
         <View className="px-6 pb-8">
           <Pressable
             onPress={handleSubmit}
-            disabled={!isFormValid}
+            disabled={!isFormValid || submission.busy || !!submission.saved}
+            accessibilityRole="button"
             className={`rounded-2xl py-5 items-center ${
               isFormValid ? 'bg-blue-500' : 'bg-gray-300'
             }`}
@@ -224,7 +222,7 @@ export default function VehicleDetailsScreen() {
               elevation: 4,
             }}
           >
-            <Text className="text-white font-bold text-lg">Get Insurance Quote</Text>
+            <Text className="text-white font-bold text-lg">{submission.busy ? 'Submitting…' : 'Get Insurance Quote'}</Text>
           </Pressable>
         </View>
       </SafeAreaView>

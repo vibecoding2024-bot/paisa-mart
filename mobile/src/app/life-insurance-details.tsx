@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import ApplicationSaved from '@/components/ApplicationSaved';
+import { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,8 +8,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Modal,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -32,6 +33,7 @@ import {
   PremiumSlab,
 } from '@/lib/life-insurance-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { submitLifeInsuranceLead } from '@/lib/life-insurance-api';
 
 function FieldLabel({ text, required }: { text: string; required?: boolean }) {
   return (
@@ -143,12 +145,15 @@ export default function LifeInsuranceDetailsScreen() {
   const params = useLocalSearchParams<{ insurer?: string }>();
   const insurer = params.insurer || '';
 
-  const addApplication = useLifeInsuranceStore((s) => s.addApplication);
   const profile = useUserProfileStore((s) => s.profile);
 
   const [policyType, setPolicyType] = useState<PolicyType | ''>('');
   const [premiumSlab, setPremiumSlab] = useState<PremiumSlab | ''>('');
   const [premiumOther, setPremiumOther] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [savedReference, setSavedReference] = useState<string | null>(null);
+  const submitting = useRef(false);
 
   const [showPolicyModal, setShowPolicyModal] = useState(false);
   const [showPremiumModal, setShowPremiumModal] = useState(false);
@@ -163,46 +168,52 @@ export default function LifeInsuranceDetailsScreen() {
     const e: typeof errors = {};
     if (!policyType) e.policyType = 'Please select a policy type.';
     if (!premiumSlab) e.premiumSlab = 'Please select a premium amount.';
-    if (premiumSlab === 'Others Amount' && !premiumOther.trim())
+    if (premiumSlab === 'Others Amount' && !/^[1-9]\d{0,11}$/.test(premiumOther.trim()))
       e.premiumOther = 'Please enter the monthly premium amount.';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (submitting.current || savedReference) return;
+    setSubmitError('');
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
-    addApplication({
-      user_name: profile?.name || 'User',
-      phone_number: profile?.phoneNumber || '—',
-      selected_life_insurer: insurer,
-      policy_type: policyType as PolicyType,
-      premium_slab: premiumSlab as PremiumSlab,
-      premium_other_amount: premiumSlab === 'Others Amount' ? premiumOther.trim() : '',
-    });
+    if (isSubmitting) return;
+    const phoneNumber = profile?.phoneNumber?.replace(/\D/g, '').slice(-10) ?? '';
+    if (!/^[6-9]\d{9}$/.test(phoneNumber)) {
+      setSubmitError('A valid mobile number is required to submit. Please update your profile and try again.');
+      return;
+    }
 
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    Alert.alert(
-      'Application Submitted!',
-      'Your life insurance query has been received. Our team will review your details and reach out with the best plans.',
-      [
-        {
-          text: 'View Offers',
-          onPress: () =>
-            router.replace({
-              pathname: '/(tabs)/products',
-              params: { category: 'life-insurance' },
-            }),
-        },
-      ]
-    );
+    submitting.current = true;
+      setIsSubmitting(true);
+    try {
+      const receipt = await submitLifeInsuranceLead({
+        phoneNumber,
+        fullName: profile?.name?.trim() || 'User',
+        selectedLifeInsurer: insurer,
+        policyType: policyType as PolicyType,
+        premiumSlab: premiumSlab as PremiumSlab,
+        premiumOtherAmount: premiumSlab === 'Others Amount' ? premiumOther.trim() : '',
+      });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setSavedReference(String(receipt.id));
+    } catch (error) {
+      setSubmitError(error instanceof Error ? error.message : 'Could not submit life insurance details');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } finally {
+      submitting.current = false;
+      setIsSubmitting(false);
+    }
   };
 
   return (
+    <>
+    <ApplicationSaved reference={savedReference} product="life insurance" onDone={() => router.replace('/(tabs)')} />
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -439,6 +450,11 @@ export default function LifeInsuranceDetailsScreen() {
               Your details are used solely to match you with the most suitable life insurance plans. We never share your information without your consent.
             </Text>
           </Animated.View>
+          {submitError ? (
+            <Text accessibilityRole="alert" style={{ color: '#DC2626', marginTop: 14, fontSize: 13 }}>
+              {submitError}
+            </Text>
+          ) : null}
         </ScrollView>
 
         {/* Bottom CTA */}
@@ -479,7 +495,8 @@ export default function LifeInsuranceDetailsScreen() {
           </Pressable>
           <Pressable
             onPress={handleSubmit}
-            style={{ flex: 2, borderRadius: 14, overflow: 'hidden' }}
+            disabled={isSubmitting}
+            style={{ flex: 2, borderRadius: 14, overflow: 'hidden', opacity: isSubmitting ? 0.7 : 1 }}
           >
             <LinearGradient
               colors={['#002561', '#003380']}
@@ -487,9 +504,11 @@ export default function LifeInsuranceDetailsScreen() {
               end={{ x: 1, y: 0 }}
               style={{ paddingVertical: 15, alignItems: 'center', justifyContent: 'center' }}
             >
-              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 }}>
-                Submit
-              </Text>
+              {isSubmitting ? <ActivityIndicator color="#fff" /> : (
+                <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 }}>
+                  Submit
+                </Text>
+              )}
             </LinearGradient>
           </Pressable>
         </View>
@@ -508,5 +527,6 @@ export default function LifeInsuranceDetailsScreen() {
         />
       </View>
     </KeyboardAvoidingView>
+    </>
   );
 }

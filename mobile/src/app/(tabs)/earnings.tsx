@@ -33,6 +33,7 @@ import {
 import * as Haptics from "@/lib/haptics";
 import { toast } from "@/lib/toast-store";
 import PressableScale from "@/components/PressableScale";
+import { PAYOUT_CALCULATIONS_ENABLED } from '../../lib/product-catalog';
 import { useIncentiveStore } from "@/lib/incentive-store";
 import { KYC_ENFORCEMENT_DISABLED } from "@/lib/onboarding-flow";
 
@@ -103,6 +104,7 @@ export default function EarningsScreen() {
   }, [bankAccounts]);
 
   const handleWithdraw = () => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) { toast.info('Payouts are awaiting business confirmation.'); return; }
     if (!canWithdraw) {
       if (!KYC_ENFORCEMENT_DISABLED && userKYC?.status !== "verified") {
         toast.info("Complete your KYC to unlock withdrawals");
@@ -118,6 +120,7 @@ export default function EarningsScreen() {
   };
 
   const handleConfirmWithdraw = () => {
+    if (!PAYOUT_CALCULATIONS_ENABLED) return;
     const amount = parseInt(withdrawAmount, 10);
 
     if (isNaN(amount) || amount <= 0) {
@@ -181,7 +184,7 @@ export default function EarningsScreen() {
           <Text
             style={{ fontSize: 11, lineHeight: 17, color: "#896029", flex: 1 }}
           >
-            Preview · These are sample figures, not your live balance.
+            Preview figures only. Payout calculations and withdrawals are disabled pending business confirmation.
           </Text>
         </View>
         <LinearGradient
@@ -224,6 +227,7 @@ export default function EarningsScreen() {
           </Text>
           <View style={{ flexDirection: "row", gap: 12, marginTop: 25 }}>
             <PressableScale
+              disabled={!PAYOUT_CALCULATIONS_ENABLED}
               onPress={handleWithdraw}
               style={{
                 backgroundColor: palette.mint,

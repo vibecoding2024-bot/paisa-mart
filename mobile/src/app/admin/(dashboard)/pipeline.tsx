@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, FlatList } from 'react-native';
+import { View, Text, ScrollView, Pressable, FlatList, useWindowDimensions } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 import { Clock, User, AlertTriangle, ChevronRight } from 'lucide-react-native';
@@ -10,7 +10,10 @@ import {
   LeadStage,
   STAGE_LABELS,
   STAGE_COLORS,
+  PRODUCT_LABELS,
+  ProductCategory,
 } from '@/lib/admin-store';
+import { leadStageLabel, leadStageOptions } from '@/lib/loan-product-stages';
 
 const PIPELINE_STAGES: LeadStage[] = [
   'new',
@@ -27,13 +30,15 @@ const PIPELINE_STAGES: LeadStage[] = [
 
 interface PipelineColumnProps {
   stage: LeadStage;
+  label: string;
+  compact: boolean;
   leads: Lead[];
   onLeadPress: (lead: Lead) => void;
   isSelected: boolean;
   onSelect: () => void;
 }
 
-function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: PipelineColumnProps) {
+function PipelineColumn({ stage, label, compact, leads, onLeadPress, isSelected, onSelect }: PipelineColumnProps) {
   const stuckLeads = leads.filter(l => {
     const hoursSinceUpdate = (Date.now() - new Date(l.updatedAt).getTime()) / (1000 * 60 * 60);
     return hoursSinceUpdate > 48 && !['closed', 'disbursed', 'rejected'].includes(l.stage);
@@ -50,13 +55,13 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
         style={{ backgroundColor: STAGE_COLORS[stage] + '30' }}
       >
         <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 }}>
             <View
               className="w-2 h-2 rounded-full mr-2"
               style={{ backgroundColor: STAGE_COLORS[stage] }}
             />
-            <Text className="text-white font-medium text-sm" numberOfLines={1}>
-              {STAGE_LABELS[stage]}
+            <Text className="text-white font-medium text-sm" style={{ flexShrink: 1 }}>
+              {label}
             </Text>
           </View>
           <View className="bg-slate-700 px-2 py-0.5 rounded">
@@ -72,7 +77,7 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
       </View>
 
       {/* Column Content */}
-      <View className="bg-slate-800/50 rounded-b-xl p-2 min-h-[300px]">
+      <ScrollView className="bg-slate-800/50 rounded-b-xl" style={{ flexGrow: 0, ...(compact ? { height: 230 } : {}) }} contentContainerStyle={{ padding: 8, minHeight: compact ? 230 : 300 }}>
         {leads.slice(0, 5).map((lead, index) => {
           const hoursSinceUpdate = (Date.now() - new Date(lead.updatedAt).getTime()) / (1000 * 60 * 60);
           const isStuck = hoursSinceUpdate > 48;
@@ -83,10 +88,13 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
               onPress={() => onLeadPress(lead)}
               className={`bg-slate-800 rounded-lg p-3 mb-2 ${isStuck ? 'border border-amber-500/50' : ''}`}
             >
-              <Text className="text-white font-medium text-sm" numberOfLines={1}>
+              <Text className="text-white font-medium text-sm" style={{ flexShrink: 1 }}>
                 {lead.userName}
               </Text>
               <Text className="text-slate-400 text-xs mt-1">{lead.provider}</Text>
+              <Text className="text-orange-400 text-xs mt-1">
+                {leadStageLabel(lead.productType, lead.stage)}
+              </Text>
               <View className="flex-row items-center justify-between mt-2">
                 <View className="flex-row items-center">
                   <Clock size={10} color="#64748B" />
@@ -116,14 +124,18 @@ function PipelineColumn({ stage, leads, onLeadPress, isSelected, onSelect }: Pip
             <Text className="text-slate-500 text-xs">No leads</Text>
           </View>
         )}
-      </View>
+      </ScrollView>
     </Pressable>
   );
 }
 
 export default function PipelineScreen() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const leads = useAdminStore(s => s.leads);
+  const [selectedProduct, setSelectedProduct] = useState<ProductCategory | 'all'>('all');
+  const stages = selectedProduct === 'all' ? PIPELINE_STAGES : leadStageOptions(selectedProduct);
+  const stageLabel = (stage: LeadStage) => selectedProduct === 'all' ? STAGE_LABELS[stage] : leadStageLabel(selectedProduct, stage);
   const [selectedStage, setSelectedStage] = useState<LeadStage>('new');
 
   const leadsByStage = useMemo(() => {
@@ -140,12 +152,12 @@ export default function PipelineScreen() {
       closed: [],
     };
 
-    leads.forEach(lead => {
+    leads.filter(lead => selectedProduct === 'all' || lead.productType === selectedProduct).forEach(lead => {
       grouped[lead.stage].push(lead);
     });
 
     return grouped;
-  }, [leads]);
+  }, [leads, selectedProduct]);
 
   const selectedLeads = leadsByStage[selectedStage];
 
@@ -170,6 +182,9 @@ export default function PipelineScreen() {
         </Text>
       </View>
 
+      <ScrollView horizontal style={{ flexGrow: 0, flexShrink: 0 }} contentContainerStyle={{ padding: 16, gap: 8 }}>
+        {(['all', ...Object.keys(PRODUCT_LABELS)] as const).map(product => <Pressable key={product} onPress={() => { setSelectedProduct(product as ProductCategory | 'all'); setSelectedStage('new'); }} className={selectedProduct === product ? 'bg-orange-500 rounded-xl p-3' : 'bg-slate-800 rounded-xl p-3'}><Text className="text-white">{product === 'all' ? 'All products' : PRODUCT_LABELS[product as ProductCategory]}</Text></Pressable>)}
+      </ScrollView>
       {/* Pipeline Columns */}
       <View className="border-b border-slate-800">
         <ScrollView keyboardShouldPersistTaps="handled"
@@ -177,10 +192,12 @@ export default function PipelineScreen() {
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={{ padding: 16 }}
         >
-          {PIPELINE_STAGES.map((stage) => (
+          {stages.map((stage) => (
             <PipelineColumn
               key={stage}
               stage={stage}
+              label={stageLabel(stage)}
+              compact={width < 768}
               leads={leadsByStage[stage]}
               onLeadPress={handleLeadPress}
               isSelected={selectedStage === stage}
@@ -193,13 +210,13 @@ export default function PipelineScreen() {
       {/* Selected Stage Details */}
       <View className="flex-1 p-4">
         <View className="flex-row items-center justify-between mb-4">
-          <View className="flex-row items-center">
+          <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0, marginRight: 8 }}>
             <View
               className="w-3 h-3 rounded-full mr-2"
               style={{ backgroundColor: STAGE_COLORS[selectedStage] }}
             />
             <Text className="text-white font-semibold text-lg">
-              {STAGE_LABELS[selectedStage]}
+              {stageLabel(selectedStage)}
             </Text>
             <Text className="text-slate-400 ml-2">({selectedLeads.length})</Text>
           </View>

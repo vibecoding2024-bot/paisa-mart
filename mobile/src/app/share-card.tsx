@@ -155,6 +155,7 @@ export default function ShareCardScreen() {
   }
 
   const content = product.content;
+  const hasIntake = ['credit-cards', 'bank-accounts', 'insta-loans'].includes(product.category);
   const referralLink = product.applicationUrl || `https://apply.paisamart.in/${product.id}?ref=${advisor.referralCode}`;
   const supportPhones = product.supportPhones || SUPPORT_PHONES;
   const messageFooter = product.messageFooter || {
@@ -292,7 +293,9 @@ export default function ShareCardScreen() {
               ))}
 
               {/* Apply Now */}
-              <Text className="text-gray-700 mt-4">
+              {hasIntake ? <Pressable accessibilityRole="button" className="bg-blue-500 rounded-xl p-4 mt-4 items-center" onPress={() => router.push({ pathname: '/service-application', params: { product: product.category, provider: product.providerName, productName: product.productName } })}>
+                <Text className="text-white font-semibold">Apply Now</Text>
+              </Pressable> : <Text className="text-gray-700 mt-4">
                 {product.applicationUrl && selectedLanguage === 'english'
                   ? `Now open a savings account from the comfort of your home - ${referralLink}`
                   : selectedLanguage === 'english'
@@ -300,7 +303,7 @@ export default function ShareCardScreen() {
                   : selectedLanguage === 'hindi'
                   ? `अभी आवेदन करें अपना ${product.providerName} ${product.productName} पाने के लिए -`
                   : `మీ ${product.providerName} ${product.productName} పొందడానికి ఇప్పుడే అప్లై చేయండి -`}
-              </Text>
+              </Text>}
 
               {/* Support Info */}
               <Text className="text-gray-700 mt-3">

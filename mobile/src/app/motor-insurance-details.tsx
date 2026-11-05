@@ -7,7 +7,6 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Alert,
   Modal,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -25,13 +24,14 @@ import {
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from '@/lib/haptics';
 import {
-  useMotorInsuranceStore,
   VEHICLE_TYPES,
   INSURANCE_TYPES,
   VehicleType,
   InsuranceType,
 } from '@/lib/motor-insurance-store';
 import { useUserProfileStore } from '@/lib/user-profile-store';
+import { useServiceSubmission } from '@/lib/use-service-submission';
+import ApplicationSaved from '@/components/ApplicationSaved';
 
 // ─── Field Label ────────────────────────────────────────────────
 function FieldLabel({ text, required }: { text: string; required?: boolean }) {
@@ -243,7 +243,7 @@ export default function MotorInsuranceDetailsScreen() {
   const params = useLocalSearchParams<{ insurer?: string }>();
   const insurer = params.insurer || '';
 
-  const addApplication = useMotorInsuranceStore((s) => s.addApplication);
+  const submission = useServiceSubmission('motor-insurance');
   const profile = useUserProfileStore((s) => s.profile);
 
   const [vehicleType, setVehicleType] = useState<VehicleType | ''>('');
@@ -272,41 +272,22 @@ export default function MotorInsuranceDetailsScreen() {
     return Object.keys(e).length === 0;
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!validate()) {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
       return;
     }
 
-    const userName = profile?.name || 'User';
-    const phoneNumber = profile?.phoneNumber || '—';
-
-    addApplication({
-      user_name: userName,
-      phone_number: phoneNumber,
-      selected_motor_insurer: insurer,
-      vehicle_type: vehicleType as VehicleType,
-      vehicle_type_other_text: vehicleType === 'Others' ? vehicleOther.trim() : '',
-      insurance_type: insuranceType as InsuranceType,
-      model_year: modelYear,
+    await submission.submit({
+      fullName: profile?.name || '',
+      phoneNumber: profile?.phoneNumber || '',
+      provider: insurer,
+      form: 'policy',
+      vehicleType,
+      vehicleTypeOther: vehicleType === 'Others' ? vehicleOther.trim() : '',
+      insuranceType,
+      modelYear,
     });
-
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-
-    Alert.alert(
-      'Application Submitted!',
-      'Your motor insurance query has been received. Our team will review your details and reach out with tailored offers.',
-      [
-        {
-          text: 'View Offers',
-          onPress: () =>
-            router.replace({
-              pathname: '/(tabs)/products',
-              params: { category: 'motor-insurance' },
-            }),
-        },
-      ]
-    );
   };
 
   return (
@@ -371,10 +352,11 @@ export default function MotorInsuranceDetailsScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {submission.error ? <Text accessibilityRole="alert" style={{ color: '#DC2626', marginBottom: 16 }}>{submission.error}</Text> : null}
           {/* Subtitle */}
           <Animated.View entering={FadeInDown.delay(60).springify()}>
             <Text style={{ color: '#6B7280', fontSize: 14, marginBottom: 20 }}>
-              Fill in your vehicle details for an instant insurance quote
+              Fill in your vehicle details to request an insurance quote
             </Text>
           </Animated.View>
 
@@ -616,6 +598,8 @@ export default function MotorInsuranceDetailsScreen() {
           </Pressable>
           <Pressable
             onPress={handleSubmit}
+            disabled={submission.busy || !!submission.saved}
+            accessibilityRole="button"
             style={{ flex: 2, borderRadius: 14, overflow: 'hidden' }}
           >
             <LinearGradient
@@ -625,7 +609,7 @@ export default function MotorInsuranceDetailsScreen() {
               style={{ paddingVertical: 15, alignItems: 'center', justifyContent: 'center' }}
             >
               <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700', letterSpacing: 0.3 }}>
-                Submit
+                {submission.busy ? 'Submitting…' : 'Submit'}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -653,6 +637,7 @@ export default function MotorInsuranceDetailsScreen() {
           onClose={() => setShowYearModal(false)}
         />
       </View>
+      <ApplicationSaved reference={submission.saved?.referenceNumber ?? null} product="motor insurance" onDone={() => router.replace('/(tabs)')} />
     </KeyboardAvoidingView>
   );
 }

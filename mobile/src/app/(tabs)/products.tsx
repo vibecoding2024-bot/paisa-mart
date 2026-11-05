@@ -3,7 +3,6 @@ import {
   View,
   ScrollView,
   TextInput,
-  Linking,
   useWindowDimensions,
 } from "react-native";
 import {
@@ -701,14 +700,14 @@ export default function ProductsScreen() {
       const productId = partner.id || getProductId(partner.name, categoryId);
       const existingProduct = products.find((p) => p.id === productId);
 
-      if (categoryId === "bank-accounts" && existingProduct?.applicationUrl) {
-        Linking.openURL(existingProduct.applicationUrl);
+      if (["credit-cards", "bank-accounts", "insta-loans"].includes(categoryId)) {
+        router.push({ pathname: '/service-application', params: { product: categoryId, provider: partner.name, productName: existingProduct?.productName || partner.name } });
         return;
       }
 
       handleProductPress(partner, categoryId);
     },
-    [handleProductPress, products],
+    [handleProductPress, products, router],
   );
 
   return (

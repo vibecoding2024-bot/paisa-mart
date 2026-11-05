@@ -34,3 +34,6 @@ studio.log
 
 # Prisma generated files (bunx prisma generate)
 /generated/prisma
+
+# Local database created by the loan/insurance regression test
+/src/routes/loan-insurance-regression.test.sqlite

@@ -38,6 +38,7 @@ import {
   IconBadge,
   palette,
 } from "@/components/brand";
+import { PRODUCT_MODULES } from '../../lib/product-catalog';
 import { useRouter } from "expo-router";
 import {
   useUserProfileStore,
@@ -51,7 +52,7 @@ import ComingSoonModal, {
   type ComingSoonModule,
 } from "@/components/ComingSoonModal";
 
-const QUICK_ACTIONS = [
+const QUICK_ACTION_APPEARANCE = [
   {
     icon: CreditCard,
     label: "Credit Cards",
@@ -162,6 +163,8 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const QUICK_ACTIONS = PRODUCT_MODULES.map(module => ({ ...QUICK_ACTION_APPEARANCE.find(action => action.categoryId === module.id)!, label: module.label }));
+
 export default function HomeScreen() {
   const { width } = useWindowDimensions();
   const wide = width >= 760;
@@ -211,7 +214,7 @@ export default function HomeScreen() {
     try {
       await Share.share({
         message:
-          "Join me on Paisa Mart and start earning by selling financial products! Sign up with my referral and we both earn ₹500. 💰",
+          "Join me on Paisa Mart and start earning by selling financial products! Earn up to ₹1 Lakh and Reduce Your Expenses.",
       });
     } catch {
       toast.error("Could not open share sheet");
@@ -566,7 +569,7 @@ export default function HomeScreen() {
                   marginTop: 7,
                 }}
               >
-                Refer & earn ₹500
+                Earn up to ₹1 Lakh and Reduce Your Expenses
               </Text>
               <Text
                 style={{

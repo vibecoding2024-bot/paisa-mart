@@ -47,7 +47,10 @@ export type ProductCategory =
   | "life-insurance"
   | "motor-insurance"
   | "gold-loans"
-  | "real-estate";
+  | "real-estate"
+  | "cash-cards"
+  | "recharge-bills"
+  | "travel-tickets";
 
 export interface Lead {
   version?: number;
@@ -159,6 +162,9 @@ export const PRODUCT_LABELS: Record<ProductCategory, string> = {
   "motor-insurance": "Motor Insurance",
   "gold-loans": "Gold Loans",
   "real-estate": "Real Estate",
+  "cash-cards": "Cash on Credit Card",
+  "recharge-bills": "Recharge & Pay Bills",
+  "travel-tickets": "Travel & Tickets",
 };
 
 export const REJECTION_CODES = [

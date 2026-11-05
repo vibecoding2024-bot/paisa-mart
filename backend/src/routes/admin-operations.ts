@@ -121,6 +121,9 @@ const change = z
         "kyc_pending",
         "kyc_completed",
         "submitted",
+        "approved",
+        "disbursed",
+        "rejected",
         "closed",
       ])
       .optional(),

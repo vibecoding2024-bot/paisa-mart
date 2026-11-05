@@ -1,18 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import Animated, { FadeIn, FadeInDown, FadeInUp } from 'react-native-reanimated';
 import { CheckCircle, Home } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
+import { verifyServiceReceipt, type SavedServiceReceipt } from '@/lib/service-application-api';
 
 export default function VehicleInsuranceSuccessScreen() {
   const router = useRouter();
   const { leadId } = useLocalSearchParams<{ leadId: string }>();
+  const [saved, setSaved] = useState<SavedServiceReceipt | null>(null);
+  const [error, setError] = useState('');
 
   useEffect(() => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-  }, []);
+    let active = true;
+    setSaved(null); setError('');
+    verifyServiceReceipt('motor-insurance', leadId || '').then(receipt => {
+      if (active) { setSaved(receipt); void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); }
+    }).catch(() => { if (active) setError('Unable to verify a saved application. Please check your reference and try again.'); });
+    return () => { active = false; };
+  }, [leadId]);
 
   const handleGoHome = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -24,6 +32,11 @@ export default function VehicleInsuranceSuccessScreen() {
   const now = new Date();
   const hours = now.getHours();
   const isAfterHours = hours < 9 || hours >= 18;
+
+  if (!saved) return <SafeAreaView className="flex-1 bg-white items-center justify-center p-6">
+    <Text accessibilityRole={error ? 'alert' : undefined} className="text-gray-700 text-center">{error || 'Verifying your saved application…'}</Text>
+    <Pressable accessibilityRole="button" onPress={handleGoHome} className="bg-blue-500 rounded-xl p-4 mt-6"><Text className="text-white">Back to Home</Text></Pressable>
+  </SafeAreaView>;
 
   return (
     <View className="flex-1 bg-gradient-to-b from-blue-50 to-white">
@@ -69,7 +82,7 @@ export default function VehicleInsuranceSuccessScreen() {
           >
             <View className="bg-white px-6 py-4 rounded-2xl border-2 border-blue-200">
               <Text className="text-gray-500 text-sm text-center mb-1">Your Reference ID</Text>
-              <Text className="text-gray-900 font-bold text-xl text-center">{leadId}</Text>
+              <Text className="text-gray-900 font-bold text-xl text-center">{saved.referenceNumber}</Text>
             </View>
           </Animated.View>
 

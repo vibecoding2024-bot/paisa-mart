@@ -131,7 +131,7 @@ export default function ProfileScreen() {
     try {
       await Share.share({
         message:
-          "Join me on Paisa Mart and start earning by selling financial products! Sign up with my referral and we both earn ₹500. 💰",
+          "Join me on Paisa Mart and start earning by selling financial products! Earn up to ₹1 Lakh and Reduce Your Expenses.",
       });
     } catch {
       toast.error("Could not open share sheet");
