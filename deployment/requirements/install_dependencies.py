@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -10,9 +11,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def digest(path): return hashlib.sha256(path.read_bytes()).hexdigest()
 
+def copy_path(path):
+    path = Path(path).resolve()
+    return Path('\\\\?\\' + str(path)) if os.name == 'nt' else path
+
+def copy_dependencies(source, target):
+    # Native packages contain paths beyond Win32's legacy 260-character limit.
+    # Use extended paths for copying; never alter global Windows settings.
+    shutil.copytree(copy_path(source), copy_path(target))
+
 def install(staging, bun):
     staging = Path(staging).resolve()
-    if staging == ROOT or ROOT in staging.parents:
+    if staging == ROOT.resolve() or ROOT.resolve() in staging.parents:
         raise ValueError('Dependency staging must be outside the source checkout')
     if any(part.lower() in ('public','final-good-20261006') for part in staging.parts):
         raise ValueError('Protected staging path')
@@ -41,7 +51,7 @@ def install(staging, bun):
         target=ROOT/workspace/'node_modules'
         if not target.resolve().is_relative_to(ROOT.resolve()) or target.exists() or target.is_symlink():
             raise ValueError('Unsafe/existing dependency destination')
-        shutil.copytree(isolated/'node_modules',target)
+        copy_dependencies(isolated/'node_modules',target)
         receipt['workspaces'][workspace]={'input_sha256':hashes,'installed_path':str(target)}
     (staging/'dependency-install.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('Verified frozen dependency receipt: '+str(staging/'dependency-install.json'))
@@ -51,4 +61,8 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--staging',required=True)
     parser.add_argument('--bun',required=True,help='Absolute path to the tested Bun executable')
-    args=parser.parse_args();install(args.staging,str(Path(args.bun).resolve()))
+    args=parser.parse_args()
+    try: install(args.staging,str(Path(args.bun).resolve()))
+    except shutil.Error as error:
+        print('Dependency copy failed; partial files retained. First errors: '+str(error.args[0][:3]))
+        raise SystemExit(1)
