@@ -1,12 +1,12 @@
 # Paisa Mart PR #6 — AWS EC2 handoff
 
-Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed with the disclosed baseline/legacy limitations below. GitHub's transient PR-head mismatch resolved; PR remains draft for user merge review. No merge, upload, service restart on EC2, production migration or deployment.**
+Updated November 6, 2026 (Asia/Calcutta). **Conditional merge checks passed, including the required retry-risk fix and fresh frozen-dependency build. User authorization covers marking ready, merging PR #6 and local packaging from merged main only. No upload, production migration, restart or deployment is authorized.**
 
 ## Exact source and preserved checkouts
 
 - PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/6 — remains draft.
 - Branch: `feature/loan-requirements-review-20261103`; isolated checkout: `.requirements-review`.
-- Final tested implementation/tooling commit: `fe7123f9a7ccf694106d2655a4a531b7d9242495`. This handoff is a subsequent documentation-only commit; use the final PR head for merge approval and pass that full approved head to the post-merge packager. The runtime/build source is this exact implementation commit.
+- Final tested application/lock commit: `5255a85958f811aacfbf744ae8219137fb6e8a0f`. Installer corrections and final handoff follow this runtime commit; their passing checks are recorded below. This handoff is a subsequent documentation-only commit; use the final PR head for merge approval and pass that full approved head to the post-merge packager. The runtime/build source is this exact implementation commit.
 - Final review started at the requested clean PR head `66ca4e3320d2bc00fbc508a65ccbc55b4f315471`; earlier implementation evidence from `7ed7f3f` was reused. Existing work was inspected before editing; no partial changes were overwritten.
 - Fetched `origin/main` remains `17eac94b39b708ee9e0979de0bda4efd551e6d24`, matching the user-confirmed dashboard release `20261021-17eac94b-dashboard`.
 - Original dirty main remains `facbc4c5b5014937f7b218f9f5eda0b78c908f92` (ahead 1 / behind 46). Its HEAD and hashes of every previously tracked dirty file are unchanged. No reset, clean, stash, forced checkout or dirty-main merge.
@@ -15,6 +15,19 @@ Updated November 4, 2026 (Asia/Calcutta). **Final implementation review passed w
 - GitHub metadata was checked before this update: PR open/draft/unmerged, exact expected prior head and main base, no returned main branch rules. No hosting check, hosting configuration or hosting deployment was investigated or changed in this resumed work. Netlify/Vercel preview results are excluded from AWS readiness.
 - GitHub briefly continued reporting PR head `66ca4e3` after branch pushes. A subsequent remote check confirmed that PR #6 and its source branch both resolved to `9cfc506cd47ce5e3778fe51c94ed8b230fef79cf`; the mismatch resolved without force push, close/reopen, merge or bypass. This follow-up changes only documentation. **Before merge approval, recheck that PR #6 matches the latest published feature-branch head, including this handoff update.** The draft description links the tested implementation and review evidence.
 - Non-hosting check runs/statuses for the published review commit: none returned. Main rules: empty; classic branch-protection endpoint: 404 (none returned). GitHub reported mergeable but an overall `unstable` state; ignored hosting preview results are not used to establish AWS readiness. Missing remote checks do not replace the recorded local verification.
+
+## Conditional merge approval — final checks
+
+- Initially verified the exact user-approved PR head `ca9a09123b89bd2fd91b9706489997b9cb81f370`. GitHub returned no unresolved review threads/reviews, no required rules/checks, and supports merge commits. Hosting previews are excluded from AWS readiness.
+- **Corrected the prior retry classification:** Life/Vehicle server submissions are introduced by this PR, so their lost-response retry duplication was a merge blocker, not merely inherited behavior. Business's changed client had the same exposure. All three changed clients now persist submission keys/fingerprints across reloads and reject changed uncertain payloads. Atomic unique keys return the original saved ID/time on retries; conflicting payloads receive 409 without overwriting records. New Life/Vehicle APIs require a key; the already-deployed unkeyed Business API remains compatible. No global deduplication by phone number is claimed.
+- Runtime/lock correction commit: `5255a85958f811aacfbf744ae8219137fb6e8a0f`. Windows installer fix: `1936fc118d6b28783359eda3a94b65c0e4243431`. This handoff is a documentation-only follow-up. The user's explicit fix-before-merge approval covers these necessary corrections; merge must use the resulting exact PR head after fresh remote validation.
+- **51 application tests / 695 assertions passed** for the affected APIs, durable clients, SQLite upgrade, admin, Personal behavior and disabled financial actions. Valid passing application evidence was reused, not repeatedly rerun. Guarded packaging tests: 29 existing safety tests plus 3 dependency-install tests passed (32 total).
+- **Fresh locked build passed:** mobile types, focused backend types, Bun bundle and Expo web export. **106 fresh-dependency desktop/mobile browser checks passed**, no runtime errors: lost-response/reload recovery, confirmations, calendars, navigation, admin lists/counts/assignment/Home refresh and disabled finance. The earlier 37 retry checks also passed on the old available dependency tree; earlier unchanged service evidence is retained, not double-counted.
+- Exact dependency failure: root `npm ci` fails with `Invalid Version` because its lockfile contains empty entries; mobile Bun lock lagged the committed manifest. Its minimal reconciliation locks Router 6.0.24, MSG91 2.1.0 and Local Authentication 17.0.9 plus corresponding transitive entries, without changing package.json. A successful frozen mobile install was reused after the copy failed with WinError 3 on native package paths exceeding 260 characters. The installer now uses extended Windows paths, tested with a long-path fixture, without changing OS settings. The failed copy was preserved separately. Fresh frozen mobile/backend installation and input hashes are recorded in `dependency-install.json`.
+- Exactly **11 backend runtime files** remain changed. Four deployed Personal files are unchanged. SQLite adds nullable submission-key/hash columns and unique indexes on Business/Life/Vehicle; existing rows retain NULL keys, and migration tests preserve old rows/constraints/history. Unapproved payout calculations, revenue/TDS actions, payout mutations and withdrawal remain disabled.
+- Original dirty main and other checkouts are preserved. No live EC2 access, upload, migration, restart or deployment occurred. The pre-existing full-backend compiler limitation remains documented; PostgreSQL is excluded from the confirmed SQLite release target.
+
+Evidence: `.build-tools/pr6-merge-20261105/`, its `locked/` build/browser results, and `.build-tools/pr6-locked-dependencies/dependency-install.json`. Temporary files stay outside the PR. Follow `deployment/requirements/README.md` for guarded packaging from the merged commit. The final release's local `HANDOFF.md` will record merge SHA, exact upload folder and artifact hashes after packaging.
 
 ## Requirements, deduplicated against both PDFs
 
@@ -42,7 +55,7 @@ Sources already extracted and visually inspected:
 | N14 | Life Insurance Leads → Logins → Policy Issued | A2–3 | **Complete** for saved applications: new API source is connected to admin, milestones persist, issuance requires recorded provider evidence. Dedicated navigation opens the existing saved-leads UI instead of the previously blocked local-only demo. |
 | N15 | All 15 customer modules reflected in admin | C3 | **Complete**: all 15 catalogue modules appear in admin. Ten now have connected application sources; the other five show unavailable processing, without fabricated counts or success. |
 | N16 | Referral box wording | A3 | **Complete**: exact “Earn up to ₹1 Lakh and Reduce Your Expenses”; referral share text no longer promises ₹500. Existing layout/styles retained. |
-| N17 | Prevent false success and repeated clicks | Conversation | **Complete for confirmed receipt/repeat-click requirements**: all implemented forms await server receipts and use immediate submit locks. The five new service APIs also use atomic keys, persisted across reloads; uncertain changed-payload retries are blocked and same-payload retries return the original reference. Legacy Business/Life/Vehicle lead APIs retain per-form locks without server replay idempotency; a lost response followed by a fresh retry can create another lead. Different devices or deliberately cleared storage are not globally deduplicated by phone number. |
+| N17 | Prevent false success and repeated clicks | Conversation | **Complete for confirmed receipt/repeat-click requirements**: all implemented forms await server receipts and use immediate submit locks. The five new service APIs also use atomic keys, persisted across reloads; uncertain changed-payload retries are blocked and same-payload retries return the original reference. Business/Life/Vehicle changed flows now also persist retry keys and use atomic server replay protection; their lost-response gap is fixed under the conditional merge approval. Different devices or deliberately cleared storage are not globally deduplicated by phone number. |
 | N18 | Dashboard counts, assignments, Home refresh, history, persistence | Conversation | **Complete** in isolated SQLite preview: automated regressions and browser changes/sign-out/sign-in pass. Original Overview spacing remains intact. |
 | F01 | Executive review then manager approval; customer payout visible only afterward | A1–3 | **Awaiting business decision**: financial workflow remains disabled; responsibilities/role mapping and payout policy require approval before implementing financial state transitions. |
 | F02 | Manual revenue; manual/automatic TDS and revenue; authorization only on customer payout | A1–3 | **Awaiting business decision**: no revenue/TDS calculation or write path enabled. The ₹10,000 / 5% / ₹9,500 example is not treated as a universal rule or tax basis. |
@@ -87,7 +100,7 @@ The existing customer forms use public guest intake by design; a submitted phone
 
 SQLite upgrades were run twice against a populated October-schema fixture. Existing Business values, its NOT NULL amount constraint, Personal data and audit rows survived; seven new intake tables were empty and integrity remained `ok`. No production database was opened. Migration and code rollback preserve additive schema and later submissions.
 
-No merge blocker remains in the reviewed non-financial SQLite scope. The legacy Business/Life/Vehicle endpoints have only per-form repeat-click suppression, not durable server replay deduplication; this retained lead-intake limitation is explicit and must not be described as universal duplicate protection. Provider automation, cross-device identity/deduplication and unapproved payout rules are not fabricated. These intake limitations do not enable financial actions.
+No merge blocker remains in the reviewed non-financial SQLite scope. The earlier classification of the Business/Life/Vehicle retry gap was corrected during the conditional merge check above; those changed submission flows now have durable client keys and atomic server replay protection. Provider automation, cross-device identity/deduplication and unapproved payout rules are not fabricated. These intake limitations do not enable financial actions.
 
 ## Verification results
 
@@ -206,13 +219,13 @@ The README separates local preparation, separately approved FileZilla upload, re
 
 **Implementation:** all confirmed non-financial requirements represented above are complete in the tested SQLite preview. External provider automation was not specified and is not fabricated. No payout calculation is enabled.
 
-**Verdict: ready for user merge review in the confirmed SQLite scope**, with the documented pre-existing full-backend compiler and legacy lead retry limitations. The transient remote-head mismatch resolved; matching the latest published head remains a required final pre-merge check. PR #6 stays draft; no merge is authorized. Release gates are separate merge approval, clean merged-main build/verification, fresh live EC2 baseline checks, then separate upload/deployment authorization. PostgreSQL is unverified and excluded; any live override stops this SQLite release. No readiness claim relies on hosting previews.
+**Verdict: ready for user merge review in the confirmed SQLite scope**, with the documented pre-existing full-backend compiler limitation. The changed-flow retry blocker is fixed. The transient remote-head mismatch resolved; matching the latest published head remains a required final pre-merge check. The user has authorized marking PR #6 ready and merging after these conditions pass; no production activation is authorized. Release gates are separate merge approval, clean merged-main build/verification, fresh live EC2 baseline checks, then separate upload/deployment authorization. PostgreSQL is unverified and excluded; any live override stops this SQLite release. No readiness claim relies on hosting previews.
 
 **Business confirmation only:** meaning of deducted share; whether Home/Personal/Business examples are fixed payouts or rates; the Business example's Personal wording; revenue/TDS basis and manual/automatic rules; insurance percentage bases/tiers and Life admin share; executive/manager role mapping and authorization policy. F01–F12 remain disabled pending that confirmation.
 
 ## Exact PR file changes versus origin/main
 
-62 tracked files; 11 are backend runtime files. Final review adds maintained tests/tooling, not temporary investigations or local preview files.
+67 tracked files, exactly 11 backend runtime files.
 
 - `HANDOFF.md`
 - `backend/.gitignore`
@@ -225,6 +238,7 @@ The README separates local preparation, separately approved FileZilla upload, re
 - `backend/src/routes/admin-operations.ts`
 - `backend/src/routes/application-receipts.test.ts`
 - `backend/src/routes/business-loans.ts`
+- `backend/src/routes/lead-idempotency.test.ts`
 - `backend/src/routes/life-insurance.ts`
 - `backend/src/routes/loan-insurance-regression.test.ts`
 - `backend/src/routes/service-applications.test.ts`
@@ -233,8 +247,11 @@ The README separates local preparation, separately approved FileZilla upload, re
 - `backend/src/routes/vehicle-loans.ts`
 - `deployment/requirements/README.md`
 - `deployment/requirements/backend-update.py`
+- `deployment/requirements/install_dependencies.py`
 - `deployment/requirements/prepare_release.py`
+- `deployment/requirements/test_install_dependencies.py`
 - `deployment/requirements/test_prepare_release.py`
+- `mobile/bun.lock`
 - `mobile/src/app/(tabs)/earnings.tsx`
 - `mobile/src/app/(tabs)/index.tsx`
 - `mobile/src/app/(tabs)/products.tsx`
@@ -273,6 +290,7 @@ The README separates local preparation, separately approved FileZilla upload, re
 - `mobile/src/lib/service-submission.ts`
 - `mobile/src/lib/use-service-submission.ts`
 - `mobile/src/lib/vehicle-loan-api.ts`
+- `scripts/lead-submission-retry.test.ts`
 - `scripts/payout-guard.test.ts`
 - `scripts/service-application-api.test.ts`
 - `scripts/service-submission.test.ts`

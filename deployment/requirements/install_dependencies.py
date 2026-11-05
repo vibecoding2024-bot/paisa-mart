@@ -26,8 +26,8 @@ def install(staging, bun):
         raise ValueError('Dependency staging must be outside the source checkout')
     if any(part.lower() in ('public','final-good-20261006') for part in staging.parts):
         raise ValueError('Protected staging path')
-    for workspace in ('mobile','backend'):
-        target = ROOT/workspace/'node_modules'
+    for relative in ('node_modules','mobile/node_modules','backend/node_modules'):
+        target = ROOT/relative
         if target.exists() or target.is_symlink():
             raise ValueError('Existing dependencies must be preserved: '+str(target))
     staging.mkdir(parents=True,exist_ok=False)
@@ -53,6 +53,9 @@ def install(staging, bun):
             raise ValueError('Unsafe/existing dependency destination')
         copy_dependencies(isolated/'node_modules',target)
         receipt['workspaces'][workspace]={'input_sha256':hashes,'installed_path':str(target)}
+    # Expo's workspace resolver watches this path even when all packages are
+    # installed in the individual workspaces. No packages are copied into it.
+    (ROOT/'node_modules').mkdir(exist_ok=False)
     (staging/'dependency-install.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print('Verified frozen dependency receipt: '+str(staging/'dependency-install.json'))
     return receipt

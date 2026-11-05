@@ -34,6 +34,7 @@ class DependencyGuards(unittest.TestCase):
             with patch.object(m,'ROOT',root),patch.object(m.subprocess,'check_output',return_value='test'),patch.object(m.subprocess,'run',side_effect=run):
                 receipt=m.install(stage,'fake-bun')
                 self.assertEqual(set(receipt['workspaces']),{'mobile','backend'})
+                self.assertTrue((root/'node_modules').is_dir())
                 self.assertEqual((root/'mobile/node_modules/fixture.txt').read_text(),'fixture')
                 with self.assertRaisesRegex(ValueError,'preserved'):m.install(Path(folder)/'again','fake-bun')
     def test_staging_inside_checkout_is_refused(self):
