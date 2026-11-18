@@ -114,6 +114,7 @@ operationsRouter.get("/applications", async (c) => {
 const change = z
   .object({
     version: z.number().int().min(0),
+    payoutStatus: z.literal("selected").optional(),
     stage: z
       .enum([
         "new",

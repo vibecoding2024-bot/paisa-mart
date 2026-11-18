@@ -1,3 +1,4 @@
+import { operations } from '@/lib/admin-operations-api';
 import { useAdminStore } from '@/lib/admin-store';
 import { saveHomeLoanAndRefresh } from '@/lib/admin-refresh';
 import { useState } from 'react';
@@ -12,7 +13,9 @@ export default function HomeLoanPipeline() {
   const [stage, setStage] = useState<HomeLoanStage | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<HomeLoanLead | null>(null);
-  const [nextStage, setNextStage] = useState<HomeLoanStage>('new');
+  const [nextStage, setNextStage] = useState<HomeLoanStage | 'payout'>('new');
+  const [payoutVersion, setPayoutVersion] = useState<number | undefined>(undefined);
+  const leads = useAdminStore(s => s.leads);
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const client = useQueryClient();
@@ -22,24 +25,30 @@ export default function HomeLoanPipeline() {
     mutationFn: () => {
       if (!selected) throw new Error('Select a lead');
       return saveHomeLoanAndRefresh({
-        save: () => updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note }),
+        save: async () => {
+          if (nextStage === 'payout') {
+            if (payoutVersion === undefined) throw new Error('Refresh applications and reopen this lead before selecting Payout.');
+            await operations('/applications/' + encodeURIComponent(selected.referenceNumber), { version: payoutVersion, payoutStatus: 'selected', ...(note ? { note } : {}) }, 'PATCH');
+          } else await updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note });
+        },
         refreshApplications,
         refreshPipeline: () => client.invalidateQueries({ queryKey: ['home-loan-pipeline'] }, { throwOnError: true }),
       });
     },
     onSuccess: () => { setSelected(null); },
   });
-  const open = (lead: HomeLoanLead) => { mutation.reset(); setSelected(lead); setNextStage(lead.stage); setAmount(lead.loanAmountRequired); setNote(''); };
+  const open = (lead: HomeLoanLead) => { mutation.reset(); setSelected(lead); setPayoutVersion(leads.find(row => row.id === lead.referenceNumber)?.version); setNextStage(lead.stage); setAmount(lead.loanAmountRequired); setNote(''); };
   const money = (value: string) => '₹' + BigInt(value).toLocaleString('en-IN');
   if (selected) return <ScrollView className="flex-1 bg-slate-900" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20 }}>
     <Pressable disabled={mutation.isPending} onPress={() => setSelected(null)} className="py-3"><Text className="text-orange-400">← Back to pipeline</Text></Pressable>
     <Text className="text-white text-2xl font-bold">{selected.fullName || 'Home loan applicant'}</Text>
     <Text selectable className="text-orange-400 mt-2 mb-5">{selected.referenceNumber}</Text>
     <View className="bg-slate-800 rounded-xl p-4 mb-5"><Text selectable className="text-slate-300 leading-7">{selected.phoneNumber}{'\n'}{selected.city}, {selected.state}{'\n'}{selected.loanType}{'\n'}Date of birth: {selected.dateOfBirth || '—'}{'\n'}CIBIL: {selected.cibil || '—'}{'\n'}Monthly income: {money(selected.monthlyIncome)}{'\n'}Existing EMI: {money(selected.existingEmi)}{'\n'}Received: {new Date(selected.createdAt).toLocaleString()}</Text></View>
+    {leads.find(row => row.id === selected.referenceNumber)?.payoutStatus === 'selected' && <Text className="text-orange-400 mb-3">Payout selected</Text>}
     <View className="bg-white rounded-xl p-4">
-      <ModalDropdown label="Pipeline stage" value={HOME_LOAN_STAGE_LABELS[nextStage]} options={HOME_LOAN_STAGES.map(key => HOME_LOAN_STAGE_LABELS[key])} onSelect={value => { if (!mutation.isPending) setNextStage(HOME_LOAN_STAGES.find(key => HOME_LOAN_STAGE_LABELS[key] === value)!); }} />
+      <ModalDropdown label="Pipeline stage" value={nextStage === 'payout' ? 'Payout' : HOME_LOAN_STAGE_LABELS[nextStage]} options={[...HOME_LOAN_STAGES.map(key => HOME_LOAN_STAGE_LABELS[key]), 'Payout']} onSelect={value => { if (!mutation.isPending) setNextStage(value === 'Payout' ? 'payout' : HOME_LOAN_STAGES.find(key => HOME_LOAN_STAGE_LABELS[key] === value)!); }} />
       <Text className="text-slate-700 font-semibold mb-2">Loan amount (₹)</Text>
-      <TextInput accessibilityLabel="Loan amount" editable={!mutation.isPending} value={amount} onChangeText={setAmount} keyboardType="numeric" maxLength={12} className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
+      <TextInput accessibilityLabel="Loan amount" editable={!mutation.isPending && nextStage !== 'payout'} value={amount} onChangeText={setAmount} keyboardType="numeric" maxLength={12} className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
       <Text className="text-slate-700 font-semibold mb-2">Admin note</Text>
       <TextInput accessibilityLabel="Admin note" editable={!mutation.isPending} value={note} onChangeText={setNote} multiline maxLength={2000} placeholder="Contact outcome, pending documents or decision reason" className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
       {mutation.isError ? <Text accessibilityRole="alert" className="text-red-600 mb-3">{mutation.error.message}</Text> : null}

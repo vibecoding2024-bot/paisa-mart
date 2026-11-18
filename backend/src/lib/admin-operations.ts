@@ -397,6 +397,7 @@ export async function applications(actor: Actor) {
         providerEvidence:
           actor.role === "viewer" ? "" : (op.providerEvidence ?? ""),
         stage: homeStage ? homeMap[homeStage] : (op.stage ?? "new"),
+        payoutStatus: op.payoutStatus ?? null,
         homeStage,
         homeVersion: workflow?.version ?? 0,
         outcome:
@@ -487,6 +488,8 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
     throw new OperationsError("Read-only access", 403);
   const lead = (await applications(actor)).data.find((x) => x.id === id);
   if (!lead) throw new OperationsError("Application not found", 404);
+  if (input.payoutStatus && !["home-loans", "business-loans", "personal-loans", "vehicle-loans", "insta-loans", "gold-loans"].includes(lead.productType))
+    throw new OperationsError("Payout selection is available for loans only");
   if (input.stage && lead.productType === "home-loans")
     throw new OperationsError(
       "Use the existing Home Loan pipeline to preserve its stages",
@@ -511,7 +514,7 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
     "closed",
   ];
   const serviceProducts = ["credit-cards", "bank-accounts", "insta-loans", "health-insurance", "motor-insurance", "life-insurance"];
-  const serviceStages = ["new", "submitted", lead.productType === "insta-loans" ? "disbursed" : "approved"];
+  const serviceStages = ["new", "submitted", ...(lead.productType === "insta-loans" ? ["disbursed", "rejected"] : ["approved"])];
   if (
     input.stage &&
     (loanProducts.includes(lead.productType)
@@ -552,7 +555,9 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
     // Existing loan transition rules, including Personal Loan, stay unchanged.
     const effectiveStage = serviceProducts.includes(lead.productType)
       ? input.stage ?? current.stage : input.stage;
-    if (effectiveStage === "approved" || (lead.productType === 'insta-loans' && effectiveStage === 'disbursed')) {
+    // Business Sanctioned is an internal processing stage. Provider decisions
+    // remain separately recorded, just as they are in the Home pipeline.
+    if ((effectiveStage === "approved" && lead.productType !== 'business-loans') || (lead.productType === 'insta-loans' && effectiveStage === 'disbursed')) {
       const requiredDecision = effectiveStage === 'disbursed' ? 'disbursed' : 'approved';
       const providerDecision =
         input.providerDecision ?? current.providerDecision ?? "unconfirmed";
@@ -579,6 +584,7 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
       "provider",
       "providerDecision",
       "providerEvidence",
+      "payoutStatus",
     ])
       if (input[key] !== undefined) next[key] = input[key];
     if (input.note)

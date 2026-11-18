@@ -53,6 +53,7 @@ export type ProductCategory =
   | "travel-tickets";
 
 export interface Lead {
+  payoutStatus?: 'selected' | null;
   version?: number;
   homeStage?: string;
   providerDecision?: string;
@@ -205,7 +206,7 @@ interface AdminStore {
   ) => void;
   updateLeadStage: (
     leadId: string,
-    newStage: LeadStage,
+    newStage: LeadStage | 'payout',
     reason?: string,
     note?: string,
   ) => Promise<boolean>;
@@ -317,7 +318,7 @@ export const useAdminStore = create<AdminStore>((set, get) => {
     },
     updateLeadStage: (id, stage, reason, note) =>
       update(id, {
-        stage,
+        ...(stage === 'payout' ? { payoutStatus: 'selected' } : { stage }),
         ...(note || reason ? { note: note || reason } : {}),
       }),
     assignLead: (id, owner) => update(id, { assignedOwner: owner }),

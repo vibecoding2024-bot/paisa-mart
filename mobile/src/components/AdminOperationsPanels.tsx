@@ -67,6 +67,7 @@ export function ApplicationOperations({ lead }: { lead: Lead }) {
         Internal stage: {lead.homeStage || lead.stage} · Provider decision:{" "}
         {lead.providerDecision || "unconfirmed"}
       </Text>
+      {lead.payoutStatus === 'selected' && <Text className="text-orange-400">Payout selected</Text>}
       <Text className="text-slate-400">
         Assigned to: {lead.assignedOwner || "Unassigned"}
       </Text>
