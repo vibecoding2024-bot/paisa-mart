@@ -113,6 +113,8 @@ export default function SettingsScreen() {
     switch (role) {
       case 'admin':
         return { bg: '#EF4444', text: '#fff' };
+      case 'executive':
+      case 'manager':
       case 'ops':
         return { bg: '#F59E0B', text: '#fff' };
       case 'viewer':
@@ -416,7 +418,7 @@ export default function SettingsScreen() {
               <View className="mb-6">
                 <Text className="text-slate-400 text-sm mb-2">Role</Text>
                 <View className="flex-row gap-2">
-                  {(['admin', 'ops', 'viewer'] as AdminRole[]).map((role) => (
+                  {(['admin', 'ops', 'viewer', 'executive', 'manager'] as AdminRole[]).map((role) => (
                     <Pressable
                       key={role}
                       onPress={() => setNewUser(u => ({ ...u, role }))}

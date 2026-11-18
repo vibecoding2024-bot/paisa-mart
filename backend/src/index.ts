@@ -16,6 +16,7 @@ import { lifeInsuranceRouter } from "./routes/life-insurance";
 import { vehicleLoansRouter } from "./routes/vehicle-loans";
 import { serviceApplicationsRouter } from "./routes/service-applications";
 import { homeLoansRouter } from "./routes/home-loans";
+import { customerPayoutsRouter } from './routes/customer-payouts';
 import { adminRouter } from "./routes/admin";
 
 const PUBLIC_DIR = import.meta.dir + "/../public";
@@ -228,6 +229,7 @@ app.get("/download-apk", async (c) => {
   });
 });
 
+app.route('/api/customer-payouts', customerPayoutsRouter);
 app.route("/api/sample", sampleRouter);
 app.route("/api/notify-interest", notifyInterestRouter);
 app.route("/api/payment", paymentRouter);

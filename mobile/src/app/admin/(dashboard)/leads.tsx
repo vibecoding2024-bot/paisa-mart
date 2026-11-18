@@ -136,7 +136,7 @@ export default function LeadsScreen() {
   };
 
   const handleStageChange = async (newStage: LoanStageAction) => {
-    if (selectedLead && currentAdmin?.role !== 'viewer') {
+    if (selectedLead && ['admin', 'ops'].includes(currentAdmin?.role ?? '')) {
       if (!await updateLeadStage(selectedLead.id, newStage)) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }

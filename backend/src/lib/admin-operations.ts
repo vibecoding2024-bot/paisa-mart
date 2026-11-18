@@ -2,7 +2,7 @@ import { Database } from "bun:sqlite";
 import type { AuthClaims } from "./auth-token";
 import { SERVICE_SOURCES, initializeServiceApplications } from './service-application-store';
 
-export type Role = "admin" | "ops" | "viewer";
+export type Role = "admin" | "ops" | "viewer" | "executive" | "manager";
 export type Actor = { id: string; email: string; role: Role };
 export class OperationsError extends Error {
   constructor(
@@ -107,7 +107,7 @@ export async function audit(
 export async function actorFromClaims(
   claims: AuthClaims | null,
 ): Promise<Actor | null> {
-  if (!claims || !["admin", "ops", "viewer"].includes(claims.role ?? ""))
+  if (!claims || !["admin", "ops", "viewer", "executive", "manager"].includes(claims.role ?? ""))
     return null;
   await migrate();
   if (claims.sub.startsWith("staff:")) {
@@ -117,7 +117,7 @@ export async function actorFromClaims(
         [claims.sub.slice(6)],
       )
     )[0];
-    return row && ["admin", "ops", "viewer"].includes(row.role) ? row : null;
+    return row && ["admin", "ops", "viewer", "executive", "manager"].includes(row.role) ? row : null;
   }
   // Preserve the existing environment-admin token contract; other staff must have a live database record.
   const email = (
@@ -212,6 +212,15 @@ export async function saveStaff(input: any, actor: Actor) {
         ],
         tx,
       );
+    }
+    // Role changes/revocation must not leave old signatures reusable later.
+    if (input.id) for (const record of await query('SELECT * FROM admin_operations', [], tx)) {
+      const payload = parse(record.payload);
+      if (Object.values(payload.payout?.approvals ?? {}).some((a: any) => a.actorId === id)) {
+        payload.payout.approvals = {};
+        await query('UPDATE admin_operations SET version=?,payload=? WHERE id=?', [record.version + 1, JSON.stringify(payload), record.id], tx);
+        await audit(actor, 'payout_approvals_invalidated', record.id, { reason: 'staff_access_changed', staffId: id }, tx);
+      }
     }
     await audit(
       actor,
@@ -398,6 +407,10 @@ export async function applications(actor: Actor) {
           actor.role === "viewer" ? "" : (op.providerEvidence ?? ""),
         stage: homeStage ? homeMap[homeStage] : (op.stage ?? "new"),
         payoutStatus: op.payoutStatus ?? null,
+        ...(actor.role !== 'viewer' ? {
+          payoutEligible: payoutEligible(source.kind, homeStage ? homeMap[homeStage] : op.stage),
+          payout: op.payout ? { ...op.payout, approvals: source.kind === 'home-loans' && op.payout.homeVersion !== (workflow?.version ?? 0) ? {} : op.payout.approvals } : null,
+        } : {}),
         homeStage,
         homeVersion: workflow?.version ?? 0,
         outcome:
@@ -484,8 +497,8 @@ export function filterApplications(rows: any[], filters: any) {
   );
 }
 export async function updateApplication(id: string, input: any, actor: Actor) {
-  if (actor.role === "viewer")
-    throw new OperationsError("Read-only access", 403);
+  if (!["admin", "ops"].includes(actor.role))
+    throw new OperationsError("Operations access required", 403);
   const lead = (await applications(actor)).data.find((x) => x.id === id);
   if (!lead) throw new OperationsError("Application not found", 404);
   if (input.payoutStatus && !["home-loans", "business-loans", "personal-loans", "vehicle-loans", "insta-loans", "gold-loans"].includes(lead.productType))
@@ -587,6 +600,10 @@ export async function updateApplication(id: string, input: any, actor: Actor) {
       "payoutStatus",
     ])
       if (input[key] !== undefined) next[key] = input[key];
+    if (input.stage && input.stage !== current.stage && current.payout) {
+      next.payout = { ...current.payout, approvals: {} };
+      await audit(actor, 'payout_approvals_invalidated', id, { reason: 'stage_change', revision: current.payout.revision }, tx);
+    }
     if (input.note)
       next.notes = [
         ...(current.notes ?? []),
@@ -656,7 +673,7 @@ export async function records(kind: string) {
   ).map((r) => ({ id: r.id, kind, version: r.version, ...parse(r.payload) }));
 }
 export async function saveRecord(kind: string, input: any, actor: Actor) {
-  if (actor.role === "viewer" || (kind === "partner" && actor.role !== "admin"))
+  if (!["admin", "ops"].includes(actor.role) || (kind === "partner" && actor.role !== "admin"))
     throw new OperationsError("Permission denied", 403);
   return transaction(async (tx) => {
     const id = input.id ?? crypto.randomUUID();
@@ -777,4 +794,105 @@ export function localDirectory(
   } finally {
     connection.close();
   }
+}
+
+
+export type PayoutApprovalRole = 'executive' | 'manager';
+export type EligiblePayout = {
+  customerAmount: string; paisamartAmount: string; currency: 'INR'; revision: number;
+  editedBy: string; editedAt: string; homeVersion: number;
+  approvals: Partial<Record<PayoutApprovalRole, { actorId: string; email: string; at: string; revision: number }>>;
+};
+export function payoutEligible(product: string, stage: string | undefined): boolean {
+  return product === 'bank-accounts' ? stage === 'approved'
+    : ['home-loans', 'business-loans', 'personal-loans', 'vehicle-loans'].includes(product) && stage === 'disbursed';
+}
+export function currencyAmount(value: string): string {
+  if (typeof value !== 'string' || !/^(0|[1-9]\d{0,11})(\.\d{1,2})?$/.test(value))
+    throw new OperationsError('Enter a non-negative amount with at most two decimal places');
+  const [whole, fraction = ''] = value.split('.');
+  return whole + '.' + fraction.padEnd(2, '0');
+}
+async function payoutContext(id: string, tx?: any) {
+  const source = [...sources].sort((a,b) => b.prefix.length - a.prefix.length).find(s => id.startsWith(s.prefix + '-'));
+  if (!source || !await exists(source.table)) throw new OperationsError('Application not found', 404);
+  const sourceId = id.slice(source.prefix.length + 1);
+  const lead = (await query('SELECT * FROM ' + source.table + ' WHERE id=?', [sourceId], tx))[0];
+  if (!lead) throw new OperationsError('Application not found', 404);
+  const row = (await query('SELECT * FROM admin_operations WHERE id=?', [id], tx))[0];
+  const current = parse(row?.payload);
+  const home = source.kind === 'home-loans' && await exists('home_loan_workflow')
+    ? (await query('SELECT * FROM home_loan_workflow WHERE lead_id=?', [sourceId], tx))[0] : null;
+  const stage = source.kind === 'home-loans' ? homeMap[home?.stage ?? 'new'] : current.stage;
+  return { source, lead, current, version: row?.version ?? 0, homeVersion: home?.version ?? 0, eligible: payoutEligible(source.kind, stage) };
+}
+export async function updatePayout(id: string, input: { version: number; homeVersion?: number; customerAmount: string; paisamartAmount: string }, actor: Actor) {
+  if (!['admin', 'ops'].includes(actor.role)) throw new OperationsError('Only admin and operations staff may edit payout amounts', 403);
+  if (url) throw new OperationsError('Payout entry requires the configured SQLite deployment', 503);
+  await migrate();
+  const customerAmount = currencyAmount(input.customerAmount), paisamartAmount = currencyAmount(input.paisamartAmount);
+  return transaction(async tx => {
+    const context = await payoutContext(id, tx);
+    if (context.source.kind === 'home-loans' && input.homeVersion !== context.homeVersion) throw new OperationsError('Home pipeline changed. Refresh and review again.', 409);
+    if (context.version !== input.version) throw new OperationsError('Application changed. Refresh and reopen the payout editor.', 409);
+    if (!context.eligible) throw new OperationsError('Payout amounts require Disbursed or Account Activation');
+    const previous = context.current.payout as EligiblePayout | undefined;
+    const payout: EligiblePayout = { customerAmount, paisamartAmount, currency: 'INR', revision: (previous?.revision ?? 0) + 1, editedBy: actor.id, editedAt: new Date().toISOString(), homeVersion: context.homeVersion, approvals: {} };
+    await query('INSERT INTO admin_operations(id,version,payload) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET version=excluded.version,payload=excluded.payload',
+      [id, context.version + 1, JSON.stringify({ ...context.current, payout, updatedAt: payout.editedAt })], tx);
+    await audit(actor, 'payout_amount_edit', id, { before: previous ?? null, after: payout, fromVersion: context.version, toVersion: context.version + 1, approvalsInvalidated: Object.keys(previous?.approvals ?? {}) }, tx);
+    return { version: context.version + 1 };
+  });
+}
+export async function approvePayout(id: string, version: number, actor: Actor, homeVersion?: number) {
+  if (!['executive', 'manager'].includes(actor.role)) throw new OperationsError('Executive or manager approval permission required', 403);
+  if (url) throw new OperationsError('Payout approval requires the configured SQLite deployment', 503);
+  await migrate();
+  return transaction(async tx => {
+    const context = await payoutContext(id, tx);
+    if (context.source.kind === 'home-loans' && homeVersion !== context.homeVersion) throw new OperationsError('Home pipeline changed. Refresh and review again.', 409);
+    if (context.version !== version) throw new OperationsError('Application changed. Refresh and review the amounts again.', 409);
+    const payout = context.current.payout as EligiblePayout | undefined;
+    if (!context.eligible || !payout) throw new OperationsError('Save eligible payout amounts before approval');
+    const role = actor.role as PayoutApprovalRole;
+    if (payout.editedBy === actor.id) throw new OperationsError('The amount editor cannot approve their own entry', 403);
+    // A Home pipeline edit has its own version; prior approvals must not survive it.
+    const approvals = payout.homeVersion === context.homeVersion ? { ...payout.approvals } : {};
+    if (approvals[role]) throw new OperationsError('This role has already approved the current amounts', 409);
+    if (Object.values(approvals).some(a => a?.actorId === actor.id)) throw new OperationsError('Two different staff members must approve', 403);
+    const approval = { actorId: actor.id, email: actor.email, at: new Date().toISOString(), revision: payout.revision };
+    const next = { ...payout, homeVersion: context.homeVersion, approvals: { ...approvals, [role]: approval } };
+    await query('UPDATE admin_operations SET version=?,payload=? WHERE id=?', [version + 1, JSON.stringify({ ...context.current, payout: next, updatedAt: approval.at }), id], tx);
+    await audit(actor, 'payout_approval', id, { role, revision: payout.revision, customerAmount: payout.customerAmount, paisamartAmount: payout.paisamartAmount, fromVersion: version, toVersion: version + 1 }, tx);
+    return { version: version + 1 };
+  });
+}
+async function customerPayout(context: Awaited<ReturnType<typeof payoutContext>>) {
+  const payout = context.current.payout as EligiblePayout | undefined;
+  if (!context.eligible || !payout || payout.homeVersion !== context.homeVersion) return null;
+  const e = payout.approvals.executive, m = payout.approvals.manager;
+  if (!e || !m || e.actorId === m.actorId || e.revision !== payout.revision || m.revision !== payout.revision) return null;
+  for (const [role, approval] of [['executive', e], ['manager', m]] as const) {
+    const staff = (await query('SELECT role,active FROM admin_staff WHERE id=?', [approval.actorId]))[0];
+    if (!staff?.active || staff.role !== role) return null;
+  }
+  return { customerAmount: payout.customerAmount, currency: payout.currency };
+}
+// Called only after validating the signed customer's phone. Never use client-supplied ownership.
+export async function customerEligiblePayouts(phone: string) {
+  await migrate();
+  if (url) throw new OperationsError('Payout details require the configured SQLite deployment', 503);
+  const result: { referenceNumber: string; productType: string; customerAmount: string; currency: string }[] = [];
+  for (const source of sources.filter(s => ['home-loans', 'business-loans', 'personal-loans', 'vehicle-loans', 'bank-accounts'].includes(s.kind))) {
+    if (!await exists(source.table)) continue;
+    for (const lead of await query('SELECT * FROM ' + source.table)) {
+      const payload = parse(lead.payload);
+      const owner = String(lead.phone_number ?? lead.phoneNumber ?? payload.phoneNumber ?? '');
+      if (owner !== phone && owner !== '+91' + phone) continue;
+      const referenceNumber = source.prefix + '-' + lead.id;
+      const visible = await customerPayout(await payoutContext(referenceNumber));
+      if (visible) result.push({ referenceNumber, productType: source.kind, ...visible });
+    }
+  }
+  return result;
 }

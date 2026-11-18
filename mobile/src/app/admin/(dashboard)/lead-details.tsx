@@ -65,7 +65,7 @@ export default function LeadDetailsScreen() {
   const [stageChangeReason, setStageChangeReason] = useState('');
   const [selectedNewStage, setSelectedNewStage] = useState<LoanStageAction | null>(null);
 
-  const isViewer = currentAdmin?.role === 'viewer';
+  const isViewer = !['admin', 'ops'].includes(currentAdmin?.role ?? '');
 
   if (!lead) {
     return (

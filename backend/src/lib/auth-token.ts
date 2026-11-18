@@ -1,6 +1,6 @@
 export type AuthClaims = {
   sub: string;
-  role?: "customer" | "admin" | "ops" | "viewer";
+  role?: "customer" | "admin" | "ops" | "viewer" | "executive" | "manager";
   email?: string;
   iat: number;
   exp: number;

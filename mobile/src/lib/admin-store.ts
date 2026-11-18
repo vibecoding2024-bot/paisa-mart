@@ -5,7 +5,7 @@ import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Types
-export type AdminRole = "admin" | "ops" | "viewer";
+export type AdminRole = "admin" | "ops" | "viewer" | "executive" | "manager";
 
 export interface AdminUser {
   id: string;
@@ -54,8 +54,14 @@ export type ProductCategory =
 
 export interface Lead {
   payoutStatus?: 'selected' | null;
+  payoutEligible?: boolean;
+  payout?: {
+    customerAmount: string; paisamartAmount: string; revision: number; editedBy: string;
+    approvals: Partial<Record<'executive' | 'manager', { actorId: string; email: string; at: string; revision: number }>>;
+  } | null;
   version?: number;
   homeStage?: string;
+  homeVersion?: number;
   providerDecision?: string;
   id: string;
   userName: string;
