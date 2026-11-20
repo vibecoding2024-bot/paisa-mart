@@ -12,6 +12,7 @@ for (const key of [
   "HOME_LOANS_DATABASE_URL",
   "PERSONAL_LOANS_DATABASE_URL",
   "BUSINESS_LOANS_DATABASE_URL",
+  "VEHICLE_LOANS_DATABASE_URL",
 ])
   delete process.env[key];
 process.env.HOME_LOAN_ADMIN_PASSWORD = "isolated-admin-password";
@@ -488,5 +489,54 @@ test("Home timestamps follow the latest assignment or workflow update and histor
     expect(fresh.stageHistory).toEqual(row.stageHistory);
   } finally {
     setSystemTime();
+  }
+});
+
+
+test("Business Sanctioned persists across fresh sign-in with exact stage audit and stale protection", async () => {
+  const lead = (await (await request('/applications?product=business-loans')).json()).data[0];
+  expect((await request('/applications/' + lead.id, viewer, { version: lead.version, stage: 'approved' }, 'PATCH')).status).toBe(403);
+  const result = await request('/applications/' + lead.id, admin, { version: lead.version, stage: 'approved', note: 'Sanction confirmed by staff' }, 'PATCH');
+  expect(result.status).toBe(200);
+  const token = await login('admin@paisamart.com', 'isolated-admin-password');
+  const saved = (await (await request('/applications?product=business-loans', token)).json()).data[0];
+  expect(saved.stage).toBe('approved');
+  expect(saved.providerDecision).toBe(lead.providerDecision);
+  expect(saved.version).toBe(lead.version + 1);
+  expect(saved.stageHistory.at(-1)).toMatchObject({ fromStage: lead.stage, toStage: 'approved', changedBy: 'admin@paisamart.com', note: 'Sanction confirmed by staff' });
+  const events = (await (await request('/audit')).json()).data;
+  expect(events.find((e: any) => e.entityId === lead.id && e.details.toVersion === saved.version).details.changes.stage).toEqual({ before: lead.stage, after: 'approved' });
+  expect((await request('/applications/' + lead.id, admin, { version: lead.version, stage: 'rejected' }, 'PATCH')).status).toBe(409);
+});
+
+test("manual Payout selection preserves Disbursed, decision and stage history and is audited", async () => {
+  const { saveVehicleLoanLead } = await import('../lib/vehicle-loan-lead-store');
+  await saveVehicleLoanLead({ ...payload, occupation: 'Salaried', vehicleCondition: 'New Vehicle', vehicleType: 'Car' });
+  const { saveServiceApplication } = await import('../lib/service-application-store');
+  await saveServiceApplication('insta-loans', { fullName: 'Synthetic Insta', phoneNumber: '9000000003', provider: 'Test provider' }, crypto.randomUUID());
+  await saveServiceApplication('bank-accounts', { fullName: 'Synthetic Bank', phoneNumber: '9000000004', provider: 'Test bank' }, crypto.randomUUID());
+  const bank = (await (await request('/applications?product=bank-accounts')).json()).data[0];
+  expect((await request('/applications/' + bank.id, admin, { version: bank.version, payoutStatus: 'selected' }, 'PATCH')).status).toBe(400);
+  for (const product of ['business-loans', 'personal-loans', 'home-loans', 'vehicle-loans', 'insta-loans']) {
+    let lead = (await (await request('/applications?product=' + product)).json()).data[0];
+    if (product === 'home-loans') {
+      const response = await app.request('/home-loans/' + lead.sourceId, {
+        method: 'PATCH', headers: { Authorization: 'Bearer ' + admin, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ stage: 'disbursed', version: lead.homeVersion, loanAmountRequired: '100000', note: 'Disbursed' }),
+      });
+      expect(response.status).toBe(200);
+    } else expect((await request('/applications/' + lead.id, admin, { version: lead.version, stage: 'disbursed', ...(product === 'insta-loans' ? { provider: 'Test provider', providerDecision: 'disbursed', providerEvidence: 'Test reference' } : {}) }, 'PATCH')).status).toBe(200);
+    lead = (await (await request('/applications?search=' + lead.id)).json()).data[0];
+    expect(lead.payoutStatus).toBeNull();
+    expect((await request('/applications/' + lead.id, viewer, { version: lead.version, payoutStatus: 'selected' }, 'PATCH')).status).toBe(403);
+    expect((await request('/applications/' + lead.id, admin, { version: lead.version, payoutStatus: 'selected' }, 'PATCH')).status).toBe(200);
+    const saved = (await (await request('/applications?search=' + lead.id)).json()).data[0];
+    expect(saved.payoutStatus).toBe('selected');
+    expect(saved.stage).toBe('disbursed');
+    expect(saved.providerDecision).toBe(lead.providerDecision);
+    expect(saved.stageHistory).toEqual(lead.stageHistory);
+    expect((await request('/applications/' + lead.id, admin, { version: lead.version, payoutStatus: 'selected' }, 'PATCH')).status).toBe(409);
+    const events = (await (await request('/audit')).json()).data;
+    expect(events.find((e: any) => e.entityId === lead.id && e.details.toVersion === saved.version).details.changes.payoutStatus).toEqual({ before: null, after: 'selected' });
   }
 });

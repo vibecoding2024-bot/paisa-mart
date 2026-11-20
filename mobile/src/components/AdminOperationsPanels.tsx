@@ -2,7 +2,7 @@ import { useState } from "react";
 import { View, Text, TextInput, Pressable, ScrollView } from "react-native";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { operations } from "@/lib/admin-operations-api";
-import { useAdminStore, type Lead } from "@/lib/admin-store";
+import { useAdminStore, type Lead, type AdminRole } from "@/lib/admin-store";
 const Button = ({
   text,
   onPress,
@@ -63,14 +63,16 @@ export function ApplicationOperations({ lead }: { lead: Lead }) {
   return (
     <View className="bg-slate-800 rounded-xl p-4 my-3">
       <Text className="text-white font-semibold">Saved operations</Text>
+      <PayoutEntry key={lead.id + ':' + lead.version + ':' + lead.homeVersion} lead={lead} />
       <Text className="text-slate-400">
         Internal stage: {lead.homeStage || lead.stage} · Provider decision:{" "}
         {lead.providerDecision || "unconfirmed"}
       </Text>
+      {lead.payoutStatus === 'selected' && <Text className="text-orange-400">Payout selected</Text>}
       <Text className="text-slate-400">
         Assigned to: {lead.assignedOwner || "Unassigned"}
       </Text>
-      {role !== "viewer" && (
+      {(role === "admin" || role === "ops") && (
         <>
           <Text className="text-slate-300 mt-3">Assign owner</Text>
           {staff
@@ -286,7 +288,7 @@ export function StaffAccess() {
   const [name, setName] = useState(""),
     [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
-    [selectedRole, setRole] = useState<"ops" | "viewer">("viewer");
+    [selectedRole, setRole] = useState<AdminRole>("viewer");
   const mutation = useMutation({
     mutationFn: (body: object) => operations("/staff", body),
     onSuccess: () => {
@@ -299,8 +301,7 @@ export function StaffAccess() {
     <View className="bg-slate-800 rounded-xl p-4 my-3">
       <Text className="text-white text-lg font-semibold">Staff access</Text>
       <Text className="text-slate-400">
-        Existing roles: admin, operations, read-only viewer. PDF-specific
-        responsibilities have not been supplied.
+        Admin/operations enter payout amounts. Executive and manager each approve. Viewers cannot see amounts.
       </Text>
       {users.map((u: any) => (
         <View key={u.id} className="py-2">
@@ -323,24 +324,10 @@ export function StaffAccess() {
                   })
                 }
               />
-              <Button
-                text={
-                  u.role === "viewer"
-                    ? "Set operations role"
-                    : "Set read-only role"
-                }
-                disabled={mutation.isPending}
-                onPress={() =>
-                  mutation.mutate({
-                    id: u.id,
-                    version: u.version,
-                    name: u.name,
-                    email: u.email,
-                    role: u.role === "viewer" ? "ops" : "viewer",
-                    active: !!u.active,
-                  })
-                }
-              />
+              {(['ops', 'viewer', 'executive', 'manager'] as const).filter(r => r !== u.role).map(nextRole => <Button
+                key={nextRole} text={'Set ' + nextRole + ' role'} disabled={mutation.isPending}
+                onPress={() => mutation.mutate({ id: u.id, version: u.version, name: u.name, email: u.email, role: nextRole, active: !!u.active })}
+              />)}
             </>
           )}
         </View>
@@ -355,12 +342,7 @@ export function StaffAccess() {
             onChange={setPassword}
             secure
           />
-          <Button
-            text={"Role: " + selectedRole}
-            onPress={() =>
-              setRole(selectedRole === "viewer" ? "ops" : "viewer")
-            }
-          />
+          {(['ops', 'viewer', 'executive', 'manager'] as const).map(r => <Button key={r} text={(selectedRole === r ? 'Selected: ' : 'Role: ') + r} onPress={() => setRole(r)} />)}
           <Button
             text="Create staff login"
             disabled={mutation.isPending}
@@ -423,11 +405,11 @@ export function FinanceUnavailable() {
   return (
     <View className="bg-slate-800 rounded-xl p-4 my-3">
       <Text className="text-white font-semibold">
-        Financial data unavailable
+        Automated settlement unavailable
       </Text>
       <Text className="text-slate-400">
         No approved commission rates, effective dates, earning/settlement rules,
-        or approval responsibilities are configured. Estimated, earned,
+        are configured. Manual eligible payouts are reviewed separately. Estimated, earned,
         approved, payable, paid, reversed and disputed amounts must remain
         distinct. No amounts or payouts are inferred; no payments or provider
         requests are sent.
@@ -495,4 +477,54 @@ export function SavedDirectory({
       </Text>
     </View>
   );
+}
+
+
+export function PayoutEntry({ lead }: { lead: Lead }) {
+  const role = useAdminStore(s => s.currentAdmin?.role);
+  const actorId = useAdminStore(s => s.currentAdmin?.id);
+  const refresh = useAdminStore(s => s.refresh);
+  const [customer, setCustomer] = useState<string>(lead.payout?.customerAmount ?? '');
+  const [paisamart, setPaisamart] = useState<string>(lead.payout?.paisamartAmount ?? '');
+  const mutation = useMutation({
+    mutationFn: async (action: 'save' | 'approve') => {
+      await operations('/applications/' + encodeURIComponent(lead.id) + '/payout' + (action === 'approve' ? '/approve' : ''),
+        action === 'save' ? { version: lead.version ?? 0, homeVersion: lead.homeVersion, customerAmount: customer, paisamartAmount: paisamart } : { version: lead.version ?? 0, homeVersion: lead.homeVersion }, action === 'save' ? 'PUT' : 'POST');
+      if (!await refresh()) throw new Error('Saved, but refresh failed. Refresh applications before continuing.');
+    }, retry: false,
+  });
+  if (!role || role === 'viewer' || !['home-loans','business-loans','personal-loans','vehicle-loans','bank-accounts'].includes(lead.productType)) return null;
+  const editor = role === 'admin' || role === 'ops';
+  const approver = role === 'executive' || role === 'manager';
+  const dirty = customer !== (lead.payout?.customerAmount ?? '') || paisamart !== (lead.payout?.paisamartAmount ?? '');
+  const valid = [customer, paisamart].every(v => /^(0|[1-9]\d{0,11})(\.\d{1,2})?$/.test(v));
+  return <View className="my-3 border border-slate-600 rounded-xl p-3">
+    <Text className="text-white font-semibold">Eligible payout</Text>
+    {!lead.payoutEligible && <Text className="text-slate-400">Available after {lead.productType === 'bank-accounts' ? 'Account Activation' : 'Disbursed'}.</Text>}
+    {editor && lead.payoutEligible ? <>
+      <Field label="Customer Eligible Payout (₹)" value={customer} onChange={setCustomer} />
+      <Field label="Paisamart Eligible Payout (₹)" value={paisamart} onChange={setPaisamart} />
+      <Text className="text-slate-400">Enter both amounts manually. Saving resets both approvals.</Text>
+      <Button text="Save payout amounts" disabled={mutation.isPending || !valid} onPress={() => mutation.mutate('save')} />
+    </> : lead.payout ? <>
+      <Text className="text-slate-300">Customer Eligible Payout: ₹{lead.payout.customerAmount}</Text>
+      <Text className="text-slate-300">Paisamart Eligible Payout: ₹{lead.payout.paisamartAmount}</Text>
+    </> : null}
+    {lead.payout && <>
+      {(['executive', 'manager'] as const).map(r => <Text key={r} className="text-slate-300">{r === 'executive' ? 'Executive' : 'Manager'}: {lead.payout?.approvals[r] ? 'Approved by ' + lead.payout.approvals[r]!.email : 'Approval pending'}</Text>)}
+      <Text className="text-slate-400">Only the applicant's amount is shared after both approvals. Paisamart's amount stays internal.</Text>
+      {approver && <Button text={'Approve as ' + role} disabled={mutation.isPending || !lead.payoutEligible || dirty || lead.payout.editedBy === actorId || !!lead.payout.approvals[role]} onPress={() => mutation.mutate('approve')} />}
+    </>}
+    {mutation.isError && <Text accessibilityRole="alert" className="text-red-400">{mutation.error.message}</Text>}
+  </View>;
+}
+
+export function PayoutReviewList() {
+  const leads = useAdminStore(s => s.leads);
+  const role = useAdminStore(s => s.currentAdmin?.role);
+  if (!role || role === 'viewer') return <Text className="text-slate-400">Payout review requires authorized staff access.</Text>;
+  return <View>{leads.filter(lead => lead.payoutEligible || lead.payout).map(lead => <View key={lead.id} className="my-2">
+    <Text className="text-white">{lead.userName} · {lead.id}</Text>
+    <PayoutEntry key={lead.id + ':' + lead.version + ':' + lead.homeVersion} lead={lead} />
+  </View>)}</View>;
 }

@@ -41,13 +41,14 @@ import {
   PRODUCT_LABELS,
   REJECTION_CODES,
 } from '@/lib/admin-store';
-import { leadStageLabel, leadStageOptions } from '@/lib/loan-product-stages';
+import { leadStageLabel, loanStageActions, type LoanStageAction } from '@/lib/loan-product-stages';
 
 export default function LeadDetailsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
   const leads = useAdminStore(s => s.leads);
   const currentAdmin = useAdminStore(s => s.currentAdmin);
+  const operationError = useAdminStore(s => s.error);
   const updateLeadStage = useAdminStore(s => s.updateLeadStage);
   const assignLead = useAdminStore(s => s.assignLead);
   const addLeadNote = useAdminStore(s => s.addLeadNote);
@@ -62,9 +63,9 @@ export default function LeadDetailsScreen() {
   const [newNote, setNewNote] = useState('');
   const [followUpDate, setFollowUpDate] = useState('');
   const [stageChangeReason, setStageChangeReason] = useState('');
-  const [selectedNewStage, setSelectedNewStage] = useState<LeadStage | null>(null);
+  const [selectedNewStage, setSelectedNewStage] = useState<LoanStageAction | null>(null);
 
-  const isViewer = currentAdmin?.role === 'viewer';
+  const isViewer = !['admin', 'ops'].includes(currentAdmin?.role ?? '');
 
   if (!lead) {
     return (
@@ -413,8 +414,9 @@ export default function LeadDetailsScreen() {
                 </Pressable>
               </View>
 
+              {operationError ? <Text accessibilityRole="alert" className="text-red-400 mb-3">{operationError}</Text> : null}
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {leadStageOptions(lead.productType).map((stage) => (
+                {loanStageActions(lead.productType).map((stage) => (
                   <Pressable
                     key={stage}
                     onPress={() => setSelectedNewStage(stage)}
@@ -424,10 +426,10 @@ export default function LeadDetailsScreen() {
                   >
                     <View
                       className="w-3 h-3 rounded-full mr-3"
-                      style={{ backgroundColor: STAGE_COLORS[stage as LeadStage] }}
+                      style={{ backgroundColor: stage === 'payout' ? '#FB923C' : STAGE_COLORS[stage] }}
                     />
-                    <Text className="text-white">{leadStageLabel(lead.productType, stage)}</Text>
-                    {lead.stage === stage && (
+                    <Text className="text-white">{stage === 'payout' ? 'Payout' : leadStageLabel(lead.productType, stage)}</Text>
+                    {(stage === 'payout' ? lead.payoutStatus === 'selected' : lead.stage === stage) && (
                       <Text className="text-slate-400 ml-2">(current)</Text>
                     )}
                   </Pressable>

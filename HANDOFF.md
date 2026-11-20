@@ -1,3 +1,69 @@
+# Current status — PR #7 (updated November 21, 2026, fourth session; code unchanged since `109d514`)
+
+**Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
+
+- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. The dirty main checkout (`facbc4c`) is preserved untouched.
+- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7. It is open and draft, base `main` = `18ae178`. Not merged, not deployed.
+- Coverage, settled decisions and unresolved decisions: [docs/requirements-coverage-20261121.md](docs/requirements-coverage-20261121.md). Payout feature details: [docs/admin-payout-handoff.md](docs/admin-payout-handoff.md).
+
+## What PR #7 contains
+
+1. **Business Sanctioned fix, the manual Payout action, and dual-approval payout amounts** for Home/Business/Personal/Vehicle loans and Bank Accounts. Commit `1a7708c`.
+2. **Customer "My applications & status"** (`GET /api/customer-applications`, `mobile/src/app/my-applications.tsx`). Commit `534cffe`.
+   - It lists the signed-in customer's own submissions from all 11 connected sources, with the current admin stage and the details the customer entered.
+   - Ownership comes only from the OTP-verified token phone.
+   - It returns no internal fields.
+3. **Friendly network-error message on that screen.** This was found during the browser check, which first showed a raw "Failed to fetch". It is in the final commit.
+
+## Settled decisions (do not re-ask)
+
+- Admin/ops staff edit the manual payout amounts.
+- Executive and Manager must both approve, as different staff members.
+- Any amount edit resets both approvals.
+- Customers see only their own approved customer amount. Paisamart amounts stay internal.
+- Authorized staff may enter and review amounts before approval.
+
+## Unresolved decisions (calculations stay disabled)
+
+- **D-1 Approval order.** Current behavior is recorded here explicitly: PR #7 accepts Executive and Manager approvals **in either order**, as long as they come from two different staff members. Whether the Manager must approve last is still unconfirmed.
+- **D-2 Calculation rules.** Payouts for Credit Cards, Insta Loans, Health, Motor and Life insurance are **requested requirements**. What remains unresolved is their calculation rules, not whether they are needed. Open points: the Revenue/TDS formula, the TDS rate and base, what the percentage deductions in PDF C mean, and whether the Home/Personal/Business figures are fixed amounts or rates. No payout fields or calculations exist for those five products yet; all automatic calculations stay disabled.
+
+## Incomplete coverage
+
+- **Gold Loans**: persistence (intake/saving), customer status tracking and payout all remain **incomplete**. Only the catalogue entry and the Payout action exist.
+
+## Tests and builds (bundled Bun `.build-tools/bun-runtime/bun-windows-x64/bun.exe`)
+
+- **Backend tests, all passing.** Reused from `534cffe`; the only code change since then is in the mobile API helper.
+  - `customer-applications`: 2 tests, 25 assertions.
+  - `admin-payouts`: 6 tests, 279 assertions.
+  - `admin-operations`: 13 tests, 141 assertions.
+  - `home-loans`: 3 tests, 83 assertions.
+  - `service-applications`: 11 tests, 248 assertions.
+- **Browser check: 20 of 20 passed, with zero runtime errors.** Script: `.preview/myapps-browser.cjs`, run against a synthetic local SQLite server (`.preview/myapps-server.ts`, port 4808). The server was stopped afterwards. Checks:
+  - Desktop (1440 px) and phone (390 px) show all saved submissions, with product names, stage labels and customer-entered details, and no horizontal overflow.
+  - After an admin stage change, both Refresh and a full page reload show "Underwriting", and the lead is still listed.
+  - A second customer sees only their own record. The API returns only the allowed keys, and owner, notes, history, provider evidence, payout, CIBIL, DOB and income are absent.
+  - Empty, signed-out, forged-token, 503 and network-failure states all show correct messages and no stale data.
+  - Evidence: `.preview/myapps-browser-results.json` and screenshots `.preview/myapps-{desktop,mobile,empty-mobile,error-mobile}.png`, all visually inspected. These are local only; `.preview/` is gitignored.
+- **Builds and type checks, all passing:** mobile `tsc` after the fix, Expo web export (cleared cache, synthetic API URL, local only), Bun backend bundle, focused strict backend `tsc`, and `git diff --check`.
+- The known full-backend `tsc` crash from generated `backend/public` JS is unchanged and not a regression.
+- Small cosmetic note: the loan amount on this screen shows unformatted (`250000`).
+
+## PR readiness
+
+PR #7 is **ready for user review** within its confirmed scope. Before production use:
+
+- the user must approve the merge;
+- an admin must assign separate Executive and Manager staff;
+- deployment needs separate authorization and a new uniquely named release through the guarded EC2 workflow.
+
+The open items (D-1 approval order, D-2 calculation rules for the five requested products, and Gold Loans) are not delivered by this PR.
+
+**Exact next action:** the user reviews PR #7 and answers D-1 and D-2. Do not merge or deploy without explicit authorization.
+
+---
+
 # Paisa Mart PR #6 — AWS EC2 handoff
 
 Updated November 6, 2026 (Asia/Calcutta). **Conditional merge checks passed, including the required retry-risk fix and fresh frozen-dependency build. User authorization covers marking ready, merging PR #6 and local packaging from merged main only. No upload, production migration, restart or deployment is authorized.**

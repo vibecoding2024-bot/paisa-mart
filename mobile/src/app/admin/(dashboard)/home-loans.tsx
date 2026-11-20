@@ -1,3 +1,5 @@
+import { PayoutEntry } from '@/components/AdminOperationsPanels';
+import { operations } from '@/lib/admin-operations-api';
 import { useAdminStore } from '@/lib/admin-store';
 import { saveHomeLoanAndRefresh } from '@/lib/admin-refresh';
 import { useState } from 'react';
@@ -12,7 +14,9 @@ export default function HomeLoanPipeline() {
   const [stage, setStage] = useState<HomeLoanStage | undefined>(undefined);
   const [page, setPage] = useState<number>(1);
   const [selected, setSelected] = useState<HomeLoanLead | null>(null);
-  const [nextStage, setNextStage] = useState<HomeLoanStage>('new');
+  const [nextStage, setNextStage] = useState<HomeLoanStage | 'payout'>('new');
+  const [payoutVersion, setPayoutVersion] = useState<number | undefined>(undefined);
+  const leads = useAdminStore(s => s.leads);
   const [amount, setAmount] = useState<string>('');
   const [note, setNote] = useState<string>('');
   const client = useQueryClient();
@@ -22,24 +26,31 @@ export default function HomeLoanPipeline() {
     mutationFn: () => {
       if (!selected) throw new Error('Select a lead');
       return saveHomeLoanAndRefresh({
-        save: () => updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note }),
+        save: async () => {
+          if (nextStage === 'payout') {
+            if (payoutVersion === undefined) throw new Error('Refresh applications and reopen this lead before selecting Payout.');
+            await operations('/applications/' + encodeURIComponent(selected.referenceNumber), { version: payoutVersion, payoutStatus: 'selected', ...(note ? { note } : {}) }, 'PATCH');
+          } else await updateHomeLoan(selected.id, { stage: nextStage, version: selected.version, loanAmountRequired: amount, note });
+        },
         refreshApplications,
         refreshPipeline: () => client.invalidateQueries({ queryKey: ['home-loan-pipeline'] }, { throwOnError: true }),
       });
     },
     onSuccess: () => { setSelected(null); },
   });
-  const open = (lead: HomeLoanLead) => { mutation.reset(); setSelected(lead); setNextStage(lead.stage); setAmount(lead.loanAmountRequired); setNote(''); };
+  const open = (lead: HomeLoanLead) => { mutation.reset(); setSelected(lead); setPayoutVersion(leads.find(row => row.id === lead.referenceNumber)?.version); setNextStage(lead.stage); setAmount(lead.loanAmountRequired); setNote(''); };
   const money = (value: string) => '₹' + BigInt(value).toLocaleString('en-IN');
   if (selected) return <ScrollView className="flex-1 bg-slate-900" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20 }}>
     <Pressable disabled={mutation.isPending} onPress={() => setSelected(null)} className="py-3"><Text className="text-orange-400">← Back to pipeline</Text></Pressable>
     <Text className="text-white text-2xl font-bold">{selected.fullName || 'Home loan applicant'}</Text>
     <Text selectable className="text-orange-400 mt-2 mb-5">{selected.referenceNumber}</Text>
     <View className="bg-slate-800 rounded-xl p-4 mb-5"><Text selectable className="text-slate-300 leading-7">{selected.phoneNumber}{'\n'}{selected.city}, {selected.state}{'\n'}{selected.loanType}{'\n'}Date of birth: {selected.dateOfBirth || '—'}{'\n'}CIBIL: {selected.cibil || '—'}{'\n'}Monthly income: {money(selected.monthlyIncome)}{'\n'}Existing EMI: {money(selected.existingEmi)}{'\n'}Received: {new Date(selected.createdAt).toLocaleString()}</Text></View>
+    {leads.find(row => row.id === selected.referenceNumber)?.payoutStatus === 'selected' && <Text className="text-orange-400 mb-3">Payout selected</Text>}
+    {leads.find(row => row.id === selected.referenceNumber) && <PayoutEntry key={selected.referenceNumber + ':' + leads.find(row => row.id === selected.referenceNumber)?.version + ':' + leads.find(row => row.id === selected.referenceNumber)?.homeVersion} lead={leads.find(row => row.id === selected.referenceNumber)!} />}
     <View className="bg-white rounded-xl p-4">
-      <ModalDropdown label="Pipeline stage" value={HOME_LOAN_STAGE_LABELS[nextStage]} options={HOME_LOAN_STAGES.map(key => HOME_LOAN_STAGE_LABELS[key])} onSelect={value => { if (!mutation.isPending) setNextStage(HOME_LOAN_STAGES.find(key => HOME_LOAN_STAGE_LABELS[key] === value)!); }} />
+      <ModalDropdown label="Pipeline stage" value={nextStage === 'payout' ? 'Payout' : HOME_LOAN_STAGE_LABELS[nextStage]} options={[...HOME_LOAN_STAGES.map(key => HOME_LOAN_STAGE_LABELS[key]), 'Payout']} onSelect={value => { if (!mutation.isPending) setNextStage(value === 'Payout' ? 'payout' : HOME_LOAN_STAGES.find(key => HOME_LOAN_STAGE_LABELS[key] === value)!); }} />
       <Text className="text-slate-700 font-semibold mb-2">Loan amount (₹)</Text>
-      <TextInput accessibilityLabel="Loan amount" editable={!mutation.isPending} value={amount} onChangeText={setAmount} keyboardType="numeric" maxLength={12} className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
+      <TextInput accessibilityLabel="Loan amount" editable={!mutation.isPending && nextStage !== 'payout'} value={amount} onChangeText={setAmount} keyboardType="numeric" maxLength={12} className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
       <Text className="text-slate-700 font-semibold mb-2">Admin note</Text>
       <TextInput accessibilityLabel="Admin note" editable={!mutation.isPending} value={note} onChangeText={setNote} multiline maxLength={2000} placeholder="Contact outcome, pending documents or decision reason" className="border border-slate-300 rounded-xl p-3 mb-4 text-slate-900" />
       {mutation.isError ? <Text accessibilityRole="alert" className="text-red-600 mb-3">{mutation.error.message}</Text> : null}
@@ -51,7 +62,7 @@ export default function HomeLoanPipeline() {
   return <ScrollView className="flex-1 bg-slate-900" keyboardShouldPersistTaps="handled" contentContainerStyle={{ padding: 20, paddingBottom: 40 }}>
     <Text className="text-white text-2xl font-bold">Home Loan Pipeline</Text>
     <Text className="text-slate-400 mt-2 mb-5">Track applications and requested loan amounts at every stage.</Text>
-    <View className="flex-row flex-wrap">{query.data?.summary.map(item => <Pressable key={item.stage} onPress={() => { setStage(item.stage); setPage(1); }} className={`rounded-xl p-4 mb-3 mr-3 border ${stage === item.stage ? 'border-orange-500 bg-slate-800' : 'border-slate-700 bg-slate-800'}`} style={{ minWidth: 150, flexGrow: 1 }}><Text className="text-slate-300">{HOME_LOAN_STAGE_LABELS[item.stage]}</Text><Text className="text-white text-xl font-bold mt-2">{money(item.totalLoanAmount)}</Text><Text className="text-orange-400 mt-1">{item.count} leads</Text></Pressable>)}<View accessibilityLabel="Home loan payout awaiting business confirmation" className="rounded-xl p-4 mb-3 mr-3 border border-slate-700 bg-slate-800" style={{ minWidth: 150, flexGrow: 1 }}><Text className="text-slate-300">Payout</Text><Text className="text-amber-400 mt-2">Awaiting business confirmation</Text><Text className="text-slate-400 mt-1">Executive review → Manager approval</Text></View></View>
+    <View className="flex-row flex-wrap">{query.data?.summary.map(item => <Pressable key={item.stage} onPress={() => { setStage(item.stage); setPage(1); }} className={`rounded-xl p-4 mb-3 mr-3 border ${stage === item.stage ? 'border-orange-500 bg-slate-800' : 'border-slate-700 bg-slate-800'}`} style={{ minWidth: 150, flexGrow: 1 }}><Text className="text-slate-300">{HOME_LOAN_STAGE_LABELS[item.stage]}</Text><Text className="text-white text-xl font-bold mt-2">{money(item.totalLoanAmount)}</Text><Text className="text-orange-400 mt-1">{item.count} leads</Text></Pressable>)}<View accessibilityLabel="Home loan payout approval information" className="rounded-xl p-4 mb-3 mr-3 border border-slate-700 bg-slate-800" style={{ minWidth: 150, flexGrow: 1 }}><Text className="text-slate-300">Payout</Text><Text className="text-amber-400 mt-2">Manual amounts after Disbursed</Text><Text className="text-slate-400 mt-1">Executive and manager approval required</Text></View></View>
     <View className="flex-row justify-between my-3"><Pressable onPress={() => { setStage(undefined); setPage(1); }} className="py-3"><Text className="text-orange-400">Show all stages</Text></Pressable><Pressable onPress={() => void query.refetch()} className="py-3"><Text className="text-orange-400">Refresh</Text></Pressable></View>
     <TextInput accessibilityLabel="Search home loan leads" value={search} onChangeText={value => { setSearch(value); setPage(1); }} maxLength={120} placeholder="Search name, phone or confirmation number" placeholderTextColor="#94A3B8" className="bg-slate-800 rounded-xl p-4 text-white mb-5" />
     {query.isLoading ? <ActivityIndicator color="#FB923C" /> : query.isError ? <Text accessibilityRole="alert" className="text-red-400">{query.error.message}</Text> : <>

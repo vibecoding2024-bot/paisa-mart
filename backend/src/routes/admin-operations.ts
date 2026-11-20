@@ -17,6 +17,8 @@ import {
   saveStaff,
   staffList,
   updateApplication,
+  updatePayout,
+  approvePayout,
   type Actor,
 } from "../lib/admin-operations";
 export const operationsRouter = new Hono<{ Variables: { actor: Actor } }>();
@@ -114,6 +116,7 @@ operationsRouter.get("/applications", async (c) => {
 const change = z
   .object({
     version: z.number().int().min(0),
+    payoutStatus: z.literal("selected").optional(),
     stage: z
       .enum([
         "new",
@@ -177,7 +180,7 @@ operationsRouter.post("/staff", async (c) => {
       version: z.number().int().min(0).optional(),
       name: z.string().trim().min(1).max(120),
       email: z.email(),
-      role: z.enum(["admin", "ops", "viewer"]),
+      role: z.enum(["admin", "ops", "viewer", "executive", "manager"]),
       password: z.string().min(12).max(200).optional(),
       active: z.boolean().default(true),
     })
@@ -321,7 +324,7 @@ operationsRouter.get("/finance", (c) =>
     success: true,
     available: false,
     message:
-      "Commission rates, provider agreements, approval responsibilities and settlement rules have not been configured. No payable or paid amount is inferred.",
+      "Automated commission rates and settlement rules are not configured. Manual eligible payout approval is separate; no payable or paid amount is inferred.",
     states: [
       "estimated",
       "earned",
@@ -340,3 +343,14 @@ operationsRouter.get("/customers", (c) =>
 operationsRouter.get("/transactions", (c) =>
   c.json({ success: true, ...localDirectory("transactions", c.get("actor")) }),
 );
+
+operationsRouter.put('/applications/:id/payout', async c => {
+  const p = z.object({ version: z.number().int().min(0), homeVersion: z.number().int().min(0).optional(), customerAmount: z.string().max(15), paisamartAmount: z.string().max(15) }).strict().safeParse(await c.req.json().catch(() => null));
+  if (!p.success) return c.json({ success: false, message: 'Enter both non-negative payout amounts and the current version' }, 400);
+  return c.json({ success: true, ...await updatePayout(c.req.param('id'), p.data, c.get('actor')) });
+});
+operationsRouter.post('/applications/:id/payout/approve', async c => {
+  const p = z.object({ version: z.number().int().min(0), homeVersion: z.number().int().min(0).optional() }).strict().safeParse(await c.req.json().catch(() => null));
+  if (!p.success) return c.json({ success: false, message: 'Refresh and review the current payout amounts' }, 400);
+  return c.json({ success: true, ...await approvePayout(c.req.param('id'), p.data.version, c.get('actor'), p.data.homeVersion) });
+});

@@ -62,3 +62,13 @@ export function leadStageOptions(product: ProductCategory): LeadStage[] {
   }
   return HOME_LOAN_STAGES.map((stage) => GENERIC_STAGE_BY_LOAN_STAGE[stage]);
 }
+
+// Payout is a manual action in Change Stage, never a loan decision/stage.
+export type LoanStageAction = LeadStage | 'payout';
+export function loanStageActions(product: ProductCategory): LoanStageAction[] {
+  const stages: LoanStageAction[] = [...leadStageOptions(product)];
+  if (!product.endsWith('-loans')) return stages;
+  if (!stages.includes('rejected')) stages.push('rejected');
+  stages.splice(stages.indexOf('rejected') + 1, 0, 'payout');
+  return stages;
+}

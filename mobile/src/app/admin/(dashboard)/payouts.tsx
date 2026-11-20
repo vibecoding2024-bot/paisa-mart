@@ -1,4 +1,4 @@
-import { FinanceUnavailable } from '@/components/AdminOperationsPanels';
+import { FinanceUnavailable, PayoutReviewList } from '@/components/AdminOperationsPanels';
 import { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, TextInput } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -107,6 +107,7 @@ export default function PayoutsScreen() {
   return (
     <ScrollView keyboardShouldPersistTaps="handled" className="flex-1 bg-slate-900" showsVerticalScrollIndicator={false}>
       <View className="p-4">
+<PayoutReviewList/>
 <FinanceUnavailable/>
         {/* Header */}
         <Animated.View entering={FadeInDown.delay(50).springify()}>

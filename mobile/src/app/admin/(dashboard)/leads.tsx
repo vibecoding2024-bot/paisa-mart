@@ -34,7 +34,7 @@ import {
   STAGE_COLORS,
   PRODUCT_LABELS,
 } from '@/lib/admin-store';
-import { leadStageLabel, leadStageOptions } from '@/lib/loan-product-stages';
+import { leadStageLabel, leadStageOptions, loanStageActions, type LoanStageAction } from '@/lib/loan-product-stages';
 
 const OUTCOME_COLORS = {
   pending: '#F59E0B',
@@ -64,6 +64,7 @@ export default function LeadsScreen() {
   const params = useLocalSearchParams<{ product?: string }>();
   const leads = useAdminStore(s => s.leads);
   const currentAdmin = useAdminStore(s => s.currentAdmin);
+  const operationError = useAdminStore(s => s.error);
   const updateLeadStage = useAdminStore(s => s.updateLeadStage);
   const assignLead = useAdminStore(s => s.assignLead);
 
@@ -134,8 +135,8 @@ export default function LeadsScreen() {
     router.push({ pathname: '/admin/lead-details', params: { id: lead.id } } as any);
   };
 
-  const handleStageChange = async (newStage: LeadStage) => {
-    if (selectedLead && currentAdmin?.role !== 'viewer') {
+  const handleStageChange = async (newStage: LoanStageAction) => {
+    if (selectedLead && ['admin', 'ops'].includes(currentAdmin?.role ?? '')) {
       if (!await updateLeadStage(selectedLead.id, newStage)) return;
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
@@ -519,8 +520,9 @@ export default function LeadsScreen() {
           <Pressable onPress={(e) => e.stopPropagation()}>
             <View className="bg-slate-800 rounded-t-3xl p-6 max-h-[70%]">
               <Text className="text-white text-lg font-semibold mb-4">Select New Stage</Text>
+              {operationError ? <Text accessibilityRole="alert" className="text-red-400 mb-3">{operationError}</Text> : null}
               <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-                {(selectedLead ? leadStageOptions(selectedLead.productType) : []).map((stage) => (
+                {(selectedLead ? loanStageActions(selectedLead.productType) : []).map((stage) => (
                   <Pressable
                     key={stage}
                     onPress={() => handleStageChange(stage as LeadStage)}
@@ -528,10 +530,10 @@ export default function LeadsScreen() {
                   >
                     <View
                       className="w-3 h-3 rounded-full mr-3"
-                      style={{ backgroundColor: STAGE_COLORS[stage as LeadStage] }}
+                      style={{ backgroundColor: stage === 'payout' ? '#FB923C' : STAGE_COLORS[stage] }}
                     />
                     <Text className="text-white">
-                      {selectedLead ? leadStageLabel(selectedLead.productType, stage) : STAGE_LABELS[stage]}
+                      {stage === 'payout' ? 'Payout' : selectedLead ? leadStageLabel(selectedLead.productType, stage) : STAGE_LABELS[stage]}
                     </Text>
                   </Pressable>
                 ))}
