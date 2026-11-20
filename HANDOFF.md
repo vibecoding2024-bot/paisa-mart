@@ -1,4 +1,120 @@
-# Current status — PR #7 merged; release prepared (November 21, 2026)
+# Current status — corrected PR #7 release prepared on the deployed PR #6 baseline (November 21, 2026)
+
+**Read this section first. It supersedes the "PR #7 merged; release prepared" section below.**
+
+## Confirmed deployment history (user-confirmed)
+
+- **October 21:** dashboard `20261021-17eac94b-dashboard`.
+- **November 6:** **PR #6 deployed successfully** as `20261106-18ae1786-dashboard` (source `18ae178`).
+  - Live frontend `index.html` SHA256: `a1ad0bf4c08b2aada00ea18076fc95905e25739540429242af036de9224d977b`.
+  - Backend backup: `/home/ec2-user/paisa-mart-data/backups/backend-before-20261106-18ae1786-dashboard`.
+  - Full verified backup: `/home/ec2-user/paisa-mart-data/backups/GOOD-PHASE-20261105T205337Z`.
+- November 6 is the last confirmed baseline. Current live drift has not been checked yet; the EC2 command below checks it. Never bypass a mismatch, and do not repeat the PR #6 deployment.
+- **PR #7:** merged as `595e521211e13dd9cdcdcd7d50dbc8c940ef9574`. Its tree is identical to the approved head `69c2398`.
+
+## Superseded artifact (kept for audit, never uploaded)
+
+- `release/pr7-595e5212-20261121/` (release `20261121-595e5212-dashboard`, `SHA256SUMS.txt` `cf4843c1…`) wrongly assumed the October `17eac94b` baseline and shipped 14 files.
+- It is marked `SUPERSEDED-DO-NOT-UPLOAD.txt` and is otherwise unchanged. Its checksums still verify.
+
+## Corrected artifact
+
+- **Release name:** `20261121-595e5212-on-pr6-dashboard`
+- **Upload folder (15 files):** `C:\Users\Swetha Anusha\Pictures\CHAITANYA\paisa mart\paisa-mart\release\pr7-on-pr6-595e5212-20261121\upload\20261121-595e5212-on-pr6-dashboard`
+- **SHA256 of `SHA256SUMS.txt`:** `4e7845d1e12f76c373d3c1d147bb2bfddd49dbd21c7f4d5d8b419da0938f46e9`
+- **Key files:**
+
+| File | SHA256 |
+|---|---|
+| `approved-web.tar.gz` | `8511cd15a953e45f0e0e9d130113aa121e0a517eec3241de453476724d7af41e` |
+| `requirements-backend.tar.gz` | `0188922c467b517cf514d7a03a3f520b26ed9149fecf4b9f7f8a831e390791ac` |
+| `manifest.json` | `6626d36eabaa32256dddb82599d643ac6dc3cc04d1c7490ce79f6bb21cabb3ee` |
+| `backend/comparison.json` | `8f8fc88d47ee5ebe9dcedaa62b646ee58ca1543d90d7b4148e025eae4acf7d88` |
+
+- **Baseline:** the deployed PR #6 release.
+  - Its `SHA256SUMS.txt` was verified against the recorded `771bc0b3…`.
+  - Its manifest's `index.html` equals the confirmed live hash `a1ad0bf4…`.
+  - Its installed payload was verified against `18ae178`.
+  - The expected live state is PR #6's `expected_baseline` with its installed hashes overlaid: 37 tracked files, plus 2 new files expected to be MISSING.
+- **Backend delta, derived by comparison: 6 files.**
+  - `src/index.ts`
+  - `src/lib/admin-operations.ts`
+  - `src/lib/auth-token.ts`
+  - `src/routes/admin-operations.ts`
+  - `src/routes/customer-applications.ts` (new)
+  - `src/routes/customer-payouts.ts` (new)
+
+  The hash comparison matches `git diff 18ae178 595e521`. The 4 deployed Personal files use the October CRLF bytes. They differ from Git only by line endings, and their Git source is unchanged since `18ae178`. They are preserved, not redeployed.
+- **Frontend and tools:** the frontend is a fresh production export (`https://paisa-mart.com`, no localhost URLs). `backend-update.py` and the four toolkit scripts are byte-identical to the copies deployed with PR #6. The new backend backup path will be `backend-before-20261121-595e5212-on-pr6-dashboard`.
+- **Packager:** `release/pr7-tools/prepare_pr7_on_pr6.py` (SHA256 `b97bbd74c2a8ca218c269c1941fe025a23cde4b3adadd4b924dc0479c889f0e3`).
+  - It reuses the maintained guarded tooling from the clean worktree `.release-pr7-595e5212-20261121` at `595e521`.
+  - It changes only the release name, to keep it unique; the IST date is still Nov 21.
+
+## Validation
+
+- **Package checks passed:** checksums (15 files), archive member/hash verification, manifest name and directory, and source guards before and after the build.
+- **Local rehearsal: 14/14 passed.** It used the packaged `backend-update.py`, run by `release/pr7-tools/rehearse_pr7_on_pr6.py` (SHA256 `13523efe234e02fc28d3c8133bae526db90a2f4338d61cd39a8c678611e76577`). Results are in `release/pr7-on-pr6-595e5212-20261121/rehearsal-results.json`.
+  - A PR #6 live tree rebuilt from the deployed artifacts matches all 39 expected hashes.
+  - A drifted file is refused.
+  - Migration rehearsal: a SQLite database seeded with PR #6 code, then migrated in an isolated copy, keeps `integrity_check` ok and every existing row count. The candidate code lists the existing submissions.
+  - Install writes exactly the 6 hashes and leaves every other file unchanged.
+  - The packaged rollback restores every PR #6 hash and removes the new files.
+- **Reused, still valid:**
+  - Packaging safety tests from the same worktree and commit: 32 + 38 OK.
+  - Application tests at `109d514`: 35 tests.
+  - Browser checks: 20/20.
+  - The app code is unchanged since these ran.
+- **Not done:** live EC2 verification. On EC2, the real backup and a migration rehearsal against a copy of the live database run automatically inside `backend-update.py update`, before any install.
+
+## Prerequisite after deployment
+
+Before payouts can be approved, an admin must create or assign **two separate staff accounts: one with the Executive role and one with the Manager role** (Settings → Staff access). The person who enters an amount cannot approve it, and one person cannot approve twice.
+
+## Still disabled or incomplete
+
+- The approval order is unconfirmed; either order is accepted.
+- Credit Card, Insta, Health, Motor and Life payouts are requested, but their calculation rules are unresolved. Those payouts and all automatic Revenue/TDS/percentage calculations stay off.
+- Gold Loan saving, status tracking and payout are incomplete.
+
+## Exact next action (each step needs separate authorization)
+
+1. **FileZilla upload, after upload approval.**
+   - Reconfirm the instance, IP, Region and SSH host key in the AWS Console. The last recorded values were `i-0e6f35bc4e48cde49` / `54.252.33.16` / `ap-southeast-2`.
+   - Connect over SFTP, port 22, with the existing authorized key.
+   - Upload the **whole** folder `20261121-595e5212-on-pr6-dashboard` into `/home/ec2-user/paisa-mart-deployment/incoming/`. Stop if the destination already exists.
+   - Confirm the transfer queue is empty with no failed transfers.
+   - Never upload the superseded folder.
+2. **Read-only verification** in EC2 Instance Connect as `ec2-user`. If the terminal is waiting at `Paste your EC2 instance ID:`, press Ctrl+C first. If anything fails, stop: do not deploy and do not bypass.
+
+```bash
+(
+set -eu
+release_name=20261121-595e5212-on-pr6-dashboard
+checksum_sha=4e7845d1e12f76c373d3c1d147bb2bfddd49dbd21c7f4d5d8b419da0938f46e9
+cd "/home/ec2-user/paisa-mart-deployment/incoming/$release_name"
+printf '%s  %s\n' "$checksum_sha" SHA256SUMS.txt | sha256sum -c -
+sha256sum -c SHA256SUMS.txt
+printf '%s  %s\n' 'a1ad0bf4c08b2aada00ea18076fc95905e25739540429242af036de9224d977b' '/home/ec2-user/paisa-mart-new/backend/public/index.html' | sha256sum -c -
+test -f /home/ec2-user/paisa-mart-data/backups/backend-before-20261106-18ae1786-dashboard/backup-ready.json
+test -d /home/ec2-user/paisa-mart-data/backups/GOOD-PHASE-20261105T205337Z
+test ! -e "/home/ec2-user/paisa-mart-data/backups/backend-before-$release_name"
+python3 -B backend/backend-update.py verify
+python3 -B /home/ec2-user/paisa-mart-deployment/verify.py
+)
+```
+
+`backend-update.py verify` is read-only and changes nothing. It checks:
+- all 39 live backend files for drift against PR #6;
+- the staged file hashes;
+- the SQLite runtime environment;
+- the PM2 process identity;
+- backend health.
+
+3. **Deployment:** only with separate explicit authorization for this release.
+
+---
+
+# SUPERSEDED status — PR #7 merged; first release used the WRONG October baseline (do not upload)
 
 **Read this section first.**
 
