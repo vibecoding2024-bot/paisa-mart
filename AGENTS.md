@@ -2,6 +2,17 @@
 
 This repository is a monorepo with two active workspaces: [mobile/](mobile/) and [backend/](backend/). Use the package-local scripts and conventions for the area you are editing; the root package.json does not define project scripts.
 
+## Shared agent working rules (OpenAI Codex + Anthropic coding agent)
+
+- Either agent may continue the project, but only one may edit files or execute commands at a time.
+- Both agents must verify they use the same local checkout (`git worktree list`, branch, HEAD). Separate cloud sessions/worktrees do not automatically share changes.
+- Before switching agents: stop running tasks, save files, and update `HANDOFF.md` with completed work, pending tasks, changed files, test results, errors and the exact next action.
+- Create a Git checkpoint of relevant work on the feature branch, excluding secrets, logs, build output and unrelated changes.
+- The incoming agent must inspect actual files and diffs; never assume access to the other agent's conversation.
+- Reuse valid test results (same commit, same inputs); avoid duplicate implementation and repeated reviews.
+- Production is AWS EC2 with SQLite. Use the existing guarded backup/release workflow. No Netlify/Vercel work; their PR previews are not AWS readiness signals.
+- Merge and deployment each require explicit user authorization for the current release.
+
 Before making changes, read the nearest folder guide first:
 - [mobile/CLAUDE.md](mobile/CLAUDE.md) for Expo app conventions.
 - [backend/CLAUDE.md](backend/CLAUDE.md) for Bun + Hono backend conventions.

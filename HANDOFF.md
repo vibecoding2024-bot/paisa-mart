@@ -1,3 +1,23 @@
+# Current status — PR #7 (updated November 21, 2026)
+
+**Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
+
+- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. Run `git worktree list` to confirm.
+- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7, "Fix Business Sanctioned and add manual payouts with dual approval". Status: open and draft, base `main` = `18ae178`, 0 commits behind main.
+- Implementation is complete at `1a7708c`. The feature details, access policy, tests and changed files are in [docs/admin-payout-handoff.md](docs/admin-payout-handoff.md).
+- Tests: 34 automated tests (770 assertions) and 10 local browser checks passed at `1a7708c`. Application code has not changed since then, so those results were reused on November 21 and nothing was re-run. The full backend `tsc` still crashes with the known stack overflow from generated `backend/public` JS (see below). It is not a regression, and it is not passing.
+- GitHub checks: the only reported checks are Netlify (passing) and Vercel (failing). Both are out of scope (AWS EC2 only), so they are neither blockers nor evidence of readiness. No GitHub Actions run on this repo.
+- November 21 changes (docs only): added the shared Codex/Claude working rules to `AGENTS.md`, plus this section.
+- Local tooling notes: `gh` is not installed, so PR metadata was read through the public GitHub REST API. `bun` is not on PATH; use `.build-tools/bun-runtime/bun-windows-x64/bun.exe` from the main checkout.
+- Main checkout `main` is still the old dirty `facbc4c` (61 commits behind `origin/main`, with untracked files). It is preserved as-is. Do not reset, stash or develop there.
+- Blockers:
+  - The user must review PR #7 and give explicit merge approval.
+  - Before the payout feature can work in production, an admin must assign separate Executive and Manager staff.
+  - Deployment needs separate authorization and a new uniquely named release.
+- **Exact next action:** wait for the user to review PR #7. If they approve the merge, mark the PR ready, merge, and build a new guarded release from merged main. Do not deploy without separate authorization.
+
+---
+
 # Paisa Mart PR #6 — AWS EC2 handoff
 
 Updated November 6, 2026 (Asia/Calcutta). **Conditional merge checks passed, including the required retry-risk fix and fresh frozen-dependency build. User authorization covers marking ready, merging PR #6 and local packaging from merged main only. No upload, production migration, restart or deployment is authorized.**
