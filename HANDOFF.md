@@ -1,4 +1,4 @@
-# Current status — PR #7 (updated November 21, 2026, third session)
+# Current status — PR #7 (updated November 21, 2026, fourth session; code unchanged since `109d514`)
 
 **Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
 
@@ -25,12 +25,12 @@
 
 ## Unresolved decisions (calculations stay disabled)
 
-- **D-1:** Must the Manager approve last? Currently either order is accepted.
-- **D-2:** Automatic Revenue/TDS/percentage calculations: the formula, TDS rate and base, the meaning of the deducted share in PDF C, fixed amount versus rate, and whether Credit Card, Insta, Health, Motor and Life need payout amounts. All of these stay disabled.
+- **D-1 Approval order.** Current behavior is recorded here explicitly: PR #7 accepts Executive and Manager approvals **in either order**, as long as they come from two different staff members. Whether the Manager must approve last is still unconfirmed.
+- **D-2 Calculation rules.** Payouts for Credit Cards, Insta Loans, Health, Motor and Life insurance are **requested requirements**. What remains unresolved is their calculation rules, not whether they are needed. Open points: the Revenue/TDS formula, the TDS rate and base, what the percentage deductions in PDF C mean, and whether the Home/Personal/Business figures are fixed amounts or rates. No payout fields or calculations exist for those five products yet; all automatic calculations stay disabled.
 
 ## Incomplete coverage
 
-- **Gold Loans** has no intake or persistence, no customer status and no payout. Only the catalogue entry and the Payout action exist.
+- **Gold Loans**: persistence (intake/saving), customer status tracking and payout all remain **incomplete**. Only the catalogue entry and the Payout action exist.
 
 ## Tests and builds (bundled Bun `.build-tools/bun-runtime/bun-windows-x64/bun.exe`)
 
@@ -58,7 +58,7 @@ PR #7 is **ready for user review** within its confirmed scope. Before production
 - an admin must assign separate Executive and Manager staff;
 - deployment needs separate authorization and a new uniquely named release through the guarded EC2 workflow.
 
-D-1, D-2 and Gold Loans are outside this PR's confirmed scope.
+The open items (D-1 approval order, D-2 calculation rules for the five requested products, and Gold Loans) are not delivered by this PR.
 
 **Exact next action:** the user reviews PR #7 and answers D-1 and D-2. Do not merge or deploy without explicit authorization.
 

@@ -25,7 +25,7 @@ Duplicates are merged into one row. The A and C rows N01–N18 and F03–F12 reu
 | U03 | Home/Business/Personal/Vehicle: Customer Eligible Payout and Paisamart Eligible Payout after Disbursed, editable | U1 | **Complete (PR #7)** | `updatePayout` plus the Payouts tab/details. |
 | U04 | Bank Account: the same two fields after Account Activation, editable | U1 | **Complete (PR #7)** | `payoutEligible('bank-accounts','approved')`. |
 | U05 | Payout visible only after executive and manager approval | U1, A1–3 | **Complete (PR #7)**. The approval order is unresolved (D-1). | Two different staff identities are required, and the editor cannot approve their own entry. |
-| A-CP | Customer Payout for Credit Cards, Insta Loans, Health, Motor and Life insurance | A1–3 | **Partial: awaiting clarification** | Their milestones are complete (PR #6 N09–N14). PR #7 has no payout amount fields for these products, because the PDFs tie them to automatic calculations (D-2). |
+| A-CP | Customer Payout for Credit Cards, Insta Loans, Health, Motor and Life insurance (requested requirement) | A1–3 | **Partial: requested; calculation rules unresolved** | Their milestones are complete (PR #6 N09–N14). PR #7 has no payout amount fields for these products, because the PDFs tie them to automatic calculations (D-2). |
 | F02 | Revenue amount and TDS (manual and automatic) | A1–3 | **Awaiting clarification** | Not implemented. See D-2. |
 | F03–F12 | Per-product payout examples and percentages | C1–3 | **Awaiting clarification** (unchanged from PR #6) | Not implemented. See D-2. |
 | N01–N18 | DOB calendars, Submit fixes, New/Used vehicle, eight loan stages, module milestones, 15 modules, referral copy | A, C | **Complete (PR #6)** | PR #6 matrix. The referral copy was re-verified in `(tabs)/index.tsx` and `profile.tsx`. |
@@ -47,4 +47,4 @@ Duplicates are merged into one row. The A and C rows N01–N18 and F03–F12 reu
   - What "automatic" TDS/Revenue means.
   - The meaning of the percentage deductions in PDF C: whether the deducted share is the customer's or Paisa Mart's, and its base. The examples are Credit Card 1,800 − 400, Bank 1,000 − 250, Insta 2.00% − 0.40%, Vehicle 0.4% / 1%, Motor tiers 5/7/8/10, Health 15% − 5%, and Life 20%.
   - Whether the Home/Personal/Business figures are fixed amounts or rates. The Business example also says "personal loan".
-  - Whether Credit Card, Insta, Health, Motor and Life need payout amounts at all.
+  - Payouts for Credit Card, Insta, Health, Motor and Life are requested requirements; only their calculation rules are undecided.
