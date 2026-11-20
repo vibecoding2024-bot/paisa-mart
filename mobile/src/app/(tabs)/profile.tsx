@@ -260,6 +260,9 @@ export default function ProfileScreen() {
             </PressableScale>
           )}
         </Surface>
+        <PressableScale onPress={() => router.push('/my-applications' as any)} style={{ padding: 20, marginBottom: 20, backgroundColor: '#FFFFFF', borderRadius: 22 }}>
+          <Text style={{ color: palette.blue, fontWeight: '700' }}>My applications & status</Text>
+        </PressableScale>
         <PressableScale onPress={() => router.push('/customer-payouts' as any)} style={{ padding: 20, marginBottom: 20, backgroundColor: '#FFFFFF', borderRadius: 22 }}>
           <Text style={{ color: palette.blue, fontWeight: '700' }}>My eligible payouts</Text>
         </PressableScale>

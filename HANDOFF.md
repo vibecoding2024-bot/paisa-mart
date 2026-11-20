@@ -1,20 +1,43 @@
-# Current status — PR #7 (updated November 21, 2026)
+# Current status — PR #7 (updated November 21, 2026, second session)
 
 **Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
 
-- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. Run `git worktree list` to confirm.
-- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7, "Fix Business Sanctioned and add manual payouts with dual approval". Status: open and draft, base `main` = `18ae178`, 0 commits behind main.
-- Implementation is complete at `1a7708c`. The feature details, access policy, tests and changed files are in [docs/admin-payout-handoff.md](docs/admin-payout-handoff.md).
-- Tests: 34 automated tests (770 assertions) and 10 local browser checks passed at `1a7708c`. Application code has not changed since then, so those results were reused on November 21 and nothing was re-run. The full backend `tsc` still crashes with the known stack overflow from generated `backend/public` JS (see below). It is not a regression, and it is not passing.
-- GitHub checks: the only reported checks are Netlify (passing) and Vercel (failing). Both are out of scope (AWS EC2 only), so they are neither blockers nor evidence of readiness. No GitHub Actions run on this repo.
-- November 21 changes (docs only): added the shared Codex/Claude working rules to `AGENTS.md`, plus this section.
-- Local tooling notes: `gh` is not installed, so PR metadata was read through the public GitHub REST API. `bun` is not on PATH; use `.build-tools/bun-runtime/bun-windows-x64/bun.exe` from the main checkout.
-- Main checkout `main` is still the old dirty `facbc4c` (61 commits behind `origin/main`, with untracked files). It is preserved as-is. Do not reset, stash or develop there.
-- Blockers:
-  - The user must review PR #7 and give explicit merge approval.
-  - Before the payout feature can work in production, an admin must assign separate Executive and Manager staff.
-  - Deployment needs separate authorization and a new uniquely named release.
-- **Exact next action:** wait for the user to review PR #7. If they approve the merge, mark the PR ready, merge, and build a new guarded release from merged main. Do not deploy without separate authorization.
+- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. Run `git worktree list` to confirm. The dirty main checkout (`facbc4c`) is preserved untouched.
+- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7. It is open and draft, base `main` = `18ae178`.
+- Requirements coverage for all four PDFs: [docs/requirements-coverage-20261121.md](docs/requirements-coverage-20261121.md). Every unique requirement there is marked complete, partial or awaiting clarification, with file/page references.
+
+## Changes this session (customer lead profile and status, `Customer_Portal_Only.pdf`)
+
+- New `GET /api/customer-applications` (`backend/src/routes/customer-applications.ts`, `customerApplications()` in `backend/src/lib/admin-operations.ts`, mounted in `backend/src/index.ts`).
+  - It lists the signed-in customer's own submissions across all 11 connected sources, with the current admin-processed stage, created/updated dates and the fields the customer entered.
+  - Ownership comes only from the OTP-verified token phone. It returns no-store responses and nothing internal: no notes, owners, provider evidence, payout data, staff identities, DOB, income or CIBIL.
+- Mobile: `mobile/src/app/my-applications.tsx`, `mobile/src/lib/customer-application-api.ts`, and a "My applications & status" link in `(tabs)/profile.tsx`. Existing Home/Personal status screens were kept.
+- Known limit: the list only includes leads submitted with the same mobile number the customer signs in with.
+
+## Tests (bundled Bun `.build-tools/bun-runtime/bun-windows-x64/bun.exe`, run from `backend/`)
+
+- New `src/routes/customer-applications.test.ts`: 2 tests, 25 assertions, passing. It covers:
+  - own versus other customer's leads, across 5 products and both phone formats;
+  - the stage updating after admin Business and Home pipeline changes, with the lead still listed;
+  - no internal or sensitive fields in the response;
+  - missing, forged, expired and admin tokens returning 401.
+- Re-run because `admin-operations.ts` changed, all passing:
+  - `admin-payouts`: 6 tests, 279 assertions;
+  - `admin-operations`: 13 tests, 141 assertions;
+  - `home-loans`: 3 tests, 83 assertions;
+  - `service-applications`: 11 tests, 248 assertions.
+  - (The PR #7 handoff recorded 14/160 for admin-operations combined with `loan-stage-actions`. That suite was not re-run because it is unchanged.)
+- Builds and type checks, all passing: mobile `tsc --noEmit`, focused strict backend `tsc` for the new route and its lib, Bun backend bundle, Expo web export (to scratch, not a release), and `git diff --check`.
+- Not done: a browser visual check of the new screen. The PR #7 browser evidence (10 checks) is still valid for the unchanged payout UI. The known full-backend `tsc` crash from generated `backend/public` JS is unchanged.
+
+## Blockers
+
+- **Business decisions needed** (C-1 to C-4 in the coverage doc): approval order, whether staff see amounts before approval, the Revenue/TDS formula, and manual versus calculated customer payouts. Payout amounts for Credit Cards, Insta, Health, Motor and Life stay unimplemented until these are decided. Nothing was guessed.
+- Gold Loans has no intake source.
+- PR #7 review and merge approval from the user, plus separate deployment authorization.
+- An admin must assign separate Executive and Manager staff before payouts can be used.
+
+**Exact next action:** run a local browser check of Profile → My applications & status with synthetic SQLite data at desktop and 390 px widths. Then get the user's answers on C-1 to C-4, and after that their PR review. Do not merge or deploy.
 
 ---
 

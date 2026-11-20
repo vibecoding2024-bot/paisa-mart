@@ -896,3 +896,56 @@ export async function customerEligiblePayouts(phone: string) {
   }
   return result;
 }
+export type CustomerApplication = { referenceNumber: string; productType: string; stage: string; createdAt: string; updatedAt: string; details: Record<string, string> };
+// Lists the signed-in customer's own submissions with the current admin-processed stage.
+// Ownership comes only from the verified token phone. Internal notes, owners, provider
+// evidence, payout state and staff identities are never returned.
+// Only fields the customer entered; staff-assigned provider and internal data are excluded.
+function customerDetails(lead: any, payload: any): Record<string, string> {
+  const fields: [string, string, string?][] = [
+    ['Name', 'fullName', 'full_name'], ['Loan type', 'loanType', 'loan_type'], ['Loan amount required', 'loanAmountRequired', 'loan_amount_required'],
+    ['Selected provider', 'provider'], ['Product', 'productName'], ['Vehicle condition', 'vehicleCondition', 'vehicle_condition'],
+    ['Vehicle type', 'vehicleType', 'vehicle_type'], ['Selected insurer', 'selectedLifeInsurer', 'selected_life_insurer'], ['Policy type', 'policyType', 'policy_type'],
+    ['City', 'city'],
+  ];
+  const out: Record<string, string> = {};
+  for (const [label, camel, snake] of fields) {
+    const value = lead[camel] ?? (snake ? lead[snake] : undefined) ?? payload[camel];
+    if (value !== undefined && value !== null && String(value).trim() !== '') out[label] = String(value);
+  }
+  return out;
+}
+export async function customerApplications(phone: string): Promise<CustomerApplication[]> {
+  await migrate();
+  await initializeServiceApplications();
+  const metadata = new Map((await query('SELECT * FROM admin_operations')).map(r => [r.id, parse(r.payload)]));
+  const workflows = (await exists('home_loan_workflow'))
+    ? new Map((await query('SELECT * FROM home_loan_workflow')).map(r => [String(r.lead_id), r])) : new Map();
+  const result: CustomerApplication[] = [];
+  for (const source of sources) {
+    if ((process.env[source.env] ?? process.env.DATABASE_URL ?? process.env.POSTGRES_URL) !== url) continue;
+    if (!(await exists(source.table))) continue;
+    for (const lead of await query('SELECT * FROM ' + source.table)) {
+      const payload = parse(lead.payload);
+      const owner = String(lead.phone_number ?? lead.phoneNumber ?? payload.phoneNumber ?? '');
+      if (owner !== phone && owner !== '+91' + phone) continue;
+      const referenceNumber = source.prefix + '-' + lead.id;
+      const op = metadata.get(referenceNumber) ?? {};
+      const workflow = source.kind === 'home-loans' ? workflows.get(String(lead.id)) : undefined;
+      const createdAt = new Date(lead.created_at ?? lead.createdAt ?? payload.createdAt).toISOString();
+      const changes = source.kind === 'home-loans'
+        ? parse(workflow?.history ?? '[]').map((h: any) => h.at)
+        : (op.history ?? []).map((h: any) => h.changedAt);
+      const updatedAt = new Date(Math.max(Date.parse(createdAt), ...changes.map((v: any) => Date.parse(v)).filter(Number.isFinite))).toISOString();
+      result.push({
+        referenceNumber,
+        productType: source.kind,
+        stage: source.kind === 'home-loans' ? homeMap[workflow?.stage ?? 'new'] ?? 'new' : op.stage ?? 'new',
+        createdAt,
+        updatedAt,
+        details: customerDetails(lead, payload),
+      });
+    }
+  }
+  return result.sort((a, b) => b.createdAt.localeCompare(a.createdAt) || a.referenceNumber.localeCompare(b.referenceNumber));
+}

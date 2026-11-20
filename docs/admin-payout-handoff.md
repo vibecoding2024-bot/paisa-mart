@@ -34,6 +34,10 @@ Mobile typecheck, focused strict backend typecheck, Expo web export, Bun backend
 
 Review flow: enter both amounts on an eligible application's details or Payouts tab → approve as Executive → customer sees no amount → approve as Manager → applicant sees only customer amount → edit either amount → customer amount disappears until both approve again. This does not execute a payment.
 
+## Follow-up (November 21)
+
+Customer lead profile/status view added on this branch. See [requirements-coverage-20261121.md](requirements-coverage-20261121.md) and the root HANDOFF.md.
+
 ## Changed files
 
 - `backend/src/index.ts`
