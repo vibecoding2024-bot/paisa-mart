@@ -1,4 +1,37 @@
-# Current status — PR #7 (updated November 21, 2026, fourth session; code unchanged since `109d514`)
+# Current status — PR #7 merged; release prepared (November 21, 2026)
+
+**Read this section first.**
+
+- **Merge:** PR #7 was merged by the user's approval of head `69c2398` through the GitHub merge API: marked ready, then merged with a SHA guard.
+  - Merge commit `595e521211e13dd9cdcdcd7d50dbc8c940ef9574` on `main`. Its tree is identical to the approved head.
+  - The Vercel check fails; it was excluded as a non-AWS check. There are no branch-protection rules.
+- **Release (local only):** `20261121-595e5212-dashboard`.
+  - **Upload folder:** `C:\Users\Swetha Anusha\Pictures\CHAITANYA\paisa mart\paisa-mart\release\pr7-595e5212-20261121\upload\20261121-595e5212-dashboard`
+  - **SHA256 of `SHA256SUMS.txt`:** `cf4843c17c6188c5899460aba4fc1cd3b4bb0137b34ce977d0c9cd25d589e07a`
+  - **Status:** not uploaded, not deployed.
+- **Checksums:** `approved-web.tar.gz` `8511cd15a953e45f0e0e9d130113aa121e0a517eec3241de453476724d7af41e`, `requirements-backend.tar.gz` `fc7489a8da4e57d91bd5cb9a71e4d70daecf9a5f74e5dac18c10a907e9b7ef5f`, `manifest.json` `9bb3258acb26804f0d37833d9bb3e6e607c4171134aa808579cdcc9a9bf71514`. All 23 files are listed in `SHA256SUMS.txt`, and all verified.
+- **How it was built:**
+  - Clean detached worktree `.release-pr7-595e5212-20261121` at merged `origin/main`.
+  - Frozen dependencies installed into `release/pr7-dependencies-595e5212-20261121`.
+  - Packager: the maintained `deployment/requirements/prepare_release.py`, run through `release/pr7-tools/prepare_pr7_release.py`. The wrapper changes only the runtime scope to **14 backend files** (PR #6's 11, plus `lib/auth-token.ts`, `routes/customer-payouts.ts` and `routes/customer-applications.ts`), compared against the recorded deployed dashboard baseline `17eac94b`. All other guards ran unchanged: clean merged main, reviewed ancestry, identical tree, the October dashboard and Personal archive checksums, a fresh production export, archive member/hash verification, and no overwrite.
+  - The web bundle uses `https://paisa-mart.com` and has no localhost URLs.
+  - Logs are in `release/pr7-*.log`.
+- **Checks:**
+  - Packaging safety tests rerun: `deployment/requirements` 32 OK, `deployment/dashboard` 38 OK.
+  - Application tests and browser checks are reused from `109d514`: 35 backend tests and 20/20 browser checks. The code is unchanged since then.
+- **Baseline assumption:** the PR #6 release `20261106-18ae1786-dashboard` was prepared but never recorded as uploaded or deployed. This release therefore contains PR #6 and PR #7 together, measured against the live October 21 dashboard (`17eac94b`).
+  - If PR #6 was deployed some other way, `backend/backend-update.py verify` on EC2 will refuse the baseline. In that case stop; do not force it.
+  - Do not also deploy the PR #6 release.
+- **Prerequisite before payouts can be used:** after deployment, an admin must create or assign **two separate staff accounts**, one with the **Executive** role and one with the **Manager** role, under Settings → Staff access. Existing staff are not reassigned automatically. The editor (admin/ops) cannot approve their own entry, and one person cannot approve twice.
+- **Still disabled or incomplete:**
+  - D-1: the approval order is unconfirmed. Either order is accepted today.
+  - D-2: the calculation rules for the requested Credit Card, Insta, Health, Motor and Life payouts are unresolved, so those payout fields and all automatic Revenue/TDS/percentage calculations stay off.
+  - Gold Loan saving, status tracking and payout are incomplete.
+- **Exact next action:** get separate user approval for the upload. Then upload the whole upload folder through FileZilla to `/home/ec2-user/paisa-mart-deployment/incoming/`, and run the read-only EC2 verification in `deployment/requirements/README.md` §3. Deployment needs its own separate authorization.
+
+---
+
+# Earlier status — PR #7 review (November 21, 2026, before merge)
 
 **Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
 
