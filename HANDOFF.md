@@ -1,43 +1,66 @@
-# Current status — PR #7 (updated November 21, 2026, second session)
+# Current status — PR #7 (updated November 21, 2026, third session)
 
 **Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**
 
-- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. Run `git worktree list` to confirm. The dirty main checkout (`facbc4c`) is preserved untouched.
-- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7. It is open and draft, base `main` = `18ae178`.
-- Requirements coverage for all four PDFs: [docs/requirements-coverage-20261121.md](docs/requirements-coverage-20261121.md). Every unique requirement there is marked complete, partial or awaiting clarification, with file/page references.
+- Shared checkout: `C:/Users/Swetha Anusha/Pictures/CHAITANYA/paisa mart/paisa-mart`. PR #7 lives in its worktree `.admin-payout-update`, branch `feature/admin-payout-approvals`. The dirty main checkout (`facbc4c`) is preserved untouched.
+- PR: https://github.com/vibecoding2024-bot/paisa-mart/pull/7. It is open and draft, base `main` = `18ae178`. Not merged, not deployed.
+- Coverage, settled decisions and unresolved decisions: [docs/requirements-coverage-20261121.md](docs/requirements-coverage-20261121.md). Payout feature details: [docs/admin-payout-handoff.md](docs/admin-payout-handoff.md).
 
-## Changes this session (customer lead profile and status, `Customer_Portal_Only.pdf`)
+## What PR #7 contains
 
-- New `GET /api/customer-applications` (`backend/src/routes/customer-applications.ts`, `customerApplications()` in `backend/src/lib/admin-operations.ts`, mounted in `backend/src/index.ts`).
-  - It lists the signed-in customer's own submissions across all 11 connected sources, with the current admin-processed stage, created/updated dates and the fields the customer entered.
-  - Ownership comes only from the OTP-verified token phone. It returns no-store responses and nothing internal: no notes, owners, provider evidence, payout data, staff identities, DOB, income or CIBIL.
-- Mobile: `mobile/src/app/my-applications.tsx`, `mobile/src/lib/customer-application-api.ts`, and a "My applications & status" link in `(tabs)/profile.tsx`. Existing Home/Personal status screens were kept.
-- Known limit: the list only includes leads submitted with the same mobile number the customer signs in with.
+1. **Business Sanctioned fix, the manual Payout action, and dual-approval payout amounts** for Home/Business/Personal/Vehicle loans and Bank Accounts. Commit `1a7708c`.
+2. **Customer "My applications & status"** (`GET /api/customer-applications`, `mobile/src/app/my-applications.tsx`). Commit `534cffe`.
+   - It lists the signed-in customer's own submissions from all 11 connected sources, with the current admin stage and the details the customer entered.
+   - Ownership comes only from the OTP-verified token phone.
+   - It returns no internal fields.
+3. **Friendly network-error message on that screen.** This was found during the browser check, which first showed a raw "Failed to fetch". It is in the final commit.
 
-## Tests (bundled Bun `.build-tools/bun-runtime/bun-windows-x64/bun.exe`, run from `backend/`)
+## Settled decisions (do not re-ask)
 
-- New `src/routes/customer-applications.test.ts`: 2 tests, 25 assertions, passing. It covers:
-  - own versus other customer's leads, across 5 products and both phone formats;
-  - the stage updating after admin Business and Home pipeline changes, with the lead still listed;
-  - no internal or sensitive fields in the response;
-  - missing, forged, expired and admin tokens returning 401.
-- Re-run because `admin-operations.ts` changed, all passing:
-  - `admin-payouts`: 6 tests, 279 assertions;
-  - `admin-operations`: 13 tests, 141 assertions;
-  - `home-loans`: 3 tests, 83 assertions;
+- Admin/ops staff edit the manual payout amounts.
+- Executive and Manager must both approve, as different staff members.
+- Any amount edit resets both approvals.
+- Customers see only their own approved customer amount. Paisamart amounts stay internal.
+- Authorized staff may enter and review amounts before approval.
+
+## Unresolved decisions (calculations stay disabled)
+
+- **D-1:** Must the Manager approve last? Currently either order is accepted.
+- **D-2:** Automatic Revenue/TDS/percentage calculations: the formula, TDS rate and base, the meaning of the deducted share in PDF C, fixed amount versus rate, and whether Credit Card, Insta, Health, Motor and Life need payout amounts. All of these stay disabled.
+
+## Incomplete coverage
+
+- **Gold Loans** has no intake or persistence, no customer status and no payout. Only the catalogue entry and the Payout action exist.
+
+## Tests and builds (bundled Bun `.build-tools/bun-runtime/bun-windows-x64/bun.exe`)
+
+- **Backend tests, all passing.** Reused from `534cffe`; the only code change since then is in the mobile API helper.
+  - `customer-applications`: 2 tests, 25 assertions.
+  - `admin-payouts`: 6 tests, 279 assertions.
+  - `admin-operations`: 13 tests, 141 assertions.
+  - `home-loans`: 3 tests, 83 assertions.
   - `service-applications`: 11 tests, 248 assertions.
-  - (The PR #7 handoff recorded 14/160 for admin-operations combined with `loan-stage-actions`. That suite was not re-run because it is unchanged.)
-- Builds and type checks, all passing: mobile `tsc --noEmit`, focused strict backend `tsc` for the new route and its lib, Bun backend bundle, Expo web export (to scratch, not a release), and `git diff --check`.
-- Not done: a browser visual check of the new screen. The PR #7 browser evidence (10 checks) is still valid for the unchanged payout UI. The known full-backend `tsc` crash from generated `backend/public` JS is unchanged.
+- **Browser check: 20 of 20 passed, with zero runtime errors.** Script: `.preview/myapps-browser.cjs`, run against a synthetic local SQLite server (`.preview/myapps-server.ts`, port 4808). The server was stopped afterwards. Checks:
+  - Desktop (1440 px) and phone (390 px) show all saved submissions, with product names, stage labels and customer-entered details, and no horizontal overflow.
+  - After an admin stage change, both Refresh and a full page reload show "Underwriting", and the lead is still listed.
+  - A second customer sees only their own record. The API returns only the allowed keys, and owner, notes, history, provider evidence, payout, CIBIL, DOB and income are absent.
+  - Empty, signed-out, forged-token, 503 and network-failure states all show correct messages and no stale data.
+  - Evidence: `.preview/myapps-browser-results.json` and screenshots `.preview/myapps-{desktop,mobile,empty-mobile,error-mobile}.png`, all visually inspected. These are local only; `.preview/` is gitignored.
+- **Builds and type checks, all passing:** mobile `tsc` after the fix, Expo web export (cleared cache, synthetic API URL, local only), Bun backend bundle, focused strict backend `tsc`, and `git diff --check`.
+- The known full-backend `tsc` crash from generated `backend/public` JS is unchanged and not a regression.
+- Small cosmetic note: the loan amount on this screen shows unformatted (`250000`).
 
-## Blockers
+## PR readiness
 
-- **Business decisions needed** (C-1 to C-4 in the coverage doc): approval order, whether staff see amounts before approval, the Revenue/TDS formula, and manual versus calculated customer payouts. Payout amounts for Credit Cards, Insta, Health, Motor and Life stay unimplemented until these are decided. Nothing was guessed.
-- Gold Loans has no intake source.
-- PR #7 review and merge approval from the user, plus separate deployment authorization.
-- An admin must assign separate Executive and Manager staff before payouts can be used.
+PR #7 is **ready for user review** within its confirmed scope. Before production use:
 
-**Exact next action:** run a local browser check of Profile → My applications & status with synthetic SQLite data at desktop and 390 px widths. Then get the user's answers on C-1 to C-4, and after that their PR review. Do not merge or deploy.
+- the user must approve the merge;
+- an admin must assign separate Executive and Manager staff;
+- deployment needs separate authorization and a new uniquely named release through the guarded EC2 workflow.
+
+D-1, D-2 and Gold Loans are outside this PR's confirmed scope.
+
+**Exact next action:** the user reviews PR #7 and answers D-1 and D-2. Do not merge or deploy without explicit authorization.
 
 ---
 
