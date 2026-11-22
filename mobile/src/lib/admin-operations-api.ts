@@ -1,6 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { API_BASE } from './api-base';
-const base = API_BASE;
+// All admin operations routes are mounted under /api/admin/operations (backend/src/routes/admin.ts); callers pass
+// relative paths such as "/applications?page=1". Without this prefix the requests hit the web app's SPA fallback
+// and receive index.html instead of JSON (production regression 23 Nov 2026).
+const base = API_BASE + "/api/admin/operations";
 export async function operations(
   path: string,
   body?: unknown,
