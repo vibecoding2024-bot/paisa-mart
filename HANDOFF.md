@@ -102,16 +102,28 @@
 - **Full backup:** `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
 - Keep both until the owner releases them. Rollback (only if ever required, separately authorized) is described in the incident file.
 
+## A-42 FIXED locally (`ede1a10`, 22 Nov)
+- **Fix:**
+  - The checkout page renders every value (URL parameters, the stored last reference, status/create/state responses) as text; there is no HTML insertion.
+  - The payment link must be `https`, and the server allowlists its host (`lib/payment-url.ts`: `vimopay.in`, the `VIMOPAY_BASE_URL` host, `VIMOPAY_PAYMENT_URL_HOSTS`).
+  - Strict hash-pinned CSP; `Cache-Control: no-store`.
+  - `/status` no longer echoes unknown references; `/create` rejects non-identifier `merchantRefId` values before any gateway call. The A-03 protection is unchanged.
+- **Tests:**
+  - `checkout-page.test.ts` (6) and `checkout-page.browser.test.ts` (5). The browser test needs Chrome or Edge (set `CHROME_PATH` to choose one); it is skipped with a message if neither is found, and it is loopback-only.
+  - On the old code the browser payloads executed and redirected; 4 of the 6 unit tests and all 5 browser tests fail there.
+  - Full suite: **117 pass / 0 fail / 0 skipped, 24 files**. The isolation check passes. Backend `tsc` errors are still at the 119 baseline, none in changed files.
+- **Release check:** create one UAT payment after the backend update. If the link host is not under `vimopay.in`, the log shows `gateway paymentUrl rejected` with the host.
+
 ## Readiness (final review, 22 Nov)
 - See [READINESS_REPORT.md](docs/play-store-remediation-20261122/READINESS_REPORT.md) and the final [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
 - **Review result:** the only runtime change since the validated commits is the welcome wording, which is already validated. The isolation check passes at HEAD. The secret scan of the branch diff is clean. Incident numbers in `CHECKLIST.md` are now masked.
-- **New top blocker: A-42 (Critical, pre-existing, open).** `/api/payment/checkout` writes URL/status values with `innerHTML`, and the reflected variant still works after A-03. It could steal tokens on the app origin.
+- **A-42:** fixed locally, see above.
 - **Also open:**
   - A-04 (payment API public, UAT);
   - A-05 (secrets and signing material tracked in Git: `backend/paisa-mart-mvp.zip`, `backend/payments.db`, `android/app/debug.keystore`; keys need rotation);
   - A-09 / A-52 (sessions);
   - Android signing.
-- **Next action:** with authorization, fix A-42 locally (render as text, stop echoing unknown refs) with a regression test.
+- **Next action:** the owner rotates the provider keys exposed by A-05 (`backend/paisa-mart-mvp.zip`). With authorization, the agent then removes the tracked secret and signing files from the branch.
 
 ## Previous step (done)
 - **The EC2 read-only `plan` passed** (owner, 22 Nov).

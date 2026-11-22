@@ -1,7 +1,7 @@
 # Google Play remediation: honest financial UI, private profiles (A-01), OTP binding, callback hardening, guarded review account, test isolation, icons
 
-> **Status: do not merge or deploy yet.** This PR is complete and tested locally, but release is blocked. Blockers, rollout order, rollback and the Play Console inputs are in [`READINESS_REPORT.md`](READINESS_REPORT.md).
-> - The **A-42** checkout-page script injection (Critical, pre-existing) must be fixed first.
+> **Status: do not merge or deploy yet.** This PR is complete and tested locally, including the A-42 checkout-page fix, but release is still blocked. Blockers, rollout order, rollback and the Play Console inputs are in [`READINESS_REPORT.md`](READINESS_REPORT.md).
+> - Open: A-04, A-05 (key rotation), A-09/A-52.
 > - Android signing must be verified.
 >
 > A production incident (four synthetic test profiles written by local test builds) is **resolved**: those profiles were deleted with a reviewed, targeted cleanup, and backups are preserved. See [`INCIDENT_2026-11-22_test-profiles-in-production.md`](INCIDENT_2026-11-22_test-profiles-in-production.md).
@@ -46,6 +46,11 @@ The audit also found fabricated money shown to customers (A-07) and critical API
   - Untrusted gateway callbacks no longer create or change payment records, and their bodies are not logged.
   - The KYC callback routes are reachable again.
   - **Authenticated payment reconciliation is not implemented.** Nothing marks a payment successful, and end-to-end payment processing is not claimed as fixed.
+- **A-42 (checkout page script injection):**
+  - Every value the page shows (URL parameters, the stored last reference, status/create/state responses) is rendered as text; there is no HTML insertion.
+  - The gateway link is used only if it is `https`, and the server allowlists its host (`vimopay.in`, the `VIMOPAY_BASE_URL` host, `VIMOPAY_PAYMENT_URL_HOSTS`).
+  - A strict CSP pins the page's own script and style by SHA-256.
+  - `/status` no longer echoes unknown references, and `/create` rejects non-identifier `merchantRefId` values.
 - **Play review account:**
   - One env-configured phone with an HMAC'd code, an expiry and a lockout. No SMS, and logs show only a masked phone.
   - Tokens are capped to the window and revocable. Its records are labelled TEST.
@@ -54,7 +59,7 @@ The audit also found fabricated money shown to customers (A-07) and critical API
 **Tests and tooling**
 - A test network guard blocks outside hosts.
 - `scripts/check-api-isolation.mjs` is the regression check for production fallbacks.
-- New tests: `users-auth`, `gateway-callback`, `api-isolation`, plus `review-account` additions. `payout-guard` is fixed.
+- New tests: `users-auth`, `gateway-callback`, `checkout-page` (unit and real-browser), `api-isolation`, plus `review-account` additions. `payout-guard` is fixed.
 
 **Docs:** store listing, App access instructions, reviewer-access design, screenshots, evidence, the incident report and the readiness report.
 
@@ -65,7 +70,9 @@ The audit also found fabricated money shown to customers (A-07) and critical API
 - Customer application isolation.
 
 ## Tests
-- `bun test`, each file run separately: **106 pass / 0 fail across 22 files** (`e1e362d`; backend unchanged since).
+- `bun test`, each file run separately: **117 pass / 0 fail / 0 skipped across 24 files** (`ede1a10`).
+  - This includes the A-42 browser test: headless Chrome over DevTools, synthetic database, loopback only.
+  - On the previous code its payloads executed and redirected to `evil.example`. With the fix they render as text, no token is sent, and legitimate checkout still renders.
 - `node scripts/check-api-isolation.mjs` passes at HEAD.
 - Mobile `tsc`: 0 errors.
 - Android WSL release builds of `e61fa03`:
