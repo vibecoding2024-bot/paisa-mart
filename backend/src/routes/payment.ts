@@ -1,14 +1,19 @@
 import { isReviewPhone, REVIEW_ACCOUNT_REFUSAL } from "../lib/review-account";
 import { Hono } from "hono";
 import { authorize, getStates, createPayment, config } from "../lib/vimopay";
-import { CHECKOUT_PAGE } from "../checkout-page";
+import { CHECKOUT_PAGE, CHECKOUT_CSP } from "../checkout-page";
+import { safePaymentUrl, MERCHANT_REF_PATTERN } from "../lib/payment-url";
 import { savePending, getTxn } from "../lib/txn-store";
 import { acknowledgeGatewayCallback } from "../lib/gateway-callback";
 
 export const paymentRouter = new Hono();
 
 // hosted checkout/initiation page
-paymentRouter.get("/checkout", (c) => c.html(CHECKOUT_PAGE));
+paymentRouter.get("/checkout", (c) => {
+  c.header("Content-Security-Policy", CHECKOUT_CSP);
+  c.header("Cache-Control", "no-store");
+  return c.html(CHECKOUT_PAGE);
+});
 
 // sanity: are the env keys loaded?
 paymentRouter.get("/config", (c) => c.json(config()));
@@ -36,6 +41,9 @@ paymentRouter.get("/states", async (c) => {
 paymentRouter.post("/create", async (c) => {
   const body: any = await c.req.json().catch(() => ({}));
   if (isReviewPhone(body.custMobile)) return c.json({ error: REVIEW_ACCOUNT_REFUSAL }, 403);
+  if (body.merchantRefId !== undefined && !(typeof body.merchantRefId === "string" && MERCHANT_REF_PATTERN.test(body.merchantRefId))) {
+    return c.json({ error: "Invalid merchantRefId" }, 400);
+  }
   const a = await authorize();
   if (!a.token) return c.json({ error: "auth failed", auth: a }, 502);
   const merchantRefId = body.merchantRefId ?? "PM" + Date.now();
@@ -65,7 +73,15 @@ paymentRouter.post("/create", async (c) => {
   } catch (e) {
     console.error("[CREATE] persist failed", e);
   }
-  return c.json({ merchantRefId, ...r });
+  // A-42: only an https link on an allowlisted gateway host is passed to the checkout page.
+  const offeredUrl = r?.data?.paymentUrl;
+  const payUrl = safePaymentUrl(offeredUrl);
+  if (offeredUrl !== undefined && offeredUrl !== null && !payUrl) {
+    let host = "unparseable";
+    try { host = new URL(String(offeredUrl)).host; } catch {}
+    console.warn("[CREATE] gateway paymentUrl rejected (not an allowlisted https host)", { host });
+  }
+  return c.json({ merchantRefId, ...r, data: r?.data ? { ...r.data, paymentUrl: payUrl } : r?.data });
 });
 
 // gateway/app return: query the stored status by merchantRefId. The authoritative
@@ -73,7 +89,8 @@ paymentRouter.post("/create", async (c) => {
 paymentRouter.get("/status/:ref", (c) => {
   const ref = c.req.param("ref");
   const txn = getTxn(ref);
-  if (!txn) return c.json({ found: false, merchantRefId: ref, status: "Unknown" });
+  // A-42: an unknown reference is not echoed back (it was reflected into the checkout page).
+  if (!txn) return c.json({ found: false, status: "Unknown" });
   return c.json({
     found: true,
     merchantRefId: txn.merchantRefId,
