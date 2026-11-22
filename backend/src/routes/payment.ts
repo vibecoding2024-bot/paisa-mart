@@ -1,3 +1,4 @@
+import { isReviewPhone, REVIEW_ACCOUNT_REFUSAL } from "../lib/review-account";
 import { Hono } from "hono";
 import { authorize, getStates, createPayment, config } from "../lib/vimopay";
 import { CHECKOUT_PAGE } from "../checkout-page";
@@ -33,6 +34,7 @@ paymentRouter.get("/states", async (c) => {
 // step 3: create a payment -> returns paymentUrl to open in the app
 paymentRouter.post("/create", async (c) => {
   const body: any = await c.req.json().catch(() => ({}));
+  if (isReviewPhone(body.custMobile)) return c.json({ error: REVIEW_ACCOUNT_REFUSAL }, 403);
   const a = await authorize();
   if (!a.token) return c.json({ error: "auth failed", auth: a }, 502);
   const merchantRefId = body.merchantRefId ?? "PM" + Date.now();

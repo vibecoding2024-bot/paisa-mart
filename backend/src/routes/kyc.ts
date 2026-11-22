@@ -1,3 +1,4 @@
+import { isReviewPhone, REVIEW_ACCOUNT_REFUSAL } from "../lib/review-account";
 import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
@@ -285,6 +286,7 @@ kycRouter.post("/vimopay/start", async (c) => {
   cleanupSessions();
   const parsed = startSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ success: false, error: "Invalid phone number" }, 400);
+  if (isReviewPhone(parsed.data.phoneNumber)) return c.json({ success: false, error: REVIEW_ACCOUNT_REFUSAL }, 403);
 
   const profile = getUserProfile(parsed.data.phoneNumber);
   if (!profile) return c.json({ success: false, error: "Complete profile before KYC" }, 404);

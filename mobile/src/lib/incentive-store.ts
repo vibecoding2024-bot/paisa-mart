@@ -145,101 +145,6 @@ export interface AuditLogEntry {
   afterValue?: string;
 }
 
-// Mock data generators
-const generateMockIncentives = (): UserIncentive[] => {
-  const users = ['Rahul Sharma', 'Priya Patel', 'Amit Kumar', 'Sneha Reddy', 'Vikram Singh'];
-  const banks = ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI', 'Kotak Bank', 'Yes Bank'];
-  const products: ('bank-account' | 'credit-card' | 'loan')[] = ['bank-account', 'credit-card', 'loan'];
-  const statuses: IncentiveStatus[] = ['pending', 'approved', 'paid'];
-
-  const incentives: UserIncentive[] = [];
-
-  for (let i = 1; i <= 25; i++) {
-    const daysAgo = Math.floor(Math.random() * 30);
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const productType = products[Math.floor(Math.random() * products.length)];
-
-    let amount = 0;
-    if (productType === 'bank-account') amount = 600;
-    else if (productType === 'credit-card') amount = Math.floor(Math.random() * 2000) + 1500;
-    else amount = Math.floor(Math.random() * 3000) + 2000;
-
-    incentives.push({
-      id: `INC-${String(i).padStart(5, '0')}`,
-      userName: users[Math.floor(Math.random() * users.length)],
-      oderId: `ORD-${String(i * 100 + Math.floor(Math.random() * 100)).padStart(6, '0')}`,
-      productType,
-      bankName: banks[Math.floor(Math.random() * banks.length)],
-      amount,
-      status,
-      date: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
-      approvedAt: status !== 'pending' ? new Date(Date.now() - (daysAgo - 1) * 24 * 60 * 60 * 1000).toISOString() : undefined,
-      paidAt: status === 'paid' ? new Date(Date.now() - (daysAgo - 2) * 24 * 60 * 60 * 1000).toISOString() : undefined,
-    });
-  }
-
-  return incentives;
-};
-
-const generateMockIncomingOutgoing = (): IncomingOutgoingRecord[] => {
-  const banks = ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI', 'Kotak Bank', 'Yes Bank', 'IndusInd Bank'];
-
-  return banks.map((bank, index) => {
-    const totalLeads = Math.floor(Math.random() * 100) + 50;
-    const approvedLeads = Math.floor(totalLeads * (0.5 + Math.random() * 0.3));
-    const totalReceivable = approvedLeads * (Math.floor(Math.random() * 2000) + 1500);
-    const totalPaidToUsers = Math.floor(totalReceivable * 0.7);
-
-    return {
-      id: `IO-${String(index + 1).padStart(3, '0')}`,
-      bankPartner: bank,
-      totalLeads,
-      approvedLeads,
-      totalReceivable,
-      totalPaidToUsers,
-      marginRetained: totalReceivable - totalPaidToUsers,
-      month: 'January 2026',
-    };
-  });
-};
-
-const generateMockPayouts = (): Payout[] => {
-  const users = [
-    { id: 'user-1', name: 'Rahul Sharma' },
-    { id: 'user-2', name: 'Priya Patel' },
-    { id: 'user-3', name: 'Amit Kumar' },
-  ];
-  const statuses: PayoutStatus[] = ['initiated', 'processing', 'completed', 'failed'];
-  const banks = ['HDFC Bank', 'ICICI Bank', 'Axis Bank', 'SBI'];
-
-  const payouts: Payout[] = [];
-
-  for (let i = 1; i <= 10; i++) {
-    const user = users[Math.floor(Math.random() * users.length)];
-    const status = statuses[Math.floor(Math.random() * statuses.length)];
-    const daysAgo = Math.floor(Math.random() * 15);
-
-    payouts.push({
-      id: `PAY-${String(i).padStart(5, '0')}`,
-      userId: user.id,
-      userName: user.name,
-      amount: Math.floor(Math.random() * 5000) + 500,
-      bankAccountId: `BA-${user.id}`,
-      bankName: banks[Math.floor(Math.random() * banks.length)],
-      accountNumber: `XXXX${String(Math.floor(Math.random() * 10000)).padStart(4, '0')}`,
-      status,
-      initiatedAt: new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString(),
-      processedAt: ['processing', 'completed', 'failed'].includes(status) ? new Date(Date.now() - (daysAgo - 1) * 24 * 60 * 60 * 1000).toISOString() : undefined,
-      completedAt: status === 'completed' ? new Date(Date.now() - (daysAgo - 2) * 24 * 60 * 60 * 1000).toISOString() : undefined,
-      failedAt: status === 'failed' ? new Date(Date.now() - (daysAgo - 1) * 24 * 60 * 60 * 1000).toISOString() : undefined,
-      failureReason: status === 'failed' ? 'Invalid account number' : undefined,
-      transactionId: status === 'completed' ? `TXN${Date.now()}${i}` : undefined,
-    });
-  }
-
-  return payouts;
-};
-
 interface IncentiveStore {
   // Incentive data
   incentives: UserIncentive[];
@@ -294,9 +199,11 @@ interface IncentiveStore {
 export const useIncentiveStore = create<IncentiveStore>()(
   persist(
     (set, get) => ({
-  incentives: generateMockIncentives(),
-  incomingOutgoing: generateMockIncomingOutgoing(),
-  payouts: generateMockPayouts(),
+  // No generated sample data: admin incentive/payout views start empty. Real payout amounts and their
+  // dual approval live on the server (Admin -> applications -> Payout); these local views hold no money.
+  incentives: [],
+  incomingOutgoing: [],
+  payouts: [],
   bankAccounts: [],
   minWithdrawalAmount: 500,
   dailyPayoutLimit: 50000,
@@ -604,10 +511,11 @@ export const useIncentiveStore = create<IncentiveStore>()(
     {
       name: 'incentive-storage',
       storage: createJSONStorage(() => AsyncStorage),
+      // v1: drop previously persisted generated payouts and device-only, unencrypted bank account numbers.
+      version: 1,
+      migrate: (persisted: any) => ({ userKYC: persisted?.userKYC ?? null, auditLogs: persisted?.auditLogs ?? [] }) as any,
       partialize: (state) => ({
         userKYC: state.userKYC,
-        bankAccounts: state.bankAccounts,
-        payouts: state.payouts,
         auditLogs: state.auditLogs,
       }),
       onRehydrateStorage: () => (state) => {

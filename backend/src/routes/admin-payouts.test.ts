@@ -175,3 +175,21 @@ test('one identity cannot supply both approvals through role changes or approve 
  const result=await req('/applications/'+other,'admin',{version:(await row(other)).version,payout:{customerAmount:'999',approvals:{executive:{actorId:staffId}}}},'PATCH');
  expect(result.status).toBe(400);
 });
+
+
+test('Play review account records are labelled TEST and can never become payout-eligible', async () => {
+ process.env.REVIEW_ACCOUNT_PHONE = '9000000099';
+ try {
+  const id = 'BL-' + (await saveBusinessLoanLead({ ...common, phoneNumber: '9000000099', fullName: 'Review Synthetic', businessType: 'Retail', loanPurpose: 'Expansion' } as any)).id;
+  const r = await row(id);
+  expect(r.testAccount).toBe(true);
+  expect(r.userName.startsWith('TEST – Play review')).toBe(true);
+  expect((await stage(id, 'disbursed')).status).toBe(200);
+  expect((await save(id)).status).toBe(403);
+  // fresh approver: earlier tests change the original executive's role
+  expect((await req('/staff','admin',{ name:'Review approver', email:'review-exec@example.test', password:'test-staff-password', role:'executive' })).status).toBe(200);
+  tokens.reviewExec = await login('review-exec@example.test','test-staff-password');
+  expect((await approve(id, 'reviewExec')).status).toBe(403);
+  expect(await visible('9000000099')).toEqual([]);
+ } finally { delete process.env.REVIEW_ACCOUNT_PHONE; }
+});

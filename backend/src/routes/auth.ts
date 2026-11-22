@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
+import { maskedReviewPhone, usesReviewLogin, verifyReviewCode } from "../lib/review-account";
 
 const phoneSchema = z.string().regex(/^[6-9]\d{9}$/, "Enter a valid Indian mobile number");
 const otpChannelSchema = z.enum(["mobile", "web"]).default("mobile");
@@ -22,6 +23,18 @@ const rates = new Map<string, RateEntry>();
 
 const SEND_DEDUPE_WINDOW_MS = 10_000;
 const otpStore = new Map<string, { otp: string; expiresAt: number; lastSentAt: number; reqId?: string }>();
+// A-02: the provider reqId is bound to the phone it was sent to; verify must present the same phone.
+const REQ_ID_TTL_MS = 15 * 60_000;
+const reqIdPhones = new Map<string, { phone: string; expiresAt: number }>();
+function bindReqId(reqId: string, phone: string) {
+  const now = Date.now();
+  for (const [key, value] of reqIdPhones) if (value.expiresAt <= now) reqIdPhones.delete(key);
+  reqIdPhones.set(reqId, { phone, expiresAt: now + REQ_ID_TTL_MS });
+}
+// A-06: the in-memory dev OTP (returned to the client) is allowed only with an explicit local flag.
+function devOtpAllowed() {
+  return process.env.ALLOW_DEV_OTP === "true";
+}
 
 function allow(key: string, limit: number, windowMs: number) {
   const now = Date.now();
@@ -53,7 +66,9 @@ function providerConfig(channel: OtpChannel) {
 }
 
 function generateOtp(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  const value = new Uint32Array(1);
+  crypto.getRandomValues(value);
+  return (100000 + (value[0]! % 900000)).toString();
 }
 
 function maskedMobile(mobile: string): string {
@@ -195,12 +210,12 @@ function base64Url(value: Uint8Array | string) {
   return Buffer.from(bytes).toString("base64url");
 }
 
-async function issueToken(phone: string) {
+async function issueToken(phone: string, extra: Record<string, unknown> = {}) {
   const secret = process.env.AUTH_TOKEN_SECRET;
   if (!secret) throw new Error("AUTH_TOKEN_SECRET is not configured");
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = base64Url(JSON.stringify({ sub: `+91${phone}`, iat: now, exp: now + 60 * 60 * 24 * 7 }));
+  const payload = base64Url(JSON.stringify({ sub: `+91${phone}`, ...extra, iat: now, exp: now + 60 * 60 * 24 * 7 }));
   const data = `${header}.${payload}`;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
@@ -223,6 +238,17 @@ authRouter.post("/send-otp", async (c) => {
     return c.json({ error: "Too many OTP requests. Please try again later." }, 429);
   }
 
+  // Play review account: no SMS is sent; the response is identical to a normal provider send.
+  if (usesReviewLogin(parsed.data.phone)) {
+    console.log("Play review account OTP request (no SMS sent)", { phone: maskedReviewPhone(parsed.data.phone) });
+    return c.json({ success: true });
+  }
+
+  if (isDev && !devOtpAllowed()) {
+    console.error("OTP provider is not configured and ALLOW_DEV_OTP is not enabled; refusing to send OTP");
+    return c.json({ error: "Unable to send OTP right now. Please try again." }, 503);
+  }
+
   try {
     const mobile = `91${parsed.data.phone}`;
     const existing = otpStore.get(mobile);
@@ -238,6 +264,7 @@ authRouter.post("/send-otp", async (c) => {
         identifier: mobile,
       }, channel);
       const reqId = findReqId(data);
+      if (reqId) bindReqId(reqId, parsed.data.phone);
       return c.json(reqId ? { success: true, reqId } : { success: true });
     } else if (isDev) {
       const otp = generateOtp();
@@ -276,14 +303,29 @@ authRouter.post("/verify-otp", async (c) => {
     const widget = widgetConfig(channel);
     const config = providerConfig(channel);
 
+    if (usesReviewLogin(parsed.data.phone)) {
+      if (!verifyReviewCode(parsed.data.phone, parsed.data.otp)) {
+        console.warn("Play review account sign-in failed", { phone: maskedReviewPhone(parsed.data.phone) });
+        return c.json({ error: "The OTP is incorrect or has expired" }, 401);
+      }
+      console.log("Play review account signed in", { phone: maskedReviewPhone(parsed.data.phone), at: new Date().toISOString() });
+      const token = await issueToken(parsed.data.phone, { review: true });
+      return c.json({ success: true, token });
+    }
+
     if (widget) {
       if (!parsed.data.reqId) throw new Error("Missing OTP request id");
+      const bound = reqIdPhones.get(parsed.data.reqId);
+      if (!bound || bound.expiresAt <= Date.now() || bound.phone !== parsed.data.phone) {
+        return c.json({ error: "The OTP is incorrect or has expired" }, 401);
+      }
       await msg91Widget("verifyOtp", {
         tokenAuth: widget.tokenAuth,
         widgetId: widget.widgetId,
         reqId: parsed.data.reqId,
         otp: parsed.data.otp,
       }, channel);
+      reqIdPhones.delete(parsed.data.reqId);
       const token = await issueToken(parsed.data.phone);
       return c.json({ success: true, token });
     }
@@ -298,6 +340,7 @@ authRouter.post("/verify-otp", async (c) => {
       return c.json({ success: true, token });
     }
 
+    if (!devOtpAllowed()) return c.json({ error: "The OTP is incorrect or has expired" }, 401);
     const stored = otpStore.get(mobile);
     if (!stored || Date.now() > stored.expiresAt) {
       return c.json({ error: "The OTP is incorrect or has expired" }, 401);

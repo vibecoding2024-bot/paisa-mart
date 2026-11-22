@@ -46,6 +46,7 @@ import {
 } from "@/lib/user-profile-store";
 import { useFeatureFlags } from "@/lib/feature-flags";
 import { useNotificationStore } from "@/lib/notification-store";
+import { useApprovedPayouts, formatPayoutTotal } from "@/lib/customer-payout-api";
 import { toast } from "@/lib/toast-store";
 import PressableScale from "@/components/PressableScale";
 import ComingSoonModal, {
@@ -175,6 +176,13 @@ export default function HomeScreen() {
   const goldLoanEnabled = useFeatureFlags((s) => s.gold_loan_enabled);
   const realEstateEnabled = useFeatureFlags((s) => s.real_estate_enabled);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
+  const approvedPayouts = useApprovedPayouts();
+  // Only a current server response is shown as a figure; otherwise an honest placeholder.
+  const approvedTotal = approvedPayouts.isSuccess
+    ? formatPayoutTotal(approvedPayouts.data)
+    : approvedPayouts.isError
+      ? "Unavailable"
+      : "…";
 
   const [comingSoonModule, setComingSoonModule] =
     useState<ComingSoonModule | null>(null);
@@ -214,7 +222,7 @@ export default function HomeScreen() {
     try {
       await Share.share({
         message:
-          "Join me on Paisa Mart and start earning by selling financial products! Earn up to ₹1 Lakh and Reduce Your Expenses.",
+          "Join me on Paisa Mart to explore loans, credit cards, bank accounts and insurance from partner banks and insurers.",
       });
     } catch {
       toast.error("Could not open share sheet");
@@ -340,7 +348,7 @@ export default function HomeScreen() {
             >
               <View style={{ flex: 1 }}>
                 <Text style={{ color: "#C6DAE7", fontSize: 12 }}>
-                  Your total earnings
+                  Approved eligible payouts
                 </Text>
                 <Text
                   style={{
@@ -352,16 +360,7 @@ export default function HomeScreen() {
                     marginTop: 5,
                   }}
                 >
-                  ₹0
-                  <Text
-                    style={{
-                      fontSize: 22,
-                      color: "#AFC9D8",
-                      fontWeight: "400",
-                    }}
-                  >
-                    .00
-                  </Text>
+                  {approvedTotal}
                 </Text>
               </View>
               <PressableScale
@@ -569,7 +568,7 @@ export default function HomeScreen() {
                   marginTop: 7,
                 }}
               >
-                Earn up to ₹1 Lakh and Reduce Your Expenses
+                Invite friends to Paisa Mart
               </Text>
               <Text
                 style={{

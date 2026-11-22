@@ -52,36 +52,9 @@ export const createKYCRejectedNotification = (reason: string) => ({
 });
 
 export const useNotificationStore = create<NotificationStore>((set, get) => ({
-  notifications: [
-    {
-      id: 'notif-1',
-      type: 'incentive_approved',
-      title: 'Incentive Approved',
-      message: 'Your ₹2,000 incentive for HDFC Credit Card sale has been approved.',
-      read: false,
-      createdAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      actionUrl: '/earnings',
-    },
-    {
-      id: 'notif-2',
-      type: 'payout_success',
-      title: 'Payout Successful',
-      message: '₹5,000 has been transferred to your HDFC Bank account.',
-      read: true,
-      createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-      actionUrl: '/earnings',
-    },
-    {
-      id: 'notif-3',
-      type: 'kyc_approved',
-      title: 'KYC Verified',
-      message: 'Your KYC verification is complete. You can now withdraw your earnings.',
-      read: true,
-      createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
-      actionUrl: '/kyc',
-    },
-  ],
-  unreadCount: 1,
+  // No seeded notifications: nothing is shown unless a real event creates it.
+  notifications: [],
+  unreadCount: 0,
 
   addNotification: (notification) => {
     const newNotification: AppNotification = {
