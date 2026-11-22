@@ -102,6 +102,26 @@
 - **Full backup:** `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
 - Keep both until the owner releases them. Rollback (only if ever required, separately authorized) is described in the incident file.
 
+## A-05 secret cleanup, local (`e9ffd09`, 22 Nov) — ROTATION PENDING (owner)
+- **Inventory** (masked; details in [KEY_ROTATION_2026-11-22.md](docs/security/KEY_ROTATION_2026-11-22.md)):
+  - **5 AI provider keys:** OpenAI, Anthropic, xAI, Google and ElevenLabs. They were in the archive and in historical `.env` files, and current code does not use them.
+  - **3 VimoPay gateway keys:** secret, salt and ED. They are in a historical `backend/.env` (f423e2c), and `lib/vimopay.ts` still reads these variables.
+  - **Demo admin credentials** in the README.
+  - All of these commits are on GitHub `origin/main` and other branches. Repository visibility is unverified.
+- **Done:**
+  - `backend/paisa-mart-mvp.zip` and `backend/payments.db` are untracked and preserved outside Git in an owner-only folder (`%USERPROFILE%\paisa-mart-secure\2026-11-22-removed-from-git\`).
+  - The public `/download` route is removed.
+  - The README credentials are redacted.
+  - New ignore rules, plus `backend/.env.example` and `mobile/.env.example`.
+  - New `scripts/secret-scan.py` (masked output), its allowlist, and `scripts/no-secret-files.test.ts`.
+- **Kept:** the standard `android/app/debug.keystore`. There is no upload keystore or `keystore.properties` in Git, and signing is unchanged.
+- **History is not rewritten:** the exposure remains until the keys are rotated and revoked.
+- **Checks:**
+  - redacted scan: 0 findings needing action (23 allowlisted test/doc values); it still detects all keys in the preserved archive;
+  - **120 tests pass / 0 fail / 0 skipped across 25 files**;
+  - the isolation check passes.
+- **Next (owner):** revoke the 5 AI keys. Run the read-only VimoPay fingerprint check in the rotation doc, then request new VimoPay keys. Check GitHub visibility and secret-scanning alerts.
+
 ## A-42 FIXED locally (`ede1a10`, 22 Nov)
 - **Fix:**
   - The checkout page renders every value (URL parameters, the stored last reference, status/create/state responses) as text; there is no HTML insertion.
@@ -123,7 +143,7 @@
   - A-05 (secrets and signing material tracked in Git: `backend/paisa-mart-mvp.zip`, `backend/payments.db`, `android/app/debug.keystore`; keys need rotation);
   - A-09 / A-52 (sessions);
   - Android signing.
-- **Next action:** the owner rotates the provider keys exposed by A-05 (`backend/paisa-mart-mvp.zip`). With authorization, the agent then removes the tracked secret and signing files from the branch.
+- **Next action:** the owner revokes or rotates the A-05 credentials following `docs/security/KEY_ROTATION_2026-11-22.md`. The local cleanup is done (`e9ffd09`).
 
 ## Previous step (done)
 - **The EC2 read-only `plan` passed** (owner, 22 Nov).

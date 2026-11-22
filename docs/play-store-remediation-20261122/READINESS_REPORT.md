@@ -20,7 +20,8 @@
 | Incident | 4 synthetic test profiles written to production were deleted with the reviewed targeted cleanup (9 → 5 profiles; backups preserved) | Owner-confirmed result in the incident file |
 
 **Totals:**
-- `bun test`: **117 pass / 0 fail / 0 skipped across 24 files** (`ede1a10`, each file run separately).
+- `bun test`: **120 pass / 0 fail / 0 skipped across 25 files** (`e9ffd09`, each file run separately).
+- `python scripts/secret-scan.py`: 0 findings needing action.
 - Mobile `tsc`: 0 errors.
 - The backend `tsc` crash (stack overflow) is pre-existing (A-38).
 
@@ -29,7 +30,13 @@
 **Security (fix before the web/backend release):**
 1. **A-42: fixed locally (`ede1a10`).** Release check: after the backend update, create one UAT payment. If the gateway's link host is not under `vimopay.in`, the page refuses it and the log shows `gateway paymentUrl rejected` with the host. Add that host to `VIMOPAY_PAYMENT_URL_HOSTS` only after confirming it belongs to VimoPay.
 2. **A-04 (High):** the payment API is public and wired to UAT. `/api/payment/create`, `/auth` and `/config` are open. Payment reconciliation is not implemented, so no payment may be shown or treated as successful.
-3. **A-05 (High, owner action):** secrets and signing material are committed to Git (`backend/paisa-mart-mvp.zip` with provider keys, a tracked `payments.db`, the debug keystore). The keys must be rotated and the files removed from the repo.
+3. **A-05 (High): local cleanup done (`e9ffd09`); rotation pending (owner).**
+   - The archive and the tracked `payments.db` were removed from the branch and preserved outside Git. The `/download` route is gone, and ignore rules, env examples and a redacted secret scan were added.
+   - **Exposed and still valid until revoked:**
+     - 5 AI provider keys (OpenAI, Anthropic, xAI, Google, ElevenLabs), which the current code does not use;
+     - 3 VimoPay gateway keys, which `lib/vimopay.ts` uses.
+   - They remain in the Git history on GitHub; history is not rewritten.
+   - Steps: `docs/security/KEY_ROTATION_2026-11-22.md`. The standard debug keystore is kept, and signing is unchanged.
 4. **A-09 / A-52 (High):** customer session enforcement, logout and MPIN brute-force limits; there is no server-side session revocation.
 
 **Compatibility:**

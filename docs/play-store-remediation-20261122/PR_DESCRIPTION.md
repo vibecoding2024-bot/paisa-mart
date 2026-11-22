@@ -1,7 +1,7 @@
 # Google Play remediation: honest financial UI, private profiles (A-01), OTP binding, callback hardening, guarded review account, test isolation, icons
 
 > **Status: do not merge or deploy yet.** This PR is complete and tested locally, including the A-42 checkout-page fix, but release is still blocked. Blockers, rollout order, rollback and the Play Console inputs are in [`READINESS_REPORT.md`](READINESS_REPORT.md).
-> - Open: A-04, A-05 (key rotation), A-09/A-52.
+> - Open: A-04, A-05 **key rotation** (the local secret cleanup is in this PR), A-09/A-52.
 > - Android signing must be verified.
 >
 > A production incident (four synthetic test profiles written by local test builds) is **resolved**: those profiles were deleted with a reviewed, targeted cleanup, and backups are preserved. See [`INCIDENT_2026-11-22_test-profiles-in-production.md`](INCIDENT_2026-11-22_test-profiles-in-production.md).
@@ -56,6 +56,11 @@ The audit also found fabricated money shown to customers (A-07) and critical API
   - Tokens are capped to the window and revocable. Its records are labelled TEST.
   - Payout, KYC and payment actions are refused. It sees only its own records.
 
+**Secrets (A-05, local cleanup)**
+- `backend/paisa-mart-mvp.zip` (its `.env` files held provider keys) and `backend/payments.db` are removed from the branch, and the public `/download` route that served the archive is removed. The README demo admin credentials are redacted.
+- New ignore rules for env files, keys, keystores (the standard debug keystore is kept), the archive and local databases. Adds `backend/.env.example` and `mobile/.env.example` (names only).
+- **This does not remove the files from Git history.** The exposed keys must be revoked or rotated: see `docs/security/KEY_ROTATION_2026-11-22.md`.
+
 **Tests and tooling**
 - A test network guard blocks outside hosts.
 - `scripts/check-api-isolation.mjs` is the regression check for production fallbacks.
@@ -70,7 +75,7 @@ The audit also found fabricated money shown to customers (A-07) and critical API
 - Customer application isolation.
 
 ## Tests
-- `bun test`, each file run separately: **117 pass / 0 fail / 0 skipped across 24 files** (`ede1a10`).
+- `bun test`, each file run separately: **120 pass / 0 fail / 0 skipped across 25 files** (`e9ffd09`). The redacted secret scan (`python scripts/secret-scan.py`) finds 0 items needing action.
   - This includes the A-42 browser test: headless Chrome over DevTools, synthetic database, loopback only.
   - On the previous code its payloads executed and redirected to `evil.example`. With the fix they render as text, no token is sent, and legitimate checkout still renders.
 - `node scripts/check-api-isolation.mjs` passes at HEAD.
