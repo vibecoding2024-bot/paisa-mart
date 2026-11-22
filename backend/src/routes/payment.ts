@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { authorize, getStates, createPayment, config } from "../lib/vimopay";
 import { CHECKOUT_PAGE } from "../checkout-page";
 import { savePending, getTxn } from "../lib/txn-store";
+import { acknowledgeGatewayCallback } from "../lib/gateway-callback";
 
 export const paymentRouter = new Hono();
 
@@ -85,10 +86,5 @@ paymentRouter.get("/status/:ref", (c) => {
   });
 });
 
-// step 4: gateway -> us. VimoPay POSTs the final txn status here (plain JSON).
-paymentRouter.post("/vimopay-callback", async (c) => {
-  const body: any = await c.req.json().catch(() => ({}));
-  console.log("[VIMOPAY CALLBACK]", JSON.stringify(body));
-  // TODO: look up order by merchantRefId/txnId, mark success/failed via txnStatusCode (000/001/002)
-  return c.json({ successStatus: true, message: "Success", responseCode: "000" });
-});
+// step 4: gateway -> us. Acknowledged only; an unauthenticated callback never changes a transaction (A-03).
+paymentRouter.on(["GET", "POST"], "/vimopay-callback", acknowledgeGatewayCallback);

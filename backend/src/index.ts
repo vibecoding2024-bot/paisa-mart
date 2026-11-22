@@ -6,7 +6,7 @@ import { sampleRouter } from "./routes/sample";
 import { notifyInterestRouter } from "./routes/notify-interest";
 import { paymentRouter } from "./routes/payment";
 import { usersRouter } from "./routes/users";
-import { applyCallback } from "./lib/txn-store";
+import { acknowledgeGatewayCallback, isCallbackPath } from "./lib/gateway-callback";
 import { logger } from "hono/logger";
 import { authRouter } from "./routes/auth";
 import { kycRouter } from "./routes/kyc";
@@ -184,23 +184,6 @@ app.use("*", async (c, next) => {
   c.header("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 });
 
-// VimoPay callback resilience: the gateway-registered callback path/host has
-// varied (caused 404s), so accept the status callback on ANY path containing
-// "callback", with any method, persist it, and reply with the required ack.
-app.all("*", async (c, next) => {
-  const pathname = new URL(c.req.url).pathname;
-  if (!pathname.toLowerCase().includes("callback")) return next();
-  let body: any = {};
-  try {
-    body = await c.req.json();
-  } catch {
-    try { body = Object.fromEntries(new URL(c.req.url).searchParams); } catch {}
-  }
-  console.log("[VIMOPAY CALLBACK]", pathname, JSON.stringify(body));
-  try { applyCallback(body); } catch (e) { console.error("[VIMOPAY CALLBACK] persist failed", e); }
-  return c.json({ successStatus: true, message: "Success", responseCode: "000" });
-});
-
 app.get("/health", (c) => c.json({ status: "ok" }));
 
 app.get("/download", async (c) => {
@@ -245,6 +228,11 @@ app.route("/api/vehicle-loans", vehicleLoansRouter);
 app.route("/api/services", serviceApplicationsRouter);
 app.route("/api/home-loans", homeLoansRouter);
 app.route("/api/admin", adminRouter);
+
+// The gateway-registered callback path has varied (it caused 404s), so any otherwise-unmatched path containing
+// "callback" still gets the acknowledgement. Registered AFTER the routers so explicit callback routes (KYC,
+// payment) run first. It has no side effects: callbacks never change transactions (A-03, lib/gateway-callback).
+app.all("*", (c, next) => (isCallbackPath(new URL(c.req.url).pathname) ? acknowledgeGatewayCallback(c) : next()));
 
 app.get("*", async (c) => {
   const reqPath = new URL(c.req.url).pathname;
