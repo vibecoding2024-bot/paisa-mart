@@ -1,10 +1,12 @@
 # Incident assessment — synthetic test profiles written to production (22 Nov 2026)
 
-Status: **Production read-only checks AUTHORIZED (22 Nov 2026), PREPARED and DRY-RUN TESTED, NOT YET RUN.**
-The agent has no existing authorized EC2 session (no SSH key or Instance Connect session is available to it),
-so the owner runs the prepared read-only script in EC2 Instance Connect and returns its masked output. No
-production record has been read, changed or deleted so far. Phone numbers are masked (`90XXXXXX01`). Only
-synthetic values typed by the agent are described. See "Production read-only check" below.
+Status: **Read-only checks RUN BY THE OWNER on EC2 (22 Nov 2026). All four profiles are CLASSIFIED as
+incident-created records (strongly supported), with no linked records found in the scanned database.**
+- The classification is the owner's reading of the EC2 results. The raw masked output was not provided to the agent, so the evidence cells below cite the owner's report rather than reproduced output.
+- The owner took a verified backup the same day: `LIVE-BEFORE-REMEDIATION-20261122T145011Z`. It must be **preserved**.
+- A targeted cleanup script is prepared **for review only**; nothing has been deleted.
+
+The agent has run no production command. Phone numbers are masked (`90XXXXXX01`).
 
 ## What happened
 
@@ -69,7 +71,7 @@ Notes:
 - Whether any of these numbers belongs to a real subscriber (they are valid-format Indian mobile numbers).
 - The production log retention.
 
-## Production read-only check (authorized; prepared; NOT YET RUN)
+## Production read-only check (authorized; run by the owner on 22 Nov 2026)
 
 **Script:** [`incident_readonly_check.py`](incident_readonly_check.py). It uses only the Python standard library, and the four numbers are passed as arguments, so none is stored in Git. The owner pastes it as `python3 - <4 numbers> <<'PYEOF' … PYEOF` in EC2 Instance Connect as `ec2-user`. It runs from standard input, so it creates no file on the server.
 
@@ -122,16 +124,30 @@ Timestamps alone are not treated as conclusive. `createdAt` is server-generated 
 | **Pre-existing (overwritten)** | A row is present in the verified baseline. Overwritten fields are those flagged `DIFFERENT`. |
 | **Inconclusive** | Any of the following: <ul><li>No verified baseline.</li><li>Not in the baseline, but `createdAt` is before the window: created by someone else between the baseline and the incident, then overwritten, with no restorable prior values.</li><li>No live row.</li><li>Live linked records absent from the baseline.</li><li>A non-reserved email domain.</li><li>Multiple matching rows.</li></ul> |
 
-### Results (production) — PENDING
+### Results (production, owner-reported, 22 Nov 2026)
 
-| Number | Live row / createdAt in window | In baseline | Fields DIFFERENT vs baseline | Linked records (live / baseline) | Log lines | Classification |
-|---|---|---|---|---|---|---|
-| 90XXXXXX01 | pending | pending | pending | pending | pending | pending |
-| 90XXXXXX03 | pending | pending | pending | pending | pending | pending |
-| 90XXXXXX02 | pending | pending | pending | pending | pending | pending |
-| 90XXXXXX99 | pending | pending | pending | pending | pending | pending |
+| Number | Classification | Linked records in the scanned database |
+|---|---|---|
+| 90XXXXXX01 | **Incident-created record, strongly supported** | None found |
+| 90XXXXXX03 | **Incident-created record, strongly supported** | None found |
+| 90XXXXXX02 | **Incident-created record, strongly supported** | None found |
+| 90XXXXXX99 | **Incident-created record, strongly supported** | None found |
 
-Expected from local evidence (to be confirmed or refuted, not assumed): all four are **newly created** within their windows, with no linked records.
+This agrees with the local evidence: the empty profile form at first sign-in, and the timing of each save.
+
+**Not in this record:** the per-field values from the script output (exact `createdAt`, presence in the 21 Nov baseline, field comparison, log-line counts). The owner holds the raw masked output. Pasting it here would make the record self-contained; it is not required for the cleanup, which re-verifies every row itself.
+
+**What "strongly supported" rests on**, by the classification rule above:
+- a live row exists;
+- no row in the verified pre-incident baseline;
+- `createdAt` inside the request window;
+- no linked records;
+- a reserved test email domain.
+
+**Scope of "no linked records":** the substring scan covers every table and column of the scanned SQLite database. It does not cover:
+- Postgres stores, if any are configured;
+- external systems (the SMS provider, VimoPay);
+- the browser or app storage of anyone who read these profiles while A-01 was open.
 
 ### Limits of the available evidence
 
@@ -163,6 +179,64 @@ None of these is to be run until the results are recorded above and the owner ap
 | 90XXXXXX03 | same | same | same |
 | 90XXXXXX02 | same | same | same |
 | 90XXXXXX99 | same | same | same |
+
+**Given the classification, the proposed action for all four is the "newly created" column:** delete the single `user_profiles` row. The script below implements exactly that, for review.
+
+## Targeted cleanup script (FOR REVIEW ONLY; not authorized, not run)
+
+**Script:** [`incident_cleanup.py`](incident_cleanup.py), Python standard library only. The four numbers are arguments and are never in Git. Paste it in EC2 Instance Connect as `ec2-user`, in the same way as the check script. Modes:
+
+1. **`plan`** (read-only).
+   - Confirms the live DB the same way as the check: the PM2 process, path resolution, and the file held open. It refuses if profiles and leads are in different databases, because one transaction could not cover both.
+   - Confirms the 13-column schema and the `phoneNumber` primary key.
+   - Confirms each row is eligible: exactly one exact match, `createdAt` in the incident window, a reserved test email domain, `kycStatus = not_started`.
+   - Scans every other table and column for linked records.
+   - Prints a 20-hex **content fingerprint per row**. It is a SHA-256 over all 13 columns, so any change to any column changes it. It is not reversible, and no values are printed.
+   - Locates the preserved backup **`LIVE-BEFORE-REMEDIATION-20261122T145011Z`** by name (exactly one match is required). It reads the backup without writing: file hashes, `integrity_check` (opened immutable), and the fingerprints of the four rows it holds.
+2. **`apply --expect <4 reviewed fingerprints> --confirm DELETE-4-INCIDENT-PROFILES`**
+   1. Repeats every `plan` check. It aborts unless each live row's fingerprint equals the reviewed one **and** the preserved backup holds that same row, so the full backup can always recover it.
+   2. Creates a **new** directory `backups/incident-cleanup-<UTC>-<pid>` (mode 0700). It never writes inside the preserved backup.
+   3. `BEGIN IMMEDIATE`: takes the write lock first, so no other writer can commit during the check-and-delete.
+   4. Inside the transaction:
+      - re-reads the four rows and re-checks eligibility and fingerprints;
+      - re-scans linked records;
+      - writes `rows.json` (the exact four rows) and `manifest.json` (its SHA-256), both mode 0600, created with `O_EXCL`, fsynced, then read back and verified.
+   5. Deletes each row with a `DELETE` that matches **every column**, and requires exactly one deleted row each.
+   6. Verifies the four rows are gone and the total profile count dropped by exactly 4, then `COMMIT`s.
+   7. **Any failure:** `ROLLBACK`, nothing deleted, and this run's (unneeded) directory removed.
+   8. **After commit:** re-checks through a read-only connection, and confirms the preserved backup is byte-for-byte unchanged.
+3. **`rollback --backup-dir <incident-cleanup-dir> --confirm RESTORE-4-INCIDENT-PROFILES`**
+   - Verifies the manifest checksum, the table layout, the database path and the four numbers.
+   - In one `BEGIN IMMEDIATE` transaction it re-inserts exactly those rows. If any of the four numbers has a row again, it **aborts rather than overwrite**.
+   - Verifies the restored fingerprints. It never restores the whole database.
+
+**Locking:** the write lock is held for the transaction only (≈4 ms locally). WAL readers are unaffected. A backend write in that window waits or receives `SQLITE_BUSY`, so run it at a quiet time.
+
+**Local test.** Run in WSL on 22 Nov against a synthetic replica: WAL mode, a process holding the DB open, a copy of the preserved backup, 4 incident rows plus 2 unrelated rows, and a planted secret. All scenarios behaved as required:
+
+| Scenario | Result |
+|---|---|
+| `plan` | OK, 4 fingerprints, no linked records |
+| Wrong confirmation phrase | STOP, nothing changed |
+| Wrong fingerprints | STOP, nothing changed |
+| Linked record added | STOP, nothing changed |
+| A row edited after the plan | STOP (fingerprint differs), nothing changed |
+| Preserved backup missing | STOP, nothing changed |
+| Linked record appearing only **inside** the transaction | ROLLBACK, nothing deleted, no leftover directory |
+| Correct apply while a concurrent writer tries to edit a row | the writer was blocked (`database is locked`). COMMITTED: exactly the 4 rows deleted; the 2 unrelated rows untouched; the row backup at 0700/0600; the preserved backup unchanged |
+| Rollback | exactly 4 rows restored; a new `plan` gives fingerprints identical to the original |
+| Second rollback | STOP: rows exist, never overwritten |
+| Leak scan of all output | no secret, name, email or unmasked number |
+
+The first version of the test caught two defects, both fixed before this run:
+- an aborted run left a directory that blocked the next run;
+- a snapshot-based transaction let a concurrent write through. This is why it now uses `BEGIN IMMEDIATE`.
+
+**To run it later (each step needs separate authorization):**
+1. `plan`; send the masked output for review.
+2. The owner approves the four fingerprints.
+3. `apply` with them.
+4. Keep both the cleanup directory and `LIVE-BEFORE-REMEDIATION-20261122T145011Z` until the owner releases them.
 
 Also recommended, independent of the per-number outcome: ship the A-01 fix (owner-only profile access) so the exposure cannot recur, and decide separately whether to read web-server access logs (`sudo`, read-only) for timestamps and sources.
 

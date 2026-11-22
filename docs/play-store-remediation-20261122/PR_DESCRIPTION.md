@@ -54,7 +54,11 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
 - `/api/users/profile` GET/POST require the customer token, and the token phone must match. Other phones get 403. A client-sent `kycStatus` is ignored.
 - `PATCH /api/users/profile/:phone/kyc` is admin/ops only. `GET /api/users/profiles` is admin only, with a bounded limit.
 - KYC start and status require the owning customer.
-- KYC callbacks never mark verified/rejected; only VimoPay's authenticated status API can. This takes effect once A-03's callback catch-all is fixed.
+- KYC callbacks never mark verified/rejected; only VimoPay's authenticated status API can. With A-03 fixed (below), the KYC callback routes are actually reached.
+- **A-03:** the unauthenticated `*callback*` catch-all is removed.
+  - Gateway callbacks are acknowledged only. They never create or change a transaction, and their bodies (which can carry a name or phone number) are not logged.
+  - A side-effect-free fallback acknowledgement for other callback paths runs after the routers.
+  - Payment status therefore stays Pending until a verified VimoPay status source is added (owner decision; the VimoPay integration is on UAT endpoints).
 - The app sends the customer token on profile and KYC calls, and the phone field is locked to the verified number.
 
 **Test isolation**
@@ -80,7 +84,9 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
 
 ## Tests
 
-- `bun test`, every file run separately: **101 pass / 0 fail across 21 files** (12 backend, 9 repo-root), at `e61fa03`.
+- `bun test`, every file run separately: **106 pass / 0 fail across 22 files** (13 backend, 9 repo-root), at `e1e362d`.
+  - This includes `gateway-callback.test.ts` (A-03), which drives the real app and fails on the previous code.
+  - The Android builds below are of `e61fa03`. A-03 is backend-only, so no app rebuild is needed for it.
   - New tests: `users-auth.test.ts`, `api-isolation.test.ts`, plus `review-account.test.ts` additions.
   - `payout-guard.test.ts` was fixed: it had been failing since `d7c8a33` because it relied on the removed mock data.
 - No type errors in changed backend files; mobile `tsc --noEmit` reports 0 errors.
@@ -110,7 +116,7 @@ Order matters. A-01 changes the API contract, so ship the **web release first, t
 ## Open findings and owner decisions
 
 - **Incident:** the read-only production confirmation and the per-number recovery decision are pending. Profiles must not be deleted, overwritten or repurposed.
-- **A-03 (pre-existing):** the unsigned callback catch-all rewrites transactions and hides the KYC callbacks. Separate change.
+- **VimoPay transaction status (decision):** payment status updates need VimoPay's server-to-server status API or a verifiable callback signature (A-03 follow-up).
 - **Unresolved:**
   - commission and rate-card figures;
   - lender list;

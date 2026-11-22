@@ -77,7 +77,13 @@ production command, Play upload or reviewer-phone selection.
    - The new web client stays compatible with the rolled-back backend.
 
 ## Remaining findings
-- **A-03 (pre-existing, Critical/High):** the `index.ts` catch-all intercepts **every** path containing "callback". It rewrites `txns` from unauthenticated input, logs full callback bodies, and hides the KYC callback routes. That's why the KYC callback hardening only takes effect once A-03 is fixed. Separate change.
+- **A-03: FIXED locally in `e1e362d`** (backend only; not deployed).
+  - The body-trusting catch-all and `applyCallback` are removed. Gateway callbacks are acknowledged only (`lib/gateway-callback.ts`): they never create a transaction or change its status, amount, ID or payload, and their bodies are not logged.
+  - The fallback acknowledgement on other `*callback*` paths runs **after** the routers, so `/api/kyc/vimopay/callback` now reaches the KYC router and the KYC hardening takes effect.
+  - Tests: `routes/gateway-callback.test.ts`, 5 tests driving the real `index.ts` app. They fail on the previous code (4 of 5).
+  - Full suite at `e1e362d`: **106 pass / 0 fail across 22 files**, each file run separately. The isolation check passes.
+  - The backend `tsc` crashes with a stack overflow at HEAD both with and without this change. With `node --stack-size=30000` it reports 119 pre-existing errors, none in the changed or new code; the only hit in a touched file is the existing `index.ts:45 HeadersInit`.
+  - **Behavior change to note at release:** payment status no longer moves from Pending on a callback. VimoPay payments use the UAT endpoints. An owner decision is needed: obtain VimoPay's server-to-server transaction-status API (or a verifiable callback signature) before payment status should update automatically.
 - **Unresolved, owner decisions:**
   - commission and rate-card figures (Products "Earn up to ₹…", Payout Structure);
   - lender list (Financial features declaration);
@@ -98,12 +104,12 @@ production command, Play upload or reviewer-phone selection.
 - **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root); the network guard loads automatically. Also run `node scripts/check-api-isolation.mjs`.
 
 ## Exact next action
-1. Read-only production checks are **authorized** (22 Nov 2026) but **not yet run**: the agent has no EC2 session.
-   - The owner pastes `docs/play-store-remediation-20261122/incident_readonly_check.py` in EC2 Instance Connect as `python3 - <4 numbers> <<'PYEOF' … PYEOF`. A ready-made paste with the numbers is kept outside Git, in the agent's scratchpad.
-   - The script was dry-run tested on a synthetic WSL replica: no leaks, no writes.
-   - The owner returns the masked output. The agent then fills "Results (production)" and the classification in the incident file.
-   - Stop before any production mutation.
-2. Owner approves (or not) the per-profile action in the incident file. Each mutation is a separate authorization.
+1. **Incident:** the owner ran the read-only checks on 22 Nov.
+   - All four profiles are classified as incident-created (strongly supported), with no linked records in the scanned DB. The raw output was not given to the agent.
+   - Preserve **`LIVE-BEFORE-REMEDIATION-20261122T145011Z`**.
+   - The cleanup script `docs/play-store-remediation-20261122/incident_cleanup.py` is **for review only**. It is tested locally in WSL (all scenarios in the incident file).
+   - Next, each step separately authorized: `plan` on EC2 → owner approves the 4 fingerprints → `apply`. Do not run the cleanup or deploy without that.
+2. **A-03:** fixed locally (`e1e362d`). It ships with the backend release in the rollout order above. Owner decision needed: the VimoPay transaction-status API.
 3. Then, separately authorized: push and PR; the web-first rollout above; Android signing; reviewer-phone selection.
 
 ---
