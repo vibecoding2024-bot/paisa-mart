@@ -1,61 +1,81 @@
-# HANDOFF — Google Play rejection remediation (22 Nov 2026) — CURRENT STATE
+# HANDOFF — Google Play remediation (22 Nov 2026) — CURRENT STATE
 
-Worktree `.play-remediation`, branch `fix/play-store-remediation-20261122` (base `origin/main` `595e521`), HEAD = latest local commit
-(code at `fcebb6b`; later commits are docs only). Local commits only: no push, PR, merge, deploy, AWS change, Play upload or submission.
-Production untouched. Full status: [docs/play-store-remediation-20261122/CHECKLIST.md](docs/play-store-remediation-20261122/CHECKLIST.md).
+Worktree `.play-remediation`, branch `fix/play-store-remediation-20261122` (base `origin/main` `595e521`). Local commits only:
+no push, PR, merge, deploy, AWS change, Play upload or submission.
+- PR description, ready to paste: [docs/play-store-remediation-20261122/PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
+- Full status: [CHECKLIST.md](docs/play-store-remediation-20261122/CHECKLIST.md).
+- Reviewer access, isolation and production steps: [REVIEWER_ACCESS_DESIGN.md](docs/play-store-remediation-20261122/REVIEWER_ACCESS_DESIGN.md).
 
-## Done
-- Launcher icon fixed (`mobile/app.json` + `mobile/assets/branding/*`). **Verified on device.**
-- **A-07 fixed in code for all users** (`d7c8a33`, polish `6d3a072`, `fcebb6b`):
-  - Earnings and Home show only `/api/customer-payouts` amounts approved by executive and manager, with empty and unavailable states.
-  - No seeded notifications.
-  - No generated admin incentives or payouts.
-  - Wallet and bank details replaced by a "not available" screen, and the store migration drops device-only bank numbers.
-  - KYC is shown as verified only when actually verified.
-  - The ₹500 and ₹1 Lakh referral/earnings claims are removed.
-  - Changed files: `mobile/src/app/(tabs)/{earnings,index,profile}.tsx`, `app/{bank-details,cash-cards,wallet-*,notifications}.tsx`,
-  `lib/{customer-payout-api,notification-store,incentive-store}.ts`, `components/ServiceUnavailable.tsx`.
-- **Reviewer access implemented and tested locally** (`backend/src/lib/review-account.ts`, `routes/{auth,kyc,payment}.ts`, `lib/admin-operations.ts`).
-  - Also fixed: A-02 (widget reqId bound to phone) and A-06 (dev OTP needs `ALLOW_DEV_OTP=true`).
-  - Exact production steps, not executed: [REVIEWER_ACCESS_DESIGN.md](docs/play-store-remediation-20261122/REVIEWER_ACCESS_DESIGN.md).
-- Tests:
-  - Backend: 62 pass / 0 fail (11 files, run one at a time), including the new `review-account.test.ts` and the TEST/payout test in `admin-payouts.test.ts`. The existing payout dual approval and ownership tests are unchanged and pass.
-  - Mobile `tsc` reports 0 errors.
-- Device (emulator, local backend, synthetic data):
-  - fresh account shows ₹0.00 and empty states;
-  - synthetic account with records shows ₹1,500.00 approved, and both applications;
-  - an admin HL stage change appeared in the app;
-  - review account sees only its own 2 TEST records, gets no payout (403), and the review code is refused for other phones (401).
-  - Evidence: `docs/.../evidence/`.
-- Audience: the app serves **customers and partners**. Tracking and payouts work only for the user's own mobile number (A-08). The listing was rewritten to match. Screenshots 01 and 06 were refreshed.
-- Exit 255 (previous and this session): caused by this agent's intentional `Stop-Process -Force` on port 3901; the log has no errors.
-- APKs (scratchpad `apk/`, debug-signed, local test only):
-  - candidate `fcebb6b` `47a9e6d1…7b2d` (production API; launches to the login screen);
-  - test variant `28a53fbf…6869`.
+## Tested commits
 
-## Blockers (explicit, unresolved)
-1. Reviewer access is **not in production**. It needs PR review, merge, a guarded backend release, `.env` values and synthetic seeding, each separately authorized, then Play Console App access.
-2. Upload certificate **unverified**; no submission artifact.
-3. versionCode 8 **provisional**; source of versionCode 7 unknown.
-4. Owner decisions:
-   - the A-08 ownership model (partners tracking client leads);
-   - the commission figures (Products "Earn up to ₹2,000", Payout Structure);
-   - the lender list;
-   - the privacy URL.
-5. A-02 partly open: `verify-otp-token` still falls back to the client phone.
+| Code | Commit | Tests |
+|---|---|---|
+| Backend runtime | `2616f1c` (unchanged through HEAD) | `bun test`, each of 11 files separately: **65 pass / 0 fail**. No tsc errors in changed files. Live local API: payout dual approval 200; review-record payout 403; review code with other phones 401. |
+| Mobile runtime | `28651cc` (unchanged through HEAD; later commits are docs only) | `tsc` 0 errors. WSL release builds: test variant `97d9d5e3…6431` (local API), candidate `1fac0b9d…c761` (production API, debug-signed, launches to the login screen, versionCode 8). |
+| Device run on the `28651cc` test variant | Emulator, DNS blocked (production unresolvable), local backend `2616f1c`, synthetic data | <ul><li>Fresh account 9000000004: profile saved to the **local** backend; ₹0.00.</li><li>"Explore products"; new Support FAQs; About Us copy.</li><li>Review account: only its 2 TEST records; ₹0.00 even though its BL is Disbursed.</li><li>Synthetic 9000000002: ₹1,500.00 and both applications.</li><li>Admin HL stage change → "Underwriting" shown in the app.</li></ul> |
+
+## Done this round
+1. **Web OTP (A-02) closed across all login paths:**
+   - `verify-otp-token` requires the phone and issues a token only for the MSG91-verified number. There is no client-phone fallback and no raw provider data in the response.
+   - The widget `reqId` is bound to the phone (earlier); template mode is provider-bound; dev OTP is off unless `ALLOW_DEV_OTP=true`.
+   - Normal login (`send-otp` → `verify-otp`, used by web and Android) is unchanged.
+2. **Review isolation reviewed:**
+   - Restrictions are enforced by the server.
+   - Tokens are capped at the window and revoked when it's disabled or expired.
+   - Rate limits and lockout apply.
+   - A test proves no code, token or full phone appears in logs.
+   - There are no provider calls for the review account.
+   - "Keeping access valid during Google review" is documented.
+3. **Claims:**
+   - Removed "earning journey", "Explore & earn", the About Us earning and "Instant Payouts" claims, and the wallet FAQs.
+   - Ownership rules and commission rates are unchanged.
+4. **Test builds no longer reach production:** the profile and KYC clients now honour `EXPO_PUBLIC_API_URL`, and the build script points every base URL at the test backend.
+
+## INCIDENT: synthetic test data written to PRODUCTION (needs owner decision)
+- **Cause:** test-variant builds set only `EXPO_PUBLIC_API_URL`. `user-profile-api.ts` and `kyc-api.ts` read only `EXPO_PUBLIC_BACKEND_URL`, which defaults to `https://paisa-mart.com`. Fixed in `28651cc`.
+- **What reached production:** `GET` and `POST /api/users/profile` for synthetic numbers only (fictional names, `@example.test` emails, pincode 500001, DOB 05/01/2004, no PAN):
+  - **9000000001** "Asha Test" (previous session);
+  - **9000000002** "Ravi Synthetic";
+  - **9000000003** "Meera Fresh";
+  - **9000000099** "Demo Reviewer".
+- Profile reads returned only those numbers' own records. No KYC call was made, and no applications or payouts went to production (the local logs show them).
+- **Not cleaned up:** deleting or changing production data needs explicit authorization. The number 9000000099 is also the local review phone. Choose a different production review phone, or decide whether to keep or remove its profile.
+
+## Remaining findings
+- **A-01 (Critical, pre-existing):** `/api/users/*` has no authentication (read or overwrite any profile; set KYC verified).
+  - Order of fix: release app and web builds that send the customer token, then enforce in `users.ts`. Separate PR.
+- **Owner decisions:**
+  - A-08 ownership model;
+  - commission and rate-card figures (Products "Earn up to ₹…", Payout Structure);
+  - About Us "Fully compliant with RBI and IRDAI guidelines";
+  - lender list;
+  - privacy URL.
+- **Signing and versioning:** the upload certificate is unverified; versionCode 8 is provisional; the source of versionCode 7 is unknown.
+
+## Backend deployment requirements (each separately authorized)
+1. **Merge:** PR review, CI and owner approval.
+2. **Read-only check:** on EC2, confirm the MSG91 variables are present (names only). With A-06, a missing provider makes `send-otp` return 503 instead of handing out a dev OTP. Never set `ALLOW_DEV_OTP` in production.
+3. **Release:** follow the guarded `deployment/requirements` workflow:
+   - `backend-update.py verify`;
+   - `verify.py`;
+   - `backend-update.py update --execute`, which backs up the source, `.env` and SQLite, rehearses migrations, and restarts PM2.
+
+   No schema migration is added by this branch.
+4. **Review account:** in the same restart window, add `REVIEW_ACCOUNT_ENABLED`, `_PHONE`, `_HMAC_KEY`, `_CODE_HASH` and `_EXPIRES_AT` (expiry 90 days or more) to the protected `.env`.
+5. **Synthetic records:** seed them through the app as the review phone (a production data change; needs approval). Verify on a production-pointed signed build, then enter the credentials in Play Console only.
+6. **Rollback:** `backend-update.py rollback --execute`.
+7. **Frontend:** no web release is needed for these backend changes.
 
 ## How to resume (environment outside Git)
-- WSL Ubuntu-22.04: `~/pm-play/{opt/jdk17,android-sdk}` installed. The build script copy is `docs/play-store-remediation-20261122/wsl-build.sh`; run it from PowerShell (`wsl -d Ubuntu-22.04 -- bash <script>`), because Git Bash rewrites `/mnt/c`.
-  - Candidate: no env.
-  - Test variant: `EXPO_PUBLIC_API_URL=http://127.0.0.1:3901 CLEARTEXT_LOCAL=1`. About 7 minutes each.
-- Emulator: AVD `pm_review` (session scratchpad `avd`), `C:\pmsdk\emulator\emulator.exe`. Then `adb reverse tcp:3901 tcp:3901`.
-- Local backend: Bun at `.build-tools/bun-runtime`, `PORT=3901`, a scratch SQLite, random secrets, MSG91 unset. For local testing only, set `ALLOW_DEV_OTP=true`.
-  - Review account: set the five `REVIEW_ACCOUNT_*` variables with locally generated values. Never commit them.
-- Tests: `bun test <file>`, one file at a time.
+- **WSL builds:** run from PowerShell with `wsl -d Ubuntu-22.04 -- [env EXPO_PUBLIC_API_URL=http://127.0.0.1:3901 CLEARTEXT_LOCAL=1] bash <wsl-build.sh>`. The script copy is in `docs/...`. Each build takes about 7 minutes.
+- **Emulator:** AVD `pm_review` (scratchpad `avd`). **Start it with `-dns-server 127.0.0.1`** so test builds cannot reach production. Then run `adb reverse tcp:3901 tcp:3901`.
+- **Local backend:** Bun at `.build-tools/bun-runtime`, `PORT=3901`, a scratch SQLite and random secrets. For local testing only, set `ALLOW_DEV_OTP=true` and the `REVIEW_ACCOUNT_*` variables (locally generated; never commit them).
+- **Tests:** `bun test <file>`, one file at a time.
 
 ## Exact next action
-The owner reviews this branch and decides the A-08 ownership model and the commission figures. With explicit authorization: push and open a PR for review/CI.
-Then, separately authorized: verify the upload certificate in Play Console; run the backend release and review-account setup per REVIEWER_ACCESS_DESIGN.md; build the signed AAB.
+1. The owner decides on the production synthetic profiles (keep or remove) and the review phone number.
+2. With explicit authorization, push the branch and open the PR using `PR_DESCRIPTION.md`.
+3. Then, separately: run the backend release per the requirements above, verify the upload certificate, and build the signed AAB.
 
 ---
 
