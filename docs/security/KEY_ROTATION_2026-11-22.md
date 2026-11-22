@@ -72,7 +72,7 @@ The current app and backend do not use any of these keys, so revoking them break
 4. **Validate.** The provider console shows the key as revoked or deleted. Do not test the old key against live APIs from a shared machine.
 5. **If AI features are ever added:** keep keys server-side only, never in `EXPO_PUBLIC_*` variables.
 
-### Items 6–8: VimoPay (payment gateway)
+### Items 6–8: VimoPay (payment gateway). PAUSED by the owner (22 Nov); do not run these steps until resumed.
 1. **Check whether production uses the exposed values** (EC2 Instance Connect, read-only; prints 8-hex fingerprints only):
    ```sh
    cd /home/ec2-user/paisa-mart-new/backend && python3 - <<'PY'

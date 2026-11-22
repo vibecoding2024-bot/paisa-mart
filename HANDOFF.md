@@ -102,6 +102,13 @@
 - **Full backup:** `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
 - Keep both until the owner releases them. Rollback (only if ever required, separately authorized) is described in the incident file.
 
+## Final review and draft PR (22 Nov) — NOT release-ready
+- **VimoPay paused:** the owner paused VimoPay integration, reconciliation and the fingerprint check. That paste file was **not** created, and no payment configuration was touched. Do not resume without instruction.
+- **Final diff review** (`595e521..db05364`, 107 files): no issues. No runtime change since the last full validation (`e9ffd09`, 120 / 0), so no checks were outstanding.
+- **New finding recorded:** the tracked root `android/` project is stale (`com.paisamartroot`, debug-signed release). Release builds come only from `mobile/` via prebuild (A-49).
+- **Draft PR:** [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md), covering exact scope, test evidence, blockers and the rollout table. Readiness: [READINESS_REPORT.md](docs/play-store-remediation-20261122/READINESS_REPORT.md).
+- **Next action:** the owner revokes the 5 exposed AI provider keys (section 3 of `docs/security/KEY_ROTATION_2026-11-22.md`). It needs no code or configuration change, because nothing uses them.
+
 ## A-05 secret cleanup, local (`e9ffd09`, 22 Nov) — ROTATION PENDING (owner)
 - **Inventory** (masked; details in [KEY_ROTATION_2026-11-22.md](docs/security/KEY_ROTATION_2026-11-22.md)):
   - **5 AI provider keys:** OpenAI, Anthropic, xAI, Google and ElevenLabs. They were in the archive and in historical `.env` files, and current code does not use them.

@@ -1,7 +1,7 @@
 # Release readiness — Google Play remediation (22 Nov 2026)
 
 - **Branch:** `fix/play-store-remediation-20261122`, local only (not pushed). Base `595e521`.
-- **Verdict:** **not ready to release.** The code changes below are complete and tested locally, and A-42 is now fixed locally. The remaining open items are A-04, A-05, A-09/A-52, Android signing and the Play Console inputs.
+- **Verdict:** **not ready to release.** The code changes below are complete and tested locally, and A-42 is fixed locally. Still open: **exposed keys not rotated (A-05)**, A-04 (payments paused, no reconciliation), A-09/A-52, Android signing and identity (A-49), owner decisions (including commission copy) and Play Console inputs.
 
 ## 1. Completed and tested
 
@@ -27,27 +27,43 @@
 
 ## 2. Remaining security and compatibility blockers
 
-**Security (fix before the web/backend release):**
-1. **A-42: fixed locally (`ede1a10`).** Release check: after the backend update, create one UAT payment. If the gateway's link host is not under `vimopay.in`, the page refuses it and the log shows `gateway paymentUrl rejected` with the host. Add that host to `VIMOPAY_PAYMENT_URL_HOSTS` only after confirming it belongs to VimoPay.
-2. **A-04 (High):** the payment API is public and wired to UAT. `/api/payment/create`, `/auth` and `/config` are open. Payment reconciliation is not implemented, so no payment may be shown or treated as successful.
-3. **A-05 (High): local cleanup done (`e9ffd09`); rotation pending (owner).**
+**Final review (22 Nov, HEAD `db05364`):**
+- The diff against base `595e521` (107 files) was reviewed for scope, debug leftovers, focused or skipped tests, logging of personal data, hard-coded hosts and listing claims.
+- No issues were found. Every new log line masks phone numbers and prints no secrets. The only skip is the browser test's no-Chrome guard.
+- No runtime code changed after the last full validation (`e9ffd09`: 120 pass / 0 fail across 25 files; redacted secret scan clean). No checks were outstanding.
+
+**Security (unresolved; release stays blocked):**
+1. **A-05 exposed keys: NOT ROTATED.**
+   - 5 AI provider keys (OpenAI, Anthropic, xAI, Google, ElevenLabs) and 3 VimoPay gateway keys remain valid and remain in the GitHub history until revoked.
+   - The local cleanup is done (`e9ffd09`; details below).
+   - The VimoPay fingerprint check and the VimoPay work are **paused** by the owner. No payment configuration was changed.
+2. **A-04 (High):** the payment API is public and wired to UAT (`/api/payment/create`, `/auth` and `/config` are open).
+   - Authenticated payment reconciliation is not implemented. VimoPay integration and reconciliation are **paused** by the owner.
+   - No payment may be shown or treated as successful, and payments must not be enabled.
+3. **A-09 / A-52 (High):** customer session enforcement, logout, MPIN brute-force limits, and no server-side session revocation.
+4. **A-42 is fixed locally (`ede1a10`).** Release check, for when payments are resumed: if the gateway's link host is not under `vimopay.in`, the page refuses it and the log shows `gateway paymentUrl rejected` with the host.
+
+**A-05 local cleanup (`e9ffd09`; rotation pending, owner):**
    - The archive and the tracked `payments.db` were removed from the branch and preserved outside Git. The `/download` route is gone, and ignore rules, env examples and a redacted secret scan were added.
    - **Exposed and still valid until revoked:**
      - 5 AI provider keys (OpenAI, Anthropic, xAI, Google, ElevenLabs), which the current code does not use;
      - 3 VimoPay gateway keys, which `lib/vimopay.ts` uses.
    - They remain in the Git history on GitHub; history is not rewritten.
    - Steps: `docs/security/KEY_ROTATION_2026-11-22.md`. The standard debug keystore is kept, and signing is unchanged.
-4. **A-09 / A-52 (High):** customer session enforcement, logout and MPIN brute-force limits; there is no server-side session revocation.
 
-**Compatibility:**
+**Compatibility and release identity:**
 5. **Old clients after the backend enforces A-01:**
    - Old Android installs (including the APK served at `/download-apk`) and old web tabs get 401 on profile calls.
    - Signed-in users fall back to their local profile.
    - **New users cannot finish onboarding until they update.**
-6. **A-49 / signing:** the upload certificate is unverified; versionCode 8 is provisional; the final signed build is not yet made.
+6. **A-49 / signing:**
+   - The upload certificate is unverified, versionCode 8 is provisional, and no signed build of the final commit exists yet.
+   - The tracked root `android/` project is stale: `com.paisamartroot`, versionCode 1, release signed with the debug keystore. **Do not build releases from it.** Build only from `mobile/` via `expo prebuild` (`com.paisamart.app`), as `wsl-build.sh` does.
+   - The last device-tested build is of `e61fa03`. App changes since then are only the welcome wording and README/ignore/example files.
 
-**Owner decisions:**
-7. Commission figures and rate card, lender list, privacy-policy URL, A-08 lead ownership, "Pan India Reach" copy.
+**Owner decisions (open):**
+7. Commission figures and rate card. In-app "Earn up to ₹…" commission copy remains, which is a misleading-claims review risk unless the figures are confirmed.
+8. Lender list, privacy-policy URL, A-08 lead ownership, "Pan India Reach" copy.
 
 ## 3. Rollout order and rollback (each step separately authorized; currently paused)
 
@@ -68,7 +84,7 @@
    - `backend-update.py verify`, then `update --execute`. This takes a verified backup and rehearses migrations; no schema migration is needed.
    - Confirm the MSG91 variable names first. **Never set `ALLOW_DEV_OTP`.**
    - Check: profile 401 without a token, normal sign-in, profile save, a callback acknowledgement, admin pages. Watch `/api/users` 401 counts.
-   - Also check the checkout page: it must send the `Content-Security-Policy` header and accept the UAT gateway link (see A-42 above).
+   - Also check that the checkout page sends the `Content-Security-Policy` header. Do **not** create payments; payments stay paused.
    - **Rollback:** `backend-update.py rollback --execute`. It restores code and keeps data; the new web client still works.
 3. **Review account.**
    - Use an owner-selected phone that is **not an incident number**.
