@@ -1,6 +1,8 @@
 import type { UserProfile } from './user-profile-store';
 
 const BACKEND_URL =
+  // Same base as auth and applications, so a build pointed at a test backend never reaches production.
+  process.env.EXPO_PUBLIC_API_URL ||
   process.env.EXPO_PUBLIC_BACKEND_URL ||
   process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
   'https://paisa-mart.com';

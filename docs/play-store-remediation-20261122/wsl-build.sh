@@ -45,6 +45,10 @@ CI=1 npx expo prebuild --platform android --no-install --clean 2>&1 | grep -v ED
 grep -n "versionCode\|applicationId" android/app/build.gradle
 
 step "API URL for this build: ${EXPO_PUBLIC_API_URL:-<default https://paisa-mart.com>}"
+if [ -n "${EXPO_PUBLIC_API_URL:-}" ]; then
+  # Test builds: every client base URL must point at the test backend (never production).
+  export EXPO_PUBLIC_BACKEND_URL="$EXPO_PUBLIC_API_URL" EXPO_PUBLIC_VIBECODE_BACKEND_URL="$EXPO_PUBLIC_API_URL"
+fi
 if [ -n "${CLEARTEXT_LOCAL:-}" ]; then
   # Screenshot/test variant only: allow HTTP to the local isolated backend via adb reverse.
   sed -i 's/<application /<application android:usesCleartextTraffic="true" /' android/app/src/main/AndroidManifest.xml
