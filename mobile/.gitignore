@@ -43,3 +43,6 @@ yarn-error.*
 
 # Expo log
 expo.log
+
+# Example env with names only (A-05)
+!.env.example

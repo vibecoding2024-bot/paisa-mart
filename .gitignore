@@ -9,3 +9,28 @@ node_modules
 .preview/
 
 __pycache__/
+
+# --- Secrets and private material (A-05). Never commit; keep real values outside Git. ---
+!.env.example
+!**/.env.example
+*.jks
+*.p12
+*.pfx
+*.pem
+*.key
+*.keystore
+!android/app/debug.keystore
+keystore.properties
+**/keystore.properties
+google-service-account*.json
+*service-account*.json
+# Archives and local databases can carry .env files, customer data or Git history.
+backend/paisa-mart-mvp.zip
+paisa-mart-mvp.zip
+*.mvp.zip
+backend/*.db
+backend/*.db-shm
+backend/*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

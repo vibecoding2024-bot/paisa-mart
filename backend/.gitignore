@@ -37,3 +37,5 @@ studio.log
 
 # Local database created by the loan/insurance regression test
 /src/routes/loan-insurance-regression.test.sqlite
+# Example env with names only (A-05)
+!.env.example

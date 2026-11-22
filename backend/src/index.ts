@@ -186,19 +186,8 @@ app.use("*", async (c, next) => {
 
 app.get("/health", (c) => c.json({ status: "ok" }));
 
-app.get("/download", async (c) => {
-  const file = Bun.file("/home/user/workspace/backend/paisa-mart-mvp.zip");
-  const exists = await file.exists();
-  if (!exists) return c.text("File not found", 404);
-  const buffer = await file.arrayBuffer();
-  return new Response(buffer, {
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": 'attachment; filename="paisa-mart-mvp.zip"',
-      "Access-Control-Allow-Origin": "*",
-    },
-  });
-});
+// A-05: the former public /download route served backend/paisa-mart-mvp.zip, an archive containing .env files with
+// provider API keys. The route and the archive are removed; /download now falls through to the web app.
 
 app.get("/download-apk", async (c) => {
   const filePath = PUBLIC_DIR + "/paisa-mart.apk";
