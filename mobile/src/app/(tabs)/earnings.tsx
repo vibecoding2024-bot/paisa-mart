@@ -101,7 +101,7 @@ export default function EarningsScreen() {
                 <Text style={{ color: palette.muted, fontSize: 10, marginTop: 5 }}>Approved eligible payout</Text>
               </View>
               <Text style={{ color: palette.teal, fontWeight: "700", fontSize: 13 }}>
-                ₹{item.customerAmount}
+                {formatPayoutTotal([item])}
               </Text>
             </View>
           ))}

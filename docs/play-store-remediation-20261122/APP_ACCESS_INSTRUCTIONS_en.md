@@ -1,9 +1,10 @@
 # Play Console → App content → App access — instructions template (English)
 
-Status: TEMPLATE. Usable ONLY after the backend review account in REVIEWER_ACCESS_DESIGN.md is implemented,
-released through the guarded AWS workflow, enabled, and tested end-to-end on a production-pointed build.
-Today, these instructions would not work. The phone number and code are placeholders. Enter the real values
-only in Play Console and the company password manager, never in Git, chat, tickets or reports.
+Status: TEMPLATE. The backend review account is implemented and tested locally (REVIEWER_ACCESS_DESIGN.md)
+but is NOT released or enabled in production. Usable only after the production steps in that file are
+authorized and completed and the account is tested end-to-end on a production-pointed build. The phone
+number and code are placeholders. Enter real values only in Play Console and the company password manager,
+never in Git, chat, tickets or reports.
 
 Select: "All or some functionality in my app is restricted" → Add instructions.
 
@@ -22,8 +23,9 @@ Paisa Mart uses mobile number + one-time password (OTP) sign-in.
    - Products tab: browse loan, credit card, savings account and insurance categories and their partners.
    - Home → Home Loans: submit the application form with sample details; a confirmation number is shown.
    - Profile → My applications & status: see submitted applications and their current stage. The demo account already contains sample applications.
+   - Earnings: shows payout amounts only after Paisa Mart approval; the demo account has none, so it shows an empty state.
 
-This is a demo account with fictional sample data. Payments, identity verification (KYC) and payouts are disabled for this account, and its submissions are marked as test records and are not sent to lending partners.
+This is a demo account with fictional sample data. Payments, identity verification (KYC) and payouts are disabled for this account, and its submissions are marked as test records in the Paisa Mart admin and are excluded from payouts.
 ```
 
 Keep the account active for as long as the app is listed or under review; Google may re-review at any time.
