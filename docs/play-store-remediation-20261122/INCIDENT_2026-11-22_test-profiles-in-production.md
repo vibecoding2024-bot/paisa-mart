@@ -1,10 +1,10 @@
 # Incident assessment — synthetic test profiles written to production (22 Nov 2026)
 
 Status: **Read-only checks RUN BY THE OWNER on EC2 (22 Nov 2026). All four profiles are CLASSIFIED as
-incident-created records (strongly supported), with no linked records found in the scanned database.**
-- The classification is the owner's reading of the EC2 results. The raw masked output was not provided to the agent, so the evidence cells below cite the owner's report rather than reproduced output.
+strongly supported incident-created records. Phone-number ownership remains unknown.**
+- The findings below are the owner's **summary from the conversation**. The agent did not independently inspect the raw output.
 - The owner took a verified backup the same day: `LIVE-BEFORE-REMEDIATION-20261122T145011Z`. It must be **preserved**.
-- A targeted cleanup script is prepared **for review only**; nothing has been deleted.
+- A targeted cleanup script is prepared **for review only**. Only its read-only `plan` command has been prepared for the owner, and nothing has been deleted.
 
 The agent has run no production command. Phone numbers are masked (`90XXXXXX01`).
 
@@ -124,18 +124,30 @@ Timestamps alone are not treated as conclusive. `createdAt` is server-generated 
 | **Pre-existing (overwritten)** | A row is present in the verified baseline. Overwritten fields are those flagged `DIFFERENT`. |
 | **Inconclusive** | Any of the following: <ul><li>No verified baseline.</li><li>Not in the baseline, but `createdAt` is before the window: created by someone else between the baseline and the incident, then overwritten, with no restorable prior values.</li><li>No live row.</li><li>Live linked records absent from the baseline.</li><li>A non-reserved email domain.</li><li>Multiple matching rows.</li></ul> |
 
-### Results (production, owner-reported, 22 Nov 2026)
+### Results (production) — owner's summary from the conversation, 22 Nov 2026
 
-| Number | Classification | Linked records in the scanned database |
-|---|---|---|
-| 90XXXXXX01 | **Incident-created record, strongly supported** | None found |
-| 90XXXXXX03 | **Incident-created record, strongly supported** | None found |
-| 90XXXXXX02 | **Incident-created record, strongly supported** | None found |
-| 90XXXXXX99 | **Incident-created record, strongly supported** | None found |
+These were not independently inspected by the agent:
 
-This agrees with the local evidence: the empty profile form at first sign-in, and the timing of each save.
+| Check | Finding |
+|---|---|
+| Target | Instance `i-0e6f35bc4e48cde49`, `ap-southeast-2` |
+| Live process | `paisa-mart`, PM2 ID 0, online |
+| Live database | `/home/ec2-user/paisa-mart-data/payments.db`; `quick_check` passed |
+| Verified baseline | All four profiles **absent** from `backend-before-20261121-595e5212-on-pr6-dashboard/payments.db` |
+| Request logs | For each profile, GET responses progressed from **404 to 200**. The PM2 logs have no timestamps; nginx logs were not inspected. |
+| Timestamps and email | All four creation and update timestamps fall **within the incident window**; all four use the reserved test email domain |
+| Linked records | **No matches across 170 scanned columns** |
 
-**Not in this record:** the per-field values from the script output (exact `createdAt`, presence in the 21 Nov baseline, field comparison, log-line counts). The owner holds the raw masked output. Pasting it here would make the record self-contained; it is not required for the cleanup, which re-verifies every row itself.
+| Number | Classification |
+|---|---|
+| 90XXXXXX01 | **Strongly supported incident-created profile** |
+| 90XXXXXX03 | **Strongly supported incident-created profile** |
+| 90XXXXXX02 | **Strongly supported incident-created profile** |
+| 90XXXXXX99 | **Strongly supported incident-created profile** |
+
+**Ownership:** whether any of these phone numbers belongs to a real person remains **unknown**.
+
+**Consistency:** these findings agree with the local evidence (the empty profile form at first sign-in, the timing of each save). Exact per-row timestamps are not reproduced here; the cleanup re-verifies every row itself.
 
 **What "strongly supported" rests on**, by the classification rule above:
 - a live row exists;
@@ -231,6 +243,28 @@ None of these is to be run until the results are recorded above and the owner ap
 The first version of the test caught two defects, both fixed before this run:
 - an aborted run left a directory that blocked the next run;
 - a snapshot-based transaction let a concurrent write through. This is why it now uses `BEGIN IMMEDIATE`.
+
+**Second review (22 Nov):**
+- **`plan` makes no changes:**
+  - the live DB is opened `mode=ro` + `query_only`;
+  - the preserved backup is opened `mode=ro&immutable=1`;
+  - otherwise it only runs `pm2 jlist`, a path probe and `/proc` link reads.
+- **`apply`** compares full-row fingerprints inside the same `BEGIN IMMEDIATE` transaction as the linked-record scan and the delete.
+- **The row backup** is private (0700/0600, `O_EXCL`), fsynced and verified by read-back before any delete. **Added:** an fsync of the parent `backups/` directory, so the new directory entry is durable. All harness scenarios were re-run and pass.
+- **`rollback`** refuses to overwrite a profile created after the cleanup.
+
+**Script SHA-256** (LF line endings): `46ddc713e59285a336553dd9b29aec61a582377cacd98a9a2658b05af454f089`.
+
+**Read-only plan command:** a paste-ready file on the owner's Windows Desktop, `paisa-mart-incident-cleanup-PLAN-readonly.txt`. It is not in Git, because it contains the four numbers.
+1. It writes the script to a private `mktemp` file in `/tmp`.
+2. It runs `sha256sum -c` against the hash above and continues only if that passes.
+3. It runs `python3 <file> plan <n1> <n2> <n3> <n4>` (the script's own CLI).
+4. It deletes the temp file.
+
+It was tested as pasted on the WSL replica:
+- checksum OK, then plan OK;
+- a copy with one byte changed fails the checksum and nothing runs;
+- no temp file is left, the DB is unchanged, and no cleanup directory is created.
 
 **To run it later (each step needs separate authorization):**
 1. `plan`; send the masked output for review.

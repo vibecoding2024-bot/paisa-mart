@@ -187,6 +187,7 @@ def apply(nums, db, expect, preserved_state, preserved_root):
     require(not str(target.resolve()).startswith(str(preserved_root.resolve())), 'refusing to write inside the preserved backup')
     os.umask(0o077)
     os.mkdir(target, 0o700)
+    pfd = os.open(BACKUPS, os.O_RDONLY); os.fsync(pfd); os.close(pfd)  # make the new directory entry itself durable
     con = connect(db)
     t0 = time.monotonic()
     # IMMEDIATE takes the write lock first: no other writer can commit while the rows are re-checked and deleted

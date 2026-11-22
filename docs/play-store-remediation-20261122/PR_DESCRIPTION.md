@@ -1,6 +1,9 @@
 # Google Play remediation: honest financial UI, private profiles (A-01), guarded review account, OTP binding, test isolation, launcher icon
 
-> **Status: submission and production deployment are paused.** An incident (synthetic test profiles written to production by local test builds) is under read-only assessment; see `docs/play-store-remediation-20261122/INCIDENT_2026-11-22_test-profiles-in-production.md`.
+> **Status: submission and production rollout are paused.** Local test builds wrote four synthetic profiles to production (an incident).
+> - The owner's read-only EC2 checks classify them as strongly supported incident-created records. Phone-number ownership is unknown.
+> - A review-only targeted cleanup is prepared; nothing has been deleted.
+> - See `docs/play-store-remediation-20261122/INCIDENT_2026-11-22_test-profiles-in-production.md`.
 
 Branch `fix/play-store-remediation-20261122` → `main` (base `595e521`). **Do not merge or deploy without explicit owner approval.**
 Merging does not release anything: the backend and the Android build each need their own authorized release.
@@ -35,6 +38,11 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
   - "Explore & earn";
   - About Us "earn through product distribution" and "Instant Payouts";
   - Support FAQs describing wallet top-ups, withdrawals and refunds that don't exist.
+- Welcome page: factual copy.
+  - Left: "Explore products. Track your applications.", plus a "Find what you need" card (Bank accounts · Credit cards · Loans · Insurance).
+  - Right: "Sign in to apply and track your applications."
+  - The repeated discovery line and the Discover/Grow promotional rows are removed.
+  - The sign-in form and links are unchanged.
 - **Not changed:** commission figures and the rate card (Products "Earn up to ₹…", Payout Structure). Owner decision; see below.
 - Profile and KYC clients now honour `EXPO_PUBLIC_API_URL` like the other modules. Production builds set none of these variables, so they behave the same.
 
@@ -55,10 +63,13 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
 - `PATCH /api/users/profile/:phone/kyc` is admin/ops only. `GET /api/users/profiles` is admin only, with a bounded limit.
 - KYC start and status require the owning customer.
 - KYC callbacks never mark verified/rejected; only VimoPay's authenticated status API can. With A-03 fixed (below), the KYC callback routes are actually reached.
-- **A-03:** the unauthenticated `*callback*` catch-all is removed.
-  - Gateway callbacks are acknowledged only. They never create or change a transaction, and their bodies (which can carry a name or phone number) are not logged.
+- **A-03: untrusted callbacks no longer change payment records.**
+  - The unauthenticated `*callback*` catch-all that created or rewrote transactions (status, amount, ID, payload) from any request is removed.
+  - Gateway callbacks are acknowledged only, and their bodies (which can carry a name or phone number) are not logged.
   - A side-effect-free fallback acknowledgement for other callback paths runs after the routers.
-  - Payment status therefore stays Pending until a verified VimoPay status source is added (owner decision; the VimoPay integration is on UAT endpoints).
+- **Authenticated payment reconciliation is still incomplete.** This PR does **not** fix or verify end-to-end payment processing.
+  - A transaction stays at the status recorded when it was created (normally Pending). Nothing marks a payment successful, from a callback or from a browser redirect.
+  - Reconciliation needs VimoPay's server-to-server status API or a verifiable callback signature. The integration uses VimoPay UAT endpoints.
 - The app sends the customer token on profile and KYC calls, and the phone field is locked to the verified number.
 
 **Test isolation**
@@ -90,6 +101,7 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
   - New tests: `users-auth.test.ts`, `api-isolation.test.ts`, plus `review-account.test.ts` additions.
   - `payout-guard.test.ts` was fixed: it had been failing since `d7c8a33` because it relied on the removed mock data.
 - No type errors in changed backend files; mobile `tsc --noEmit` reports 0 errors.
+- Welcome copy (`48226fb`, wording only) was checked in a local web export at 1440, 390 and 360 px (`evidence/WELCOME-*.png`). No Android rebuild was made for wording alone.
 - `node scripts/check-api-isolation.mjs` passes.
 - Android, on WSL release builds of `e61fa03`:
   - Test variant: emulator with production DNS blocked, against a local backend. Authenticated profile GET 404 → POST 200 → GET 200; synthetic account ₹1,500.00 with both applications; review account sees only its own records; an admin stage change showed in the app.
@@ -98,8 +110,8 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
 
 ## Deployment requirements (PAUSED; each step separately authorized)
 
-Order matters. A-01 changes the API contract, so ship the **web release first, then the backend**. See HANDOFF "A-01 compatible rollout plan".
-1. **Web:** build and deploy a new web release from merged main via the guarded frontend workflow. It sends the token and works with the current backend.
+Order matters. A-01 changes the API contract: the new backend returns 401 to any profile call without the customer token. Ship the **web release first, then the backend**, with the new Android build ready by the backend step. See HANDOFF "Release dependency".
+1. **Web:** build and deploy a new web release from merged main via the guarded frontend workflow. It sends the token and works with the current backend. Browser tabs still on the old bundle behave like old clients until they reload.
 2. **Backend:** `backend-update.py verify`, then `update --execute`.
    - Confirm the MSG91 variable names first.
    - Never set `ALLOW_DEV_OTP`.
@@ -110,13 +122,18 @@ Order matters. A-01 changes the API contract, so ship the **web release first, t
    - confirm the versionCode;
    - build a signed AAB.
 
-   Older installs, if any were distributed, must update.
+   **Impact on older installs** (the current app, including any APK served at `/download-apk`) once the backend enforces A-01:
+   - Signed-in users with a saved profile: the profile GET returns 401, and the old app falls back to its local copy, so they can continue without syncing.
+   - New sign-ins, or users still completing their profile: the profile save returns 401, and they **cannot finish onboarding** until they update.
+   - Mitigation: release the new build by the backend step, replace the `/download-apk` APK, and monitor `/api/users` 401s.
 5. **Play Console:** listing, screenshots, App access, Financial features declaration, privacy URL.
 
 ## Open findings and owner decisions
 
-- **Incident:** the read-only production confirmation and the per-number recovery decision are pending. Profiles must not be deleted, overwritten or repurposed.
-- **VimoPay transaction status (decision):** payment status updates need VimoPay's server-to-server status API or a verifiable callback signature (A-03 follow-up).
+- **Incident:** the four profiles are classified incident-created (owner's EC2 summary).
+  - The targeted cleanup (`incident_cleanup.py`) is review-only. Its read-only `plan` comes first; `apply` needs the owner's approval of the reviewed fingerprints.
+  - Preserve backup `LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- **Payments:** authenticated reconciliation (VimoPay status API or a verifiable signature) is still to be built (A-03 follow-up).
 - **Unresolved:**
   - commission and rate-card figures;
   - lender list;
