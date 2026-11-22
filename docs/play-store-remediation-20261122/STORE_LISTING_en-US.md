@@ -1,50 +1,65 @@
 # Store listing copy — en-US (default listing)
 
-Status: DRAFT for owner review. Claims are limited to features exercised on the Android test build
-(see CHECKLIST.md, "Runtime verification"). Do not add Earnings, Wallet, Recharge, Travel or payout
-claims: the 21 Nov 2026 audit (A-07) found those screens show preview/sample figures.
+Status: READY FOR OWNER REVIEW. Every claim below was exercised on the Android test build (versionCode 8,
+22 Nov 2026) against an isolated local backend with synthetic data. See CHECKLIST.md → Runtime verification.
+
+The app is a **partner/agent app**: users refer customers to financial products and track the leads they
+submit. The copy says so. It doesn't claim earnings, wallet, payouts, recharge or travel. Audit A-07
+(confirmed again on this build) found that the Earnings tab and notifications show fabricated figures.
 
 ## App name (max 30)
 
 Paisa Mart: Loans & Insurance
 
-(29 characters. The installed app label stays "Paisa Mart"; Google allows a longer store title as long as
-it is not misleading. If the owner prefers an exact match, use "Paisa Mart".)
+(29 characters. Installed label: "Paisa Mart".)
 
 ## Short description (max 80)
 
-Compare loans, cards & insurance, apply in-app and track your application status
+Refer customers to loans, cards & insurance, submit leads and track their status
 
 (80 characters)
 
 ## Full description (max 4000)
 
-Paisa Mart helps you find and apply for financial products from banks, NBFCs and insurance partners in India, all from one app.
+Paisa Mart is an app for partners and agents who help customers find financial products from banks, NBFCs and insurance partners in India.
 
 WHAT YOU CAN DO
-• Browse products by category: home loans, personal loans, business loans, vehicle loans, credit cards, savings accounts, gold loans, and health, life and vehicle insurance.
-• See partner banks and finance companies for each product before you apply.
-• Fill in a guided application form for the product you need, with your contact, income and loan details.
-• Track every application you have submitted under "My applications & status", including its current stage.
-• Sign in securely with your mobile number and a one-time password (OTP), and protect the app with your own MPIN.
+• Browse product categories: credit cards, bank accounts, home loans, personal loans, vehicle loans, business loans, insta loans, gold loans, and health, life and motor insurance.
+• See the partner banks and finance companies available in each category.
+• Submit a customer's details through a guided application form for the product they need (for example a home loan: name, mobile number, income, existing EMI, loan amount, loan type and city).
+• Get a confirmation number for every submission.
+• Track submitted applications under "My applications & status", with the current stage updated by the Paisa Mart team.
+• Sign in with your mobile number and a one-time password (OTP), then protect the app with your own 4-digit MPIN.
 
 HOW IT WORKS
 1. Sign in with your Indian mobile number and the OTP sent by SMS.
-2. Complete a short profile.
-3. Choose a product and submit the application form.
-4. The Paisa Mart team reviews your request and works with the partner bank or insurer. You can check the current stage of each application in the app.
+2. Complete your profile.
+3. Choose a product and submit your customer's application.
+4. The Paisa Mart team reviews each lead and works with the partner bank or insurer. Check the stage of every application in the app at any time.
 
 IMPORTANT
-• Paisa Mart is a loan and insurance distribution platform. Paisa Mart does not lend money or issue insurance itself. Loans, cards and policies are provided by the partner bank, NBFC or insurer, subject to their eligibility checks, terms and approval.
-• Submitting an application does not guarantee approval. Interest rates, fees and repayment terms are set by the lending partner and are shown to you by that partner before you accept any offer.
-• Contact: support details are available in the app under Support.
+• Paisa Mart is a distribution platform. It does not lend money or issue insurance. Loans, cards, accounts and policies are provided by the partner bank, NBFC or insurer, subject to their own eligibility checks, terms and approval.
+• Submitting an application does not guarantee approval. Interest rates, fees and repayment terms are set by the partner and shared by that partner before any offer is accepted.
+• Support is available in the app under Support.
 
-Paisa Mart — financial products, one place.
+## Screenshots (phone, 1080×2160, in this order)
 
-## Notes for the owner (do not paste)
+From `screenshots/`. Genuine Android captures of the versionCode 8 test build, synthetic user "Asha Test" /
+9000000001. Only the system status and gesture bars were cropped, to meet Play's 2:1 limit.
 
-- Google's Personal Loans policy for India requires the Play Console "Financial features" declaration
-  and, for apps facilitating personal loans, listing the partner lenders (NBFC/bank names) in the
-  description and on the website. Confirm and add the partner lender names before submission —
-  they are business facts not verifiable from code. (UNVERIFIED / owner action.)
-- Add the Privacy Policy URL in Play Console (App content → Privacy policy).
+1. `01-home-product-categories.png` — Home with product categories. Earnings shows ₹0.00, the genuine value for a new account.
+2. `02-products-partners.png` — Products: partner banks for credit cards.
+3. `03-home-loan-application-form.png` — Home loan application form.
+4. `04-application-confirmation.png` — Submission confirmation with confirmation number.
+5. `05-my-applications-status.png` — My applications & status.
+
+Remove the two promotional banners currently uploaded as screenshots. Keep `feature-1024x500.jpg` only as the
+Feature graphic.
+
+## Owner decisions before pasting (not verifiable from code)
+
+- Screenshot 2 shows "Potential commission — Earn up to ₹2,000" per partner. These are configured product figures,
+  not user balances, but the owner must confirm they are accurate and current, or remove them from the app first.
+- Google's India personal-loan rules (Financial features declaration) may require naming the partner lenders.
+  The owner must confirm the lender list. UNVERIFIED.
+- Privacy policy URL in Play Console → App content.

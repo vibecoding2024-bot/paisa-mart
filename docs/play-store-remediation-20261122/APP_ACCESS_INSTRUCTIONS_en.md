@@ -20,7 +20,7 @@ Paisa Mart uses mobile number + one-time password (OTP) sign-in.
 3. If asked, complete the short profile with any sample details, then set any 4-digit MPIN.
 4. You are now on Home. To review the main features:
    - Products tab: browse loan, credit card, savings account and insurance categories and their partners.
-   - Open a product (for example Home Loan) and submit the application form with sample details.
+   - Home → Home Loans: submit the application form with sample details; a confirmation number is shown.
    - Profile → My applications & status: see submitted applications and their current stage. The demo account already contains sample applications.
 
 This is a demo account with fictional sample data. Payments, identity verification (KYC) and payouts are disabled for this account, and its submissions are marked as test records and are not sent to lending partners.
