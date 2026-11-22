@@ -30,15 +30,13 @@ export function verifyOtp(
   return request<{ success: true; token: string }>('/api/auth/verify-otp', { phone, otp, channel, reqId });
 }
 
+/** Server requires the phone and issues a token only if MSG91 verified that same number. */
 export function verifyOtpAccessToken(
   accessToken: string,
-  channel: OtpChannel = Platform.OS === 'web' ? 'web' : 'mobile',
-  phone?: string
+  phone: string,
+  channel: OtpChannel = Platform.OS === 'web' ? 'web' : 'mobile'
 ) {
-  return request<{ success: true; token: string; phone: string; data: Record<string, unknown> }>(
-    '/api/auth/verify-otp-token',
-    phone ? { accessToken, channel, phone } : { accessToken, channel }
-  );
+  return request<{ success: true; token: string; phone: string }>('/api/auth/verify-otp-token', { accessToken, channel, phone });
 }
 
 export async function saveAuthToken(token: string) {

@@ -43,6 +43,18 @@ export function reviewLoginActive(now = Date.now()): boolean {
   return failures < REVIEW_MAX_FAILURES;
 }
 
+/** Review window open: enabled and unexpired (used to revoke already-issued review tokens). */
+export function reviewWindowOpen(now = Date.now()): boolean {
+  if (process.env.REVIEW_ACCOUNT_ENABLED !== "true" || !configuredPhone()) return false;
+  const expires = Date.parse(process.env.REVIEW_ACCOUNT_EXPIRES_AT || "");
+  return Number.isFinite(expires) && expires > now;
+}
+
+/** Review tokens never outlive the configured window (seconds since epoch). */
+export function reviewTokenExpiry(): number {
+  return Math.floor(Date.parse(process.env.REVIEW_ACCOUNT_EXPIRES_AT || "") / 1000);
+}
+
 /** True when this request should use the review path (never for any other phone). */
 export function usesReviewLogin(phone: string): boolean {
   return reviewLoginActive() && isReviewPhone(phone);

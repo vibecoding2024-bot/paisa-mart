@@ -1,4 +1,5 @@
 import { timingSafeEqual, createHmac } from 'node:crypto';
+import { reviewWindowOpen } from './review-account';
 
 // Verify the customer token already issued by the OTP routes; never trust a supplied phone.
 export function customerPhone(authorization?: string): string | null {
@@ -14,6 +15,8 @@ export function customerPhone(authorization?: string): string | null {
     if (signature.length !== expected.length || !timingSafeEqual(Buffer.from(signature), Buffer.from(expected))) return null;
     const claims = JSON.parse(Buffer.from(payload, 'base64url').toString());
     if (typeof claims.exp !== 'number' || claims.exp <= Date.now() / 1000 || claims.role === 'admin') return null;
+    // Disabling or expiring the Play review window revokes review tokens immediately.
+    if (claims.review === true && !reviewWindowOpen()) return null;
     return typeof claims.sub === 'string' && /^\+91[6-9]\d{9}$/.test(claims.sub) ? claims.sub.slice(3) : null;
   } catch { return null; }
 }

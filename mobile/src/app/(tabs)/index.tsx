@@ -427,7 +427,7 @@ export default function HomeScreen() {
         <Reveal delay={70}>
           <Surface style={{ padding: wide ? 26 : 18, marginBottom: 24 }}>
             <SectionHeading
-              title="Explore & earn"
+              title="Explore products"
               action="View all"
               onPress={() => router.push("/(tabs)/products")}
             />

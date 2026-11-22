@@ -22,20 +22,20 @@ const COMPANY_INFO = [
 
 const FAQS = [
   {
-    q: 'How do I add money to my wallet?',
-    a: 'Open Cash on Credit Card, tap "Add Money", enter the amount and pay using your credit/debit card, UPI or net banking. The balance updates instantly.',
+    q: 'How do I check the status of an application?',
+    a: 'Open Profile → My applications & status. It lists applications submitted with your signed-in mobile number and the current stage set by the Paisa Mart team. Tap "Refresh status" for the latest stage.',
   },
   {
-    q: 'How long does a bank withdrawal take?',
-    a: 'Withdrawals from your wallet to a linked bank account are usually credited within a few minutes, and may take up to 2 hours during banking off-hours.',
+    q: 'When does a payout amount appear under Earnings?',
+    a: 'Only after an executive and a manager at Paisa Mart approve it. An approved amount is an eligible payout, not confirmation that money has been paid. The Paisa Mart team contacts you about payment.',
   },
   {
-    q: 'Is there a charge for adding money via credit card?',
-    a: 'Adding money to your wallet is free. Your card issuer may apply their own terms, so please check with your bank for any applicable charges.',
+    q: 'Can I add money, hold a balance or withdraw in the app?',
+    a: 'No. The app has no wallet, balance or in-app withdrawal. Cash on Credit Card and bank details are not available in the app yet.',
   },
   {
-    q: 'My money was deducted but wallet not updated. What do I do?',
-    a: 'Do not worry — failed top-ups are auto-refunded to your source within 5–7 working days. If you need help sooner, contact our support team below with your transaction details.',
+    q: 'Does submitting an application mean it is approved?',
+    a: 'No. Loans, cards, accounts and policies are provided by the partner bank, NBFC or insurer, subject to their own checks, terms and approval.',
   },
 ];
 

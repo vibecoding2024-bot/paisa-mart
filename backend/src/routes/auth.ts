@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { z } from "zod";
-import { maskedReviewPhone, usesReviewLogin, verifyReviewCode } from "../lib/review-account";
+import { isReviewPhone, maskedReviewPhone, reviewTokenExpiry, usesReviewLogin, verifyReviewCode } from "../lib/review-account";
 
 const phoneSchema = z.string().regex(/^[6-9]\d{9}$/, "Enter a valid Indian mobile number");
 const otpChannelSchema = z.enum(["mobile", "web"]).default("mobile");
@@ -14,7 +14,8 @@ const verifySchema = z.object({
 const verifyTokenSchema = z.object({
   accessToken: z.string().min(1, "Missing accessToken"),
   channel: otpChannelSchema.optional(),
-  phone: phoneSchema.optional(),
+  // The phone being signed in is mandatory; the provider must confirm the same number.
+  phone: phoneSchema,
 });
 type OtpChannel = z.infer<typeof otpChannelSchema>;
 
@@ -198,6 +199,11 @@ function findProviderPhone(value: unknown): string | null {
       if (phoneSchema.safeParse(phone).success) return phone;
     }
   }
+  // MSG91 verifyAccessToken returns the verified number as `message` ("91XXXXXXXXXX"). Accept it only
+  // when the whole value is a phone number (never digits embedded in free text).
+  const message = typeof record.message === "string" ? record.message.trim() : "";
+  const messageMatch = /^\+?(?:91)?([6-9]\d{9})$/.exec(message);
+  if (messageMatch) return messageMatch[1]!;
   for (const key of ["data", "user", "result"]) {
     const nested = findProviderPhone(record[key]);
     if (nested) return nested;
@@ -210,12 +216,12 @@ function base64Url(value: Uint8Array | string) {
   return Buffer.from(bytes).toString("base64url");
 }
 
-async function issueToken(phone: string, extra: Record<string, unknown> = {}) {
+async function issueToken(phone: string, extra: Record<string, unknown> = {}, maxExp?: number) {
   const secret = process.env.AUTH_TOKEN_SECRET;
   if (!secret) throw new Error("AUTH_TOKEN_SECRET is not configured");
   const now = Math.floor(Date.now() / 1000);
   const header = base64Url(JSON.stringify({ alg: "HS256", typ: "JWT" }));
-  const payload = base64Url(JSON.stringify({ sub: `+91${phone}`, ...extra, iat: now, exp: now + 60 * 60 * 24 * 7 }));
+  const payload = base64Url(JSON.stringify({ sub: `+91${phone}`, ...extra, iat: now, exp: Math.min(now + 60 * 60 * 24 * 7, maxExp ?? Infinity) }));
   const data = `${header}.${payload}`;
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign"]);
   const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(data));
@@ -309,7 +315,7 @@ authRouter.post("/verify-otp", async (c) => {
         return c.json({ error: "The OTP is incorrect or has expired" }, 401);
       }
       console.log("Play review account signed in", { phone: maskedReviewPhone(parsed.data.phone), at: new Date().toISOString() });
-      const token = await issueToken(parsed.data.phone, { review: true });
+      const token = await issueToken(parsed.data.phone, { review: true }, reviewTokenExpiry());
       return c.json({ success: true, token });
     }
 
@@ -368,15 +374,18 @@ authRouter.post("/verify-otp-token", async (c) => {
   }
 
   try {
+    // A-02: the identity comes only from the provider-verified number, and it must equal the
+    // phone being signed in. No fallback to the client's phone; raw provider data is never returned.
     const data = await msg91VerifyAccessToken(parsed.data.accessToken, channel);
     const providerPhone = findProviderPhone(data);
-    const phone = providerPhone || parsed.data.phone;
-    if (!phone) throw new Error("Verified OTP token did not include a phone number");
-    if (providerPhone && parsed.data.phone && providerPhone !== parsed.data.phone) {
-      return c.json({ error: "OTP token does not match this mobile number" }, 401);
+    if (!providerPhone || providerPhone !== parsed.data.phone) {
+      console.warn("OTP token rejected: provider-verified phone missing or different", { channel, phone: maskedMobile(parsed.data.phone) });
+      return c.json({ error: "Invalid token" }, 401);
     }
-    const token = await issueToken(phone);
-    return c.json({ success: true, token, phone, data });
+    // The review account signs in only through its own path (no provider actions).
+    if (usesReviewLogin(providerPhone) || isReviewPhone(providerPhone)) return c.json({ error: "Invalid token" }, 401);
+    const token = await issueToken(providerPhone);
+    return c.json({ success: true, token, phone: providerPhone });
   } catch (error) {
     console.error("OTP token verify failed", error instanceof Error ? error.message : "unknown error");
     return c.json({ error: "Invalid token" }, 401);

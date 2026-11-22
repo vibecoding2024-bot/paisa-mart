@@ -266,8 +266,8 @@ export default function LoginScreen() {
                   maxWidth: 340,
                 }}
               >
-                Discover financial products. Help your customers. Build your
-                earning journey with Paisa Mart.
+                Discover loans, cards, bank accounts and insurance from partner
+                banks and insurers with Paisa Mart.
               </Text>
               {wide && (
                 <View style={{ marginTop: 40, gap: 12 }}>

@@ -115,3 +115,65 @@ test('review account: no KYC, no payments, and only its own synthetic applicatio
   expect(response.status).toBe(200);
   expect((await response.json()).data.map((a: any) => a.details.Name)).toEqual(['Demo Applicant']);
 });
+
+test('A-02 web: verify-otp-token binds identity to the provider-verified phone, with no fallback and no raw data', async () => {
+  process.env.MSG91_AUTH_KEY = 'test-key';
+  const realFetch = globalThis.fetch;
+  let providerBody: Record<string, unknown> = {};
+  globalThis.fetch = (async () => new Response(JSON.stringify(providerBody), { status: 200 })) as any;
+  try {
+    providerBody = { type: 'success', message: '919300000011' };
+    const ok = await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: '9300000011' });
+    expect(ok.status).toBe(200);
+    const body = await ok.json();
+    expect(claims(body.token).sub).toBe('+919300000011');
+    expect(body.data).toBeUndefined();
+    // Someone else's verified token cannot sign in as a different phone.
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: '9300000012' })).status).toBe(401);
+    // Provider response without a phone: previously fell back to the client phone; now refused.
+    providerBody = { type: 'success' };
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: '9300000011' })).status).toBe(401);
+    // Free text containing digits is not accepted as a verified phone.
+    providerBody = { type: 'success', message: 'verified 919300000011' };
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: '9300000011' })).status).toBe(401);
+    // The phone being signed in is mandatory.
+    providerBody = { type: 'success', message: '919300000011' };
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web' })).status).toBe(400);
+    // Provider rejection stays a rejection.
+    providerBody = { type: 'error', message: 'invalid' };
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: '9300000011' })).status).toBe(401);
+    // The review phone never signs in through the provider token path.
+    providerBody = { type: 'success', message: '91' + REVIEW_PHONE };
+    expect((await post(authRouter, '/verify-otp-token', { accessToken: 'tok', channel: 'web', phone: REVIEW_PHONE })).status).toBe(401);
+  } finally {
+    globalThis.fetch = realFetch;
+    delete process.env.MSG91_AUTH_KEY;
+  }
+});
+
+test('review tokens never outlive the window and are revoked when the window is disabled or expires', async () => {
+  const { token } = await (await post(authRouter, '/verify-otp', { phone: REVIEW_PHONE, otp: CODE })).json();
+  expect(claims(token).exp).toBeLessThanOrEqual(Math.floor(Date.parse(process.env.REVIEW_ACCOUNT_EXPIRES_AT!) / 1000));
+  const list = () => customerApplicationsRouter.request('/', { headers: { Authorization: 'Bearer ' + token } });
+  expect((await list()).status).toBe(200);
+  process.env.REVIEW_ACCOUNT_ENABLED = 'false';
+  expect((await list()).status).toBe(401);
+  enable({ REVIEW_ACCOUNT_EXPIRES_AT: new Date(Date.now() - 1000).toISOString() });
+  expect((await list()).status).toBe(401);
+});
+
+test('no review code, OTP or token appears in logs', async () => {
+  const lines: string[] = [];
+  const orig = { log: console.log, warn: console.warn, error: console.error };
+  for (const k of ['log', 'warn', 'error'] as const) console[k] = (...a: unknown[]) => { lines.push(a.map(x => typeof x === 'string' ? x : JSON.stringify(x)).join(' ')); };
+  try {
+    await post(authRouter, '/send-otp', { phone: REVIEW_PHONE });
+    const { token } = await (await post(authRouter, '/verify-otp', { phone: REVIEW_PHONE, otp: CODE })).json();
+    await post(authRouter, '/verify-otp', { phone: REVIEW_PHONE, otp: CODE === '111111' ? '222222' : '111111' });
+    const all = lines.join('\n');
+    expect(all).not.toContain(CODE);
+    expect(all).not.toContain(token);
+    expect(all).not.toContain(REVIEW_PHONE);
+    expect(all).toContain('90******99');
+  } finally { Object.assign(console, orig); }
+});
