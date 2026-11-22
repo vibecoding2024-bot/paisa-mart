@@ -98,8 +98,12 @@ production command, Play upload or reviewer-phone selection.
 - **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root); the network guard loads automatically. Also run `node scripts/check-api-isolation.mjs`.
 
 ## Exact next action
-1. With authorization, run the **read-only** production confirmation steps in the incident file and record the masked results.
-2. Owner reviews the recovery proposal per number.
+1. Read-only production checks are **authorized** (22 Nov 2026) but **not yet run**: the agent has no EC2 session.
+   - The owner pastes `docs/play-store-remediation-20261122/incident_readonly_check.py` in EC2 Instance Connect as `python3 - <4 numbers> <<'PYEOF' … PYEOF`. A ready-made paste with the numbers is kept outside Git, in the agent's scratchpad.
+   - The script was dry-run tested on a synthetic WSL replica: no leaks, no writes.
+   - The owner returns the masked output. The agent then fills "Results (production)" and the classification in the incident file.
+   - Stop before any production mutation.
+2. Owner approves (or not) the per-profile action in the incident file. Each mutation is a separate authorization.
 3. Then, separately authorized: push and PR; the web-first rollout above; Android signing; reviewer-phone selection.
 
 ---
