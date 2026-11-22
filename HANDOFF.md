@@ -95,7 +95,25 @@
 - **Local backend:** Bun at `.build-tools/bun-runtime/bun-windows-x64/bun.exe`, `PORT=3901`, a scratch SQLite and random secrets. `ALLOW_DEV_OTP=true` locally only; `REVIEW_ACCOUNT_*` values are never committed.
 - **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root). Also run `node scripts/check-api-isolation.mjs`.
 
-## Exact next action
+## INCIDENT RESOLVED (owner-confirmed, 22 Nov 2026) — do not repeat the cleanup
+- Exactly **4** incident test profiles deleted; total profiles **9 → 5**.
+- Post-checks passed; the preserved full backup is unchanged.
+- **Row backup:** `/home/ec2-user/paisa-mart-data/backups/incident-cleanup-20261122T154044Z-3204996`.
+- **Full backup:** `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- Keep both until the owner releases them. Rollback (only if ever required, separately authorized) is described in the incident file.
+
+## Readiness (final review, 22 Nov)
+- See [READINESS_REPORT.md](docs/play-store-remediation-20261122/READINESS_REPORT.md) and the final [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
+- **Review result:** the only runtime change since the validated commits is the welcome wording, which is already validated. The isolation check passes at HEAD. The secret scan of the branch diff is clean. Incident numbers in `CHECKLIST.md` are now masked.
+- **New top blocker: A-42 (Critical, pre-existing, open).** `/api/payment/checkout` writes URL/status values with `innerHTML`, and the reflected variant still works after A-03. It could steal tokens on the app origin.
+- **Also open:**
+  - A-04 (payment API public, UAT);
+  - A-05 (secrets and signing material tracked in Git: `backend/paisa-mart-mvp.zip`, `backend/payments.db`, `android/app/debug.keystore`; keys need rotation);
+  - A-09 / A-52 (sessions);
+  - Android signing.
+- **Next action:** with authorization, fix A-42 locally (render as text, stop echoing unknown refs) with a regression test.
+
+## Previous step (done)
 - **The EC2 read-only `plan` passed** (owner, 22 Nov).
 - **The owner approved deleting only the four incident profiles,** guarded by these fingerprints, in plan order (01, 03, 02, 99): `d83914834dbd120f00e5, 32258238dc8d19e72ab3, 5db9ffcb75c137d9d2c4, 77dbce08a355552f92ef`.
 - **APPLY paste file:** `C:\Users\Swetha Anusha\Desktop\paisa-mart-incident-cleanup-APPLY.txt`.

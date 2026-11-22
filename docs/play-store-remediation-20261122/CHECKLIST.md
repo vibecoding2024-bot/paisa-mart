@@ -53,10 +53,10 @@ Still in the app, for the **owner to confirm or remove** (configured business ra
 | Check | Result |
 |---|---|
 | Upgrade install over the earlier build, then app-data clear for fresh state | Pass |
-| Fresh account 9000000003: OTP (local dev OTP, `ALLOW_DEV_OTP=true` locally only) → profile → MPIN → Home | Pass; Home and Earnings show ₹0.00 and "No approved payouts yet"; notifications empty; Bank details and Cash on Credit Card show "not available" |
-| Synthetic account 9000000002 with saved records (BL Disbursed with ₹1,500.00 entered by admin, approved by executive then manager; HL New) | Home and Earnings ₹1,500.00 with the BL reference; My applications lists both with their stages |
+| Fresh account 90XXXXXX03: OTP (local dev OTP, `ALLOW_DEV_OTP=true` locally only) → profile → MPIN → Home | Pass; Home and Earnings show ₹0.00 and "No approved payouts yet"; notifications empty; Bank details and Cash on Credit Card show "not available" |
+| Synthetic account 90XXXXXX02 with saved records (BL Disbursed with ₹1,500.00 entered by admin, approved by executive then manager; HL New) | Home and Earnings ₹1,500.00 with the BL reference; My applications lists both with their stages |
 | Admin stage change reflected in Android | Pass: HL "New leads" → admin `documents_pending` → app "Documents pending" after Refresh |
-| Review account 9000000099 (locally generated code) | send-otp gives no SMS and no dev OTP; verify gives 200; log shows a masked phone. Only its 2 synthetic records are visible (both labelled TEST in admin). Payouts ₹0.00 although its BL is Disbursed: payout save and approval return 403. |
+| Review account 90XXXXXX99 (locally generated code) | send-otp gives no SMS and no dev OTP; verify gives 200; log shows a masked phone. Only its 2 synthetic records are visible (both labelled TEST in admin). Payouts ₹0.00 although its BL is Disbursed: payout save and approval return 403. |
 | Review code with other phones (live) | 401 / 401 |
 | Payout approvals and ownership | Existing dual-approval and isolation tests pass (`admin-payouts`, `customer-applications`, `admin-operations`) |
 | Backend tests | 62 pass / 0 fail (11 files run separately); backend typecheck has no errors in changed files; mobile `tsc --noEmit` 0 errors |

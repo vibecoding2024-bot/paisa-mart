@@ -1,7 +1,26 @@
 # Incident assessment — synthetic test profiles written to production (22 Nov 2026)
 
-Status: **Read-only checks RUN BY THE OWNER on EC2 (22 Nov 2026). All four profiles are CLASSIFIED as
-strongly supported incident-created records. Phone-number ownership remains unknown.**
+Status: **RESOLVED (22 Nov 2026). The four incident test profiles were DELETED in production by the owner, using
+the reviewed targeted cleanup.** Do not repeat the cleanup.
+
+## Cleanup result (confirmed by the owner, 22 Nov 2026)
+- **What ran:** `incident_cleanup.py apply` (SHA-256 `46ddc713…f089`) after a passing read-only `plan`, with the owner-approved fingerprints in plan order: `d83914834dbd120f00e5, 32258238dc8d19e72ab3, 5db9ffcb75c137d9d2c4, 77dbce08a355552f92ef`.
+- **Result:**
+  - exactly **4** incident test profiles deleted;
+  - total profiles **9 → 5**;
+  - post-checks passed;
+  - the preserved full backup is unchanged.
+- **Row backup** (the exact 4 rows, private; needed for any targeted rollback): `/home/ec2-user/paisa-mart-data/backups/incident-cleanup-20261122T154044Z-3204996`.
+- **Full backup** (preserve): `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- **Rollback, only if ever required and separately authorized:** `incident_cleanup.py rollback <same 4 numbers> --backup-dir <row backup> --confirm RESTORE-4-INCIDENT-PROFILES`. It re-inserts only those rows and refuses to overwrite.
+- **Unchanged:** no other record, no restart, no deployment, no whole-database restore.
+- **Keep:** both backups until the owner releases them.
+- **Still unknown:** phone-number ownership. These numbers must never be used as the review phone.
+
+## Assessment (before cleanup)
+
+Read-only checks were run by the owner on EC2 (22 Nov 2026). All four profiles were classified as
+strongly supported incident-created records. Phone-number ownership remains unknown.
 - The findings below are the owner's **summary from the conversation**. The agent did not independently inspect the raw output.
 - The owner took a verified backup the same day: `LIVE-BEFORE-REMEDIATION-20261122T145011Z`. It must be **preserved**.
 - A targeted cleanup script is prepared **for review only**. Only its read-only `plan` command has been prepared for the owner, and nothing has been deleted.
