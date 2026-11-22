@@ -14,6 +14,7 @@ import { Hono } from 'hono';
  */
 for (const key of ['DATABASE_URL', 'POSTGRES_URL', 'VIMOPAY_PAYMENT_URL_HOSTS', 'VIMOPAY_BASE_URL']) delete process.env[key];
 process.env.PAYMENTS_ENABLED = 'true'; // these tests exercise the payment routes themselves (paused by default)
+process.env.VIMOPAY_SECRET_KEY = 'synthetic-test-key-0123456789abc'; process.env.VIMOPAY_SALT_KEY = 'synthetic-salt'; process.env.VIMOPAY_ED_KEY = 'synthetic-ed'; process.env.VIMOPAY_USER_ID = 'synthetic-user'; // complete synthetic VimoPay config (never real)
 process.env.TXN_DB = join(mkdtempSync(join(tmpdir(), 'checkout-browser-')), 'db.sqlite');
 const { paymentRouter } = await import('./payment');
 const { savePending } = await import('../lib/txn-store');

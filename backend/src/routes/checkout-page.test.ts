@@ -6,6 +6,7 @@ import { createHash } from 'node:crypto';
 // A-42 regression (no browser needed). The real-browser execution tests are in checkout-page.browser.test.ts.
 for (const key of ['DATABASE_URL', 'POSTGRES_URL', 'VIMOPAY_PAYMENT_URL_HOSTS', 'VIMOPAY_BASE_URL']) delete process.env[key];
 process.env.PAYMENTS_ENABLED = 'true'; // these tests exercise the payment routes themselves (paused by default)
+process.env.VIMOPAY_SECRET_KEY = 'synthetic-test-key-0123456789abc'; process.env.VIMOPAY_SALT_KEY = 'synthetic-salt'; process.env.VIMOPAY_ED_KEY = 'synthetic-ed'; process.env.VIMOPAY_USER_ID = 'synthetic-user'; // complete synthetic VimoPay config (never real)
 process.env.LEADS_DB = process.env.TXN_DB = process.env.USER_DB = join(mkdtempSync(join(tmpdir(), 'checkout-page-')), 'db.sqlite');
 process.env.AUTH_TOKEN_SECRET = 'test-customer-secret';
 process.env.HOME_LOAN_ADMIN_TOKEN_SECRET = 'test-admin-secret';

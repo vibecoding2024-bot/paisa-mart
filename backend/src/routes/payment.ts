@@ -14,8 +14,20 @@ export const paymentRouter = new Hono();
  * VimoPay configuration is untouched. Gateway callbacks are still acknowledged (never applied, A-03), so a stray
  * callback is not retried endlessly.
  */
+/**
+ * Fails closed: even with PAYMENTS_ENABLED=true, payments stay disabled unless the VimoPay configuration is complete and
+ * well-formed (same environment variables lib/vimopay.ts reads). Missing, empty or malformed values keep the routes shut.
+ */
+export function paymentConfigValid(): boolean {
+  const env = process.env;
+  let httpsBase = false;
+  try { httpsBase = new URL(env.VIMOPAY_BASE_URL ?? "https://gateway.vimopay.in").protocol === "https:"; } catch {}
+  const present = (v?: string) => typeof v === "string" && v.trim() !== "";
+  return httpsBase && present(env.VIMOPAY_SECRET_KEY) && Buffer.byteLength(env.VIMOPAY_SECRET_KEY!, "utf8") === 32 &&
+    present(env.VIMOPAY_SALT_KEY) && present(env.VIMOPAY_ED_KEY) && present(env.VIMOPAY_USER_ID);
+}
 export function paymentsEnabled(): boolean {
-  return process.env.PAYMENTS_ENABLED === "true";
+  return process.env.PAYMENTS_ENABLED === "true" && paymentConfigValid();
 }
 export const PAYMENTS_PAUSED = "Payments are currently unavailable.";
 paymentRouter.use("*", async (c, next) => {

@@ -35,11 +35,41 @@ test('paused: gateway callbacks are still acknowledged but never applied (A-03)'
   expect(getTxn('PM-X')).toBeNull();
 });
 
-test('only an explicit PAYMENTS_ENABLED=true re-opens the routes', async () => {
-  for (const value of ['1', 'yes', 'TRUE', '']) {
-    process.env.PAYMENTS_ENABLED = value;
-    expect((await call('/api/payment/checkout')).status).toBe(503);
+const VALID = { VIMOPAY_SECRET_KEY: 'synthetic-test-key-0123456789abc', VIMOPAY_SALT_KEY: 'synthetic-salt', VIMOPAY_ED_KEY: 'synthetic-ed', VIMOPAY_USER_ID: 'synthetic-user' };
+const KEYS = [...Object.keys(VALID), 'VIMOPAY_BASE_URL', 'PAYMENTS_ENABLED'];
+const withEnv = async (env: Record<string, string | undefined>, fn: () => Promise<void>) => {
+  const saved = Object.fromEntries(KEYS.map((k) => [k, process.env[k]]));
+  for (const k of KEYS) delete process.env[k];
+  for (const [k, v] of Object.entries(env)) if (v !== undefined) process.env[k] = v;
+  try { await fn(); } finally { for (const k of KEYS) { if (saved[k] === undefined) delete process.env[k]; else process.env[k] = saved[k]!; } }
+};
+
+test('only an explicit PAYMENTS_ENABLED=true re-opens the routes (with a complete configuration)', async () => {
+  for (const value of ['1', 'yes', 'TRUE', '', ' true', undefined]) {
+    await withEnv({ ...VALID, PAYMENTS_ENABLED: value }, async () => { expect((await call('/api/payment/checkout')).status).toBe(503); });
   }
-  process.env.PAYMENTS_ENABLED = 'true';
-  try { expect((await call('/api/payment/checkout')).status).toBe(200); } finally { delete process.env.PAYMENTS_ENABLED; }
+  await withEnv({ ...VALID, PAYMENTS_ENABLED: 'true' }, async () => { expect((await call('/api/payment/checkout')).status).toBe(200); });
+});
+
+test('missing or invalid payment configuration keeps payments disabled even when PAYMENTS_ENABLED=true', async () => {
+  const cases: Record<string, string | undefined>[] = [
+    {},                                                        // nothing configured
+    { ...VALID, VIMOPAY_SECRET_KEY: undefined },               // missing secret
+    { ...VALID, VIMOPAY_SECRET_KEY: '   ' },                   // blank secret
+    { ...VALID, VIMOPAY_SECRET_KEY: 'too-short-secret' },      // not a 32-byte AES-256 key
+    { ...VALID, VIMOPAY_SALT_KEY: '' },                        // missing salt
+    { ...VALID, VIMOPAY_ED_KEY: undefined },                   // missing ED key
+    { ...VALID, VIMOPAY_USER_ID: '' },                         // missing user id
+    { ...VALID, VIMOPAY_BASE_URL: 'http://gateway.vimopay.in' }, // not https
+    { ...VALID, VIMOPAY_BASE_URL: 'not a url' },               // malformed
+  ];
+  for (const env of cases) {
+    await withEnv({ ...env, PAYMENTS_ENABLED: 'true' }, async () => {
+      for (const path of ['/api/payment/checkout', '/api/payment/config', '/api/payment/auth']) {
+        const res = await call(path);
+        expect(res.status).toBe(503);
+        expect(await res.json()).toMatchObject({ paymentsPaused: true });
+      }
+    });
+  }
 });
