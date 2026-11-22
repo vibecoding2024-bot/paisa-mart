@@ -351,12 +351,15 @@ export default function HomeScreen() {
                   Approved eligible payouts
                 </Text>
                 <Text
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                  minimumFontScale={0.5}
                   style={{
-                    fontSize: 40,
-                    lineHeight: 52,
+                    fontSize: 34,
+                    lineHeight: 46,
                     color: "#fff",
                     fontWeight: "800",
-                    letterSpacing: -1.4,
+                    letterSpacing: -1.2,
                     marginTop: 5,
                   }}
                 >
