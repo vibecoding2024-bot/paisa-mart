@@ -1,12 +1,9 @@
 import type { BusinessLoanData } from './business-loan-store';
 import { submitDurableApplication } from './service-submission';
 import { ServiceSubmissionError } from './service-application-api';
+import { API_BASE } from './api-base';
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_API_URL ||
-  'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 
 type BusinessLoanLeadPayload = BusinessLoanData & {
   phoneNumber: string;

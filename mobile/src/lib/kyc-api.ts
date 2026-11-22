@@ -1,9 +1,6 @@
-const BACKEND_URL =
-  // Same base as auth and applications, so a build pointed at a test backend never reaches production.
-  process.env.EXPO_PUBLIC_API_URL ||
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  'https://paisa-mart.com';
+import { API_BASE } from './api-base';
+import { customerAuthHeaders } from './auth-api';
+const BACKEND_URL = API_BASE;
 
 type ApiResponse<T> = {
   success: boolean;
@@ -25,7 +22,7 @@ async function parseResponse<T>(response: Response): Promise<T> {
 export async function startVimoPayKyc(phoneNumber: string) {
   const response = await fetch(`${BACKEND_URL}/api/kyc/vimopay/start`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await customerAuthHeaders()) },
     body: JSON.stringify({ phoneNumber: normalizePhone(phoneNumber) }),
   });
 
@@ -33,7 +30,7 @@ export async function startVimoPayKyc(phoneNumber: string) {
 }
 
 export async function getVimoPayKycStatus(sessionId: string) {
-  const response = await fetch(`${BACKEND_URL}/api/kyc/vimopay/status/${sessionId}`);
+  const response = await fetch(`${BACKEND_URL}/api/kyc/vimopay/status/${sessionId}`, { headers: await customerAuthHeaders() });
   return parseResponse<{
     success: true;
     sessionId: string;

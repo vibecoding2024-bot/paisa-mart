@@ -1,9 +1,10 @@
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
+import { API_BASE, API_CONFIGURED } from './api-base';
 
-const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, '');
-const API_URL = configuredUrl || (Platform.OS === 'web' ? '' : 'https://paisa-mart.com');
+// Web without any configured URL keeps same-origin requests (served from the API host).
+const API_URL = API_CONFIGURED || Platform.OS !== 'web' ? API_BASE : '';
 export type OtpChannel = 'mobile' | 'web';
 
 async function request<T>(path: string, body: Record<string, string | undefined>): Promise<T> {
@@ -37,6 +38,19 @@ export function verifyOtpAccessToken(
   channel: OtpChannel = Platform.OS === 'web' ? 'web' : 'mobile'
 ) {
   return request<{ success: true; token: string; phone: string }>('/api/auth/verify-otp-token', { accessToken, channel, phone });
+}
+
+/** The OTP-verified customer token, or null when signed out. */
+export async function getAuthToken(): Promise<string | null> {
+  return Platform.OS === 'web'
+    ? AsyncStorage.getItem('paisa_mart_auth_token')
+    : SecureStore.getItemAsync('paisa_mart_auth_token');
+}
+
+/** Authorization header for customer-owned data (profile, KYC). */
+export async function customerAuthHeaders(): Promise<Record<string, string>> {
+  const token = await getAuthToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 export async function saveAuthToken(token: string) {

@@ -105,7 +105,10 @@ test('A-02: a widget reqId is bound to the phone it was sent to', async () => {
 });
 
 test('review account: no KYC, no payments, and only its own synthetic applications', async () => {
-  expect((await post(kycRouter, '/vimopay/start', { phoneNumber: REVIEW_PHONE })).status).toBe(403);
+  const reviewToken = (await (await post(authRouter, '/verify-otp', { phone: REVIEW_PHONE, otp: CODE })).json()).token;
+  expect((await post(kycRouter, '/vimopay/start', { phoneNumber: REVIEW_PHONE })).status).toBe(401);
+  const kyc = await kycRouter.request('/vimopay/start', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + reviewToken }, body: JSON.stringify({ phoneNumber: REVIEW_PHONE }) });
+  expect(kyc.status).toBe(403);
   expect((await post(paymentRouter, '/create', { custMobile: REVIEW_PHONE, amount: 10 })).status).toBe(403);
   const common = { cibil: '750', dateOfBirth: '01/01/1990', city: 'Hyderabad', state: 'Telangana', monthlyIncome: '50000', loanAmountRequired: '100000', existingEmi: '0', businessType: 'Retail', loanPurpose: 'Expansion' };
   await saveBusinessLoanLead({ ...common, fullName: 'Demo Applicant', phoneNumber: REVIEW_PHONE } as any);

@@ -3,6 +3,7 @@ import { createHmac, randomUUID, timingSafeEqual } from "node:crypto";
 import { Hono } from "hono";
 import { z } from "zod";
 import { getUserProfile, updateUserKycStatus } from "../lib/user-profile-store";
+import { customerPhone } from "../lib/customer-token";
 
 const kycRouter = new Hono();
 
@@ -261,24 +262,19 @@ function callbackHtml(title: string, message: string) {
 </html>`;
 }
 
-function updateSessionFromCallback(params: Record<string, unknown>) {
+/**
+ * Callbacks are untrusted input: anyone can call these URLs, and the signed `state` is visible to the
+ * customer's browser. A callback therefore never sets "verified" or "rejected" itself. It only identifies the
+ * session; the result is taken from VimoPay's status API (server-to-server, authenticated). Without a
+ * configured status API the session stays pending for staff review.
+ */
+async function updateSessionFromCallback(params: Record<string, unknown>, config: ReturnType<typeof getVimoPayKycConfig>) {
   const matched = findSessionFromCallback(params);
   if (!matched.session) return { ok: false as const, error: matched.error || "Unable to match VimoPay KYC session" };
   const session = matched.session;
-
-  const providerStatus = valueAt(params, ["kycStatus", "status", "txnStatusCode", "responseCode"]);
-  const status = statusFromProvider(providerStatus);
-  session.status = status;
-  session.raw = params;
   session.updatedAt = Date.now();
-
-  if (status === "verified") {
-    updateUserKycStatus(session.phoneNumber, "verified");
-  } else if (status === "failed") {
-    session.error = String(valueAt(params, ["error", "message", "responseMessage"]) || "VimoPay KYC failed");
-    updateUserKycStatus(session.phoneNumber, "rejected");
-  }
-
+  if (config?.statusUrl) await fetchVimoPayStatus(config, session);
+  else console.warn("VimoPay KYC callback received but no status API is configured; result left pending", { sessionId: session.id });
   return { ok: true as const, session };
 }
 
@@ -286,6 +282,9 @@ kycRouter.post("/vimopay/start", async (c) => {
   cleanupSessions();
   const parsed = startSchema.safeParse(await c.req.json().catch(() => null));
   if (!parsed.success) return c.json({ success: false, error: "Invalid phone number" }, 400);
+  const tokenPhone = customerPhone(c.req.header("authorization"));
+  if (!tokenPhone) return c.json({ success: false, error: "Please sign in again to continue." }, 401);
+  if (tokenPhone !== parsed.data.phoneNumber) return c.json({ success: false, error: "You can only start KYC for your own number." }, 403);
   if (isReviewPhone(parsed.data.phoneNumber)) return c.json({ success: false, error: REVIEW_ACCOUNT_REFUSAL }, 403);
 
   const profile = getUserProfile(parsed.data.phoneNumber);
@@ -341,8 +340,10 @@ kycRouter.post("/vimopay/start", async (c) => {
 
 kycRouter.get("/vimopay/status/:sessionId", async (c) => {
   cleanupSessions();
+  const tokenPhone = customerPhone(c.req.header("authorization"));
+  if (!tokenPhone) return c.json({ success: false, error: "Please sign in again to continue." }, 401);
   const session = sessions.get(c.req.param("sessionId"));
-  if (!session) return c.json({ success: false, error: "KYC session expired" }, 404);
+  if (!session || session.phoneNumber !== tokenPhone) return c.json({ success: false, error: "KYC session expired" }, 404);
 
   const config = getVimoPayKycConfig(c);
   if (config) await fetchVimoPayStatus(config, session);
@@ -358,8 +359,8 @@ kycRouter.get("/vimopay/status/:sessionId", async (c) => {
   });
 });
 
-kycRouter.get("/vimopay/callback", (c) => {
-  const result = updateSessionFromCallback(Object.fromEntries(new URL(c.req.url).searchParams.entries()));
+kycRouter.get("/vimopay/callback", async (c) => {
+  const result = await updateSessionFromCallback(Object.fromEntries(new URL(c.req.url).searchParams.entries()), getVimoPayKycConfig(c));
   if (!result.ok) return c.html(callbackHtml("KYC failed", `${result.error}. Please return to Paisa Mart and try again.`), 400);
 
   if (result.session.status === "verified") {
@@ -375,7 +376,7 @@ kycRouter.get("/vimopay/callback", (c) => {
 
 kycRouter.post("/vimopay/callback", async (c) => {
   const body = await c.req.json().catch(() => ({})) as Record<string, unknown>;
-  const result = updateSessionFromCallback(body);
+  const result = await updateSessionFromCallback(body, getVimoPayKycConfig(c));
   if (!result.ok) return c.json({ success: false, error: result.error }, 400);
   return c.json({ success: true, status: result.session.status });
 });

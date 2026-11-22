@@ -48,6 +48,8 @@ step "API URL for this build: ${EXPO_PUBLIC_API_URL:-<default https://paisa-mart
 if [ -n "${EXPO_PUBLIC_API_URL:-}" ]; then
   # Test builds: every client base URL must point at the test backend (never production).
   export EXPO_PUBLIC_BACKEND_URL="$EXPO_PUBLIC_API_URL" EXPO_PUBLIC_VIBECODE_BACKEND_URL="$EXPO_PUBLIC_API_URL"
+  # Runtime guard (mobile/src/lib/api-base.ts): a test build that would resolve to production refuses to start.
+  export EXPO_PUBLIC_TEST_ENV=1
 fi
 if [ -n "${CLEARTEXT_LOCAL:-}" ]; then
   # Screenshot/test variant only: allow HTTP to the local isolated backend via adb reverse.
@@ -65,3 +67,18 @@ tail -25 "$BASE/gradle.log"
 [ $rc -eq 0 ] || { echo "GRADLE FAILED rc=$rc (full log: $BASE/gradle.log)"; exit $rc; }
 ls -la app/build/outputs/apk/release/
 sha256sum app/build/outputs/apk/release/*.apk
+
+step "bundle isolation check"
+python3 - app/build/outputs/apk/release/app-release.apk "${EXPO_PUBLIC_API_URL:-}" <<'PY'
+import sys, zipfile
+apk, test_url = sys.argv[1], sys.argv[2]
+js = zipfile.ZipFile(apk).read("assets/index.android.bundle").decode("utf-8", "replace")
+prod = js.count("https://paisa-mart.com")
+assert "refusing to start" in js, "api-base guard missing from bundle"
+if test_url:
+    assert test_url in js, "test API URL not compiled into the bundle"
+    print(f"test build OK: test URL present, production origin occurrences={prod} (guarded default only)")
+else:
+    print(f"production candidate: production origin occurrences={prod}")
+assert prod <= 1, f"production origin appears {prod} times; expected only the api-base default"
+PY

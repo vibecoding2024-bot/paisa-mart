@@ -1,7 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { randomUUID } from 'expo-crypto';
 import type { PersonalLoanData } from './personal-loan-store';
-const BACKEND_URL = process.env.EXPO_PUBLIC_API_URL || process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL || 'https://paisa-mart.com';
+import { API_BASE } from './api-base';
+const BACKEND_URL = API_BASE;
 const URL = `${BACKEND_URL.replace(/\/$/, '')}/api/personal-loans/applications`;
 const PENDING_KEY = 'personal-loan-pending-request';
 export type PersonalLoanReceipt = { id: string; referenceNumber: string; status: string; createdAt: string; requestKey: string };

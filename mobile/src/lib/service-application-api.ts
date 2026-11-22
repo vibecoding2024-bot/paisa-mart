@@ -1,6 +1,6 @@
 export type ServiceProduct = 'credit-cards' | 'bank-accounts' | 'insta-loans' | 'health-insurance' | 'motor-insurance';
 export type SavedServiceReceipt = { id: string; referenceNumber: string; createdAt: string };
-const BACKEND_URL = process.env.EXPO_PUBLIC_BACKEND_URL || process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL || process.env.EXPO_PUBLIC_API_URL || 'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 export class ServiceSubmissionError extends Error { constructor(message: string, public status: number) { super(message); } }
 async function receipt(response: Response): Promise<SavedServiceReceipt> {
   const body = await response.json().catch(() => null);
@@ -21,3 +21,4 @@ export async function verifyServiceReceipt(product: ServiceProduct, id: string) 
   return receipt(await fetch(`${BACKEND_URL.replace(/\/$/, '')}/api/services/${product}/receipts/${encodeURIComponent(id)}`, { headers: { Authorization: `Bearer ${key}` } }));
 }
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_BASE } from './api-base';

@@ -1,6 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { HomeLoanStage } from './home-loan-stages';
-const base = (process.env.EXPO_PUBLIC_API_URL || 'https://paisa-mart.com').replace(/\/$/, '');
+import { API_BASE } from './api-base';
+const base = API_BASE;
 export async function adminLogin(email: string, password: string) {
   const response = await fetch(base + '/api/admin/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
   const body = await response.json();
