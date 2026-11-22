@@ -13,11 +13,8 @@ import { useRouter } from "expo-router";
 import {
   ArrowUpRight,
   Landmark,
-  CreditCard,
   ShieldCheck,
   Headphones,
-  Check,
-  Sparkles,
 } from "lucide-react-native";
 import PressableScale from "@/components/PressableScale";
 import {
@@ -230,7 +227,7 @@ export default function LoginScreen() {
                     letterSpacing: 2,
                   }}
                 >
-                  YOUR NEXT CHAPTER
+                  FINANCIAL PRODUCTS, MADE SIMPLE
                 </Text>
               </View>
               <Text
@@ -244,7 +241,7 @@ export default function LoginScreen() {
                   marginTop: 14,
                 }}
               >
-                Big ambitions.{"\n"}
+                Explore products.{"\n"}
                 <Text
                   style={{
                     color: palette.mint,
@@ -254,7 +251,7 @@ export default function LoginScreen() {
                     letterSpacing: -1.5,
                   }}
                 >
-                  Brighter beginnings.
+                  Track your applications.
                 </Text>
               </Text>
               <Text
@@ -266,8 +263,8 @@ export default function LoginScreen() {
                   maxWidth: 340,
                 }}
               >
-                Discover loans, cards, bank accounts and insurance from partner
-                banks and insurers with Paisa Mart.
+                Browse financial products, submit applications and check their
+                status in one place.
               </Text>
               {wide && (
                 <View style={{ marginTop: 40, gap: 12 }}>
@@ -296,27 +293,14 @@ export default function LoginScreen() {
                           fontSize: 15,
                         }}
                       >
-                        More possibilities, one place.
+                        Find what you need
                       </Text>
                       <Text
                         style={{ color: "#C6DAE7", fontSize: 12, marginTop: 5 }}
                       >
-                        Banking · Credit cards · Loans · Insurance
+                        Bank accounts · Credit cards · Loans · Insurance
                       </Text>
                     </View>
-                  </View>
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 7,
-                      padding: 6,
-                    }}
-                  >
-                    <Check size={15} color={palette.mint} />
-                    <Text style={{ color: "#C6DAE7", fontSize: 12 }}>
-                      Product discovery to application, made simpler.
-                    </Text>
                   </View>
                 </View>
               )}
@@ -366,7 +350,7 @@ export default function LoginScreen() {
                   marginBottom: 28,
                 }}
               >
-                A world of opportunities starts with your mobile number.
+                Sign in to apply and track your applications.
               </Text>
               <Text
                 style={{ fontSize: 12, fontWeight: "700", marginBottom: 10 }}
@@ -497,60 +481,12 @@ export default function LoginScreen() {
               </Text>
               <View
                 style={{
+                  flexDirection: "row",
+                  justifyContent: "space-between",
                   borderTopWidth: 1,
                   borderColor: palette.line,
                   marginTop: 28,
-                  paddingTop: 23,
-                  gap: 15,
-                }}
-              >
-                {[
-                  {
-                    icon: CreditCard,
-                    title: "Discover",
-                    caption: "Explore products for every customer.",
-                  },
-                  {
-                    icon: Sparkles,
-                    title: "Grow",
-                    caption: "Learn, share, and build your business.",
-                  },
-                ].map((item) => (
-                  <View
-                    key={item.title}
-                    style={{
-                      flexDirection: "row",
-                      gap: 12,
-                      alignItems: "center",
-                    }}
-                  >
-                    <IconBadge
-                      icon={item.icon}
-                      size={37}
-                      background="#F0F5FB"
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 12, fontWeight: "700" }}>
-                        {item.title}
-                      </Text>
-                      <Text
-                        style={{
-                          fontSize: 11,
-                          color: palette.muted,
-                          marginTop: 3,
-                        }}
-                      >
-                        {item.caption}
-                      </Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "space-between",
-                  marginTop: 25,
+                  paddingTop: 12,
                 }}
               >
                 <PressableScale
