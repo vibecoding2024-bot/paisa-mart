@@ -8,6 +8,22 @@ import { acknowledgeGatewayCallback } from "../lib/gateway-callback";
 
 export const paymentRouter = new Hono();
 
+/**
+ * Payments are PAUSED (owner decision): there is no authenticated payment reconciliation yet (A-04), so every payment
+ * route is refused on the server unless PAYMENTS_ENABLED=true is set explicitly. No call reaches VimoPay while paused.
+ * VimoPay configuration is untouched. Gateway callbacks are still acknowledged (never applied, A-03), so a stray
+ * callback is not retried endlessly.
+ */
+export function paymentsEnabled(): boolean {
+  return process.env.PAYMENTS_ENABLED === "true";
+}
+export const PAYMENTS_PAUSED = "Payments are currently unavailable.";
+paymentRouter.use("*", async (c, next) => {
+  if (paymentsEnabled() || /\/vimopay-callback$/.test(new URL(c.req.url).pathname)) return next();
+  c.header("Cache-Control", "no-store");
+  return c.json({ success: false, paymentsPaused: true, error: PAYMENTS_PAUSED }, 503);
+});
+
 // hosted checkout/initiation page
 paymentRouter.get("/checkout", (c) => {
   c.header("Content-Security-Policy", CHECKOUT_CSP);

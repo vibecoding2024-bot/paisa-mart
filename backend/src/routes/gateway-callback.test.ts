@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 // A-03 regression: drives the real app (index.ts) so route ORDER is tested, not just the handler.
 for (const key of ['DATABASE_URL', 'POSTGRES_URL', 'VIMOPAY_KYC_START_URL', 'VIMOPAY_KYC_STATUS_URL', 'VIMOPAY_KYC_URL_TEMPLATE']) delete process.env[key];
+process.env.PAYMENTS_ENABLED = 'true'; // these tests exercise the payment routes themselves (paused by default)
 process.env.LEADS_DB = process.env.TXN_DB = process.env.USER_DB = join(mkdtempSync(join(tmpdir(), 'gateway-callback-')), 'db.sqlite');
 process.env.AUTH_TOKEN_SECRET = 'test-customer-secret';
 process.env.HOME_LOAN_ADMIN_TOKEN_SECRET = 'test-admin-secret';

@@ -13,6 +13,7 @@ import { Hono } from 'hono';
  * Skipped (with a message) only when no Chrome/Edge binary is available; set CHROME_PATH to choose one.
  */
 for (const key of ['DATABASE_URL', 'POSTGRES_URL', 'VIMOPAY_PAYMENT_URL_HOSTS', 'VIMOPAY_BASE_URL']) delete process.env[key];
+process.env.PAYMENTS_ENABLED = 'true'; // these tests exercise the payment routes themselves (paused by default)
 process.env.TXN_DB = join(mkdtempSync(join(tmpdir(), 'checkout-browser-')), 'db.sqlite');
 const { paymentRouter } = await import('./payment');
 const { savePending } = await import('../lib/txn-store');

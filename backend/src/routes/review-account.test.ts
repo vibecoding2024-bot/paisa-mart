@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import { randomBytes } from 'node:crypto';
 for (const key of ['DATABASE_URL', 'POSTGRES_URL', 'HOME_LOANS_DATABASE_URL', 'PERSONAL_LOANS_DATABASE_URL', 'BUSINESS_LOANS_DATABASE_URL', 'VEHICLE_LOANS_DATABASE_URL', 'ALLOW_DEV_OTP']) delete process.env[key];
 for (const key of Object.keys(process.env)) if (key.startsWith('MSG91_') || key.startsWith('EXPO_PUBLIC_MSG91')) delete process.env[key];
+process.env.PAYMENTS_ENABLED = 'true'; // these tests exercise the payment routes themselves (paused by default)
 process.env.LEADS_DB = process.env.TXN_DB = join(mkdtempSync(join(tmpdir(), 'review-test-')), 'db.sqlite');
 process.env.AUTH_TOKEN_SECRET = 'test-customer-secret';
 process.env.HOME_LOAN_ADMIN_TOKEN_SECRET = 'test-admin-secret';
