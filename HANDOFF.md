@@ -96,7 +96,17 @@
 - **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root). Also run `node scripts/check-api-isolation.mjs`.
 
 ## Exact next action
-The owner runs the Desktop file in EC2 Instance Connect and returns the masked `plan` output for fingerprint review. Nothing else proceeds until that is authorized.
+- **The EC2 read-only `plan` passed** (owner, 22 Nov).
+- **The owner approved deleting only the four incident profiles,** guarded by these fingerprints, in plan order (01, 03, 02, 99): `d83914834dbd120f00e5, 32258238dc8d19e72ab3, 5db9ffcb75c137d9d2c4, 77dbce08a355552f92ef`.
+- **APPLY paste file:** `C:\Users\Swetha Anusha\Desktop\paisa-mart-incident-cleanup-APPLY.txt`.
+  - It runs the same reviewed script (SHA-256 `46ddc713…f089`), checksum-verified, using its own CLI: `apply <n1..n4> --expect <fps> --confirm DELETE-4-INCIDENT-PROFILES`.
+  - All checks stay enabled.
+- **Tested on the WSL replica:**
+  - the real file STOPs there, because the fingerprints differ, and nothing is deleted;
+  - an identical file with the replica's fingerprints deletes exactly 4 rows, keeps the preserved backup unchanged, leaves no temp file, and leaks nothing.
+- **Not executed by the agent.** The owner runs it, then returns the output, which includes the `incident-cleanup-*` row-backup folder needed for any rollback.
+- Keep that folder and `LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- Then record the result in the incident file.
 
 ---
 
