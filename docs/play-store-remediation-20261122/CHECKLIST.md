@@ -1,6 +1,6 @@
 # Google Play rejection (version code 7, 21 Nov 2026) — remediation checklist
 
-Final tested runtime code: backend `2616f1c`, mobile `28651cc`. Final APKs: candidate `1fac0b9d…c761` and test variant `97d9d5e3…6431`, both debug-signed and for local testing only. Rows below that cite earlier commits are historical evidence.
+**PAUSED.** Final tested runtime code: `e61fa03` (backend and mobile). Final APKs: candidate `3b7fd209…f842` and test variant `5d4595f4…e52b`, both debug-signed and for local testing only. The A-01 fix and test isolation are in place; see HANDOFF. Rows below that cite earlier commits are historical evidence.
 
 Branch `fix/play-store-remediation-20261122` (base `origin/main` `595e521`). Local commits only: nothing pushed,
 uploaded, submitted, merged or deployed. No AWS or production access.
@@ -77,7 +77,7 @@ own `Stop-Process -Force` on port 3901 (04:57:40Z → 04:57:44Z; 05:47:54Z → 0
 4. Ownership model (A-08): partners cannot track leads they file for clients. The listing doesn't claim it. Owner decision needed.
 5. Commission and rate-card figures (Products, Payout Structure): owner must confirm.
 6. A-02 is closed in code (`2616f1c`): `verify-otp-token` is bound to the MSG91-verified phone, with no fallback. It is not deployed.
-8. A-01 (Critical, pre-existing): `/api/users/*` is unauthenticated; separate PR (app sends the token first, then the backend enforces).
+8. A-01 is fixed locally (`e61fa03`): profile access requires the customer token and matching ownership, and customers can't set KYC status. Rollout: web first, then backend (HANDOFF).
 9. INCIDENT: earlier test builds wrote 4 synthetic profiles to production (see HANDOFF). Fixed in `28651cc`; cleanup needs the owner's decision.
 7. In-app logo (green/blue "p") differs from the orange "P" launcher icon: a brand consistency item.
 

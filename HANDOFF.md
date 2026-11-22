@@ -1,81 +1,106 @@
 # HANDOFF — Google Play remediation (22 Nov 2026) — CURRENT STATE
 
-Worktree `.play-remediation`, branch `fix/play-store-remediation-20261122` (base `origin/main` `595e521`). Local commits only:
-no push, PR, merge, deploy, AWS change, Play upload or submission.
-- PR description, ready to paste: [docs/play-store-remediation-20261122/PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
-- Full status: [CHECKLIST.md](docs/play-store-remediation-20261122/CHECKLIST.md).
-- Reviewer access, isolation and production steps: [REVIEWER_ACCESS_DESIGN.md](docs/play-store-remediation-20261122/REVIEWER_ACCESS_DESIGN.md).
+**Play submission and production deployment are PAUSED** (owner instruction). Branch `fix/play-store-remediation-20261122`,
+worktree `.play-remediation`, base `origin/main` `595e521`. Local commits only: no push, PR, merge, deploy, AWS change,
+production command, Play upload or reviewer-phone selection.
+- Earlier HEAD `09ffbdc` is preserved in history.
+- PR description: [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
+- Incident: [INCIDENT_2026-11-22_test-profiles-in-production.md](docs/play-store-remediation-20261122/INCIDENT_2026-11-22_test-profiles-in-production.md).
 
-## Tested commits
+## Tested commits (final)
 
-| Code | Commit | Tests |
+| Code | Commit | Evidence |
 |---|---|---|
-| Backend runtime | `2616f1c` (unchanged through HEAD) | `bun test`, each of 11 files separately: **65 pass / 0 fail**. No tsc errors in changed files. Live local API: payout dual approval 200; review-record payout 403; review code with other phones 401. |
-| Mobile runtime | `28651cc` (unchanged through HEAD; later commits are docs only) | `tsc` 0 errors. WSL release builds: test variant `97d9d5e3…6431` (local API), candidate `1fac0b9d…c761` (production API, debug-signed, launches to the login screen, versionCode 8). |
-| Device run on the `28651cc` test variant | Emulator, DNS blocked (production unresolvable), local backend `2616f1c`, synthetic data | <ul><li>Fresh account 9000000004: profile saved to the **local** backend; ₹0.00.</li><li>"Explore products"; new Support FAQs; About Us copy.</li><li>Review account: only its 2 TEST records; ₹0.00 even though its BL is Disbursed.</li><li>Synthetic 9000000002: ₹1,500.00 and both applications.</li><li>Admin HL stage change → "Underwriting" shown in the app.</li></ul> |
+| Backend runtime | `e61fa03` | `bun test`, every file run separately: **101 pass / 0 fail across 21 files** (12 backend, 9 repo-root). No tsc errors in changed files. Live local API: unauthenticated profile GET/POST/list/KYC-PATCH all return 401. |
+| Mobile runtime | `e61fa03` | `tsc` 0 errors. `node scripts/check-api-isolation.mjs` passes. WSL release builds pass the bundle isolation check: test variant `5d4595f4…e52b` (local API, `EXPO_PUBLIC_TEST_ENV=1`), candidate `3b7fd209…f842` (production API, debug-signed, versionCode 8, launches to the login screen). |
+| Device run on the `e61fa03` test variant | Emulator with production DNS blocked (`ping paisa-mart.com` gives "unknown host"), local backend `e61fa03` | <ul><li>Fresh account: profile GET 404 → POST 200 → GET 200, with the token, all local.</li><li>Synthetic account: profile loaded with the token; ₹1,500.00; both applications.</li><li>Review account: only its own records; ₹0.00.</li><li>Admin HL stage change → "Sanctioned" shown in the app.</li></ul> |
 
 ## Done this round
-1. **Web OTP (A-02) closed across all login paths:**
-   - `verify-otp-token` requires the phone and issues a token only for the MSG91-verified number. There is no client-phone fallback and no raw provider data in the response.
-   - The widget `reqId` is bound to the phone (earlier); template mode is provider-bound; dev OTP is off unless `ALLOW_DEV_OTP=true`.
-   - Normal login (`send-otp` → `verify-otp`, used by web and Android) is unchanged.
-2. **Review isolation reviewed:**
-   - Restrictions are enforced by the server.
-   - Tokens are capped at the window and revoked when it's disabled or expired.
-   - Rate limits and lockout apply.
-   - A test proves no code, token or full phone appears in logs.
-   - There are no provider calls for the review account.
-   - "Keeping access valid during Google review" is documented.
-3. **Claims:**
-   - Removed "earning journey", "Explore & earn", the About Us earning and "Instant Payouts" claims, and the wallet FAQs.
-   - Ownership rules and commission rates are unchanged.
-4. **Test builds no longer reach production:** the profile and KYC clients now honour `EXPO_PUBLIC_API_URL`, and the build script points every base URL at the test backend.
+1. **Incident assessment (read-only, local evidence only):** see the incident file. Request windows, fields, confirmed vs assumed, and production read-only confirmation queries (not run).
+2. **A-01 fixed locally (release blocker):**
+   - `/api/users/profile` GET/POST need the customer token, and the token phone must match (other phones get 403). `kycStatus` in a body is ignored.
+   - `PATCH …/kyc` is admin/ops only. `GET /profiles` is admin only, with a bounded limit.
+   - KYC start and status need the owning customer.
+   - KYC callbacks never set verified/rejected; only VimoPay's authenticated status API can.
+   - App: the profile and KYC clients send the token; the phone field is locked to the verified number; the unused client KYC setter is removed.
+   - Tests: `users-auth.test.ts`.
+3. **Test isolation by default:**
+   - A `bun test` preload (repo root and backend) blocks non-loopback requests unless `ALLOW_TEST_NETWORK=1`, and points client URLs at a dead loopback.
+   - All app clients use `lib/api-base.ts`; a build with `EXPO_PUBLIC_TEST_ENV=1` refuses to start if it would use production.
+   - `scripts/check-api-isolation.mjs` (plus a test) is the regression check for production fallbacks, absolute fetch URLs and WebView URLs.
+   - The build script sets `EXPO_PUBLIC_TEST_ENV=1` and checks the APK bundle.
+   - Inventory: 15 clients route through api-base; there is no WebView; the only links are `tel:`, `mailto:`, support links and the backend-supplied KYC URL.
+   - Recommended emulator setting: `-dns-server 127.0.0.1`.
+4. **The RBI/IRDAI compliance claim was removed** (About Us now says products are provided by partners under their own terms).
+5. **Fixed** `scripts/payout-guard.test.ts`. It had been failing since `d7c8a33` because it relied on generated mock data; it now seeds explicit fixtures. Earlier rounds did not run the repo-root tests, so this regression went unnoticed.
 
-## INCIDENT: synthetic test data written to PRODUCTION (needs owner decision)
-- **Cause:** test-variant builds set only `EXPO_PUBLIC_API_URL`. `user-profile-api.ts` and `kyc-api.ts` read only `EXPO_PUBLIC_BACKEND_URL`, which defaults to `https://paisa-mart.com`. Fixed in `28651cc`.
-- **What reached production:** `GET` and `POST /api/users/profile` for synthetic numbers only (fictional names, `@example.test` emails, pincode 500001, DOB 05/01/2004, no PAN):
-  - **9000000001** "Asha Test" (previous session);
-  - **9000000002** "Ravi Synthetic";
-  - **9000000003** "Meera Fresh";
-  - **9000000099** "Demo Reviewer".
-- Profile reads returned only those numbers' own records. No KYC call was made, and no applications or payouts went to production (the local logs show them).
-- **Not cleaned up:** deleting or changing production data needs explicit authorization. The number 9000000099 is also the local review phone. Choose a different production review phone, or decide whether to keep or remove its profile.
+## INCIDENT (summary — details in the incident file)
+- Four synthetic profiles were written to the **production** profile API by local test builds (`4d0557e`, `d7c8a33`, `6d3a072`, `fcebb6b`) on 22 Nov, between 05:26 and 10:40 UTC. The numbers are masked in the incident file.
+- No local `/api/users` traffic came from those builds; the app reported success, so a server accepted the saves.
+- No applications, OTP, KYC or payouts went to production.
+- Whether any record existed beforehand is **unconfirmed**. It requires the read-only production queries in the incident file.
+- **Do not delete, overwrite or repurpose these profiles**, and do not use any of these numbers as the production review phone.
+
+## Recovery proposal (for review AFTER the read-only assessment is confirmed; nothing executed)
+1. **Confirm read-only** (incident file, steps 1–5):
+   - `createdAt` and `updatedAt` per number, from the live database and from the newest backup before 22 Nov 05:22 UTC;
+   - counts of linked leads, applications and transactions;
+   - PM2 log lines.
+2. **Decide per number:**
+   - **A — created by the incident** (`createdAt` inside its request window, absent from the pre-incident backup, no linked records): proposal is a targeted delete of that row only.
+   - **B — existed before and was overwritten:** proposal is a targeted restore of the overwritten columns (name, email, occupation, qualification, annualIncome, pincode, panCard, cibilScore, dateOfBirth, updatedAt) from the pre-incident backup row. Keep `kycStatus` and `createdAt`.
+   - **C — linked records exist, or the number belongs to a real customer:** stop and escalate to the owner. No automatic change.
+3. **Backup before any write:**
+   - Make an online SQLite backup of the live database using the backup API, as `backend-update.py` already does (or `sqlite3 <db> ".backup '<backups>/incident-20261122-before-recovery.sqlite'"`), mode 0700.
+   - Run `PRAGMA integrity_check` and record the `user_profiles` row count and the SHA-256.
+4. **Execute** (separately authorized, in a short window):
+   - `ATTACH` the pre-incident backup read-only.
+   - In one transaction, apply only the A/B statements for the confirmed numbers, with `WHERE phoneNumber=? AND updatedAt=<value seen in step 1>`, so the statement does nothing if anything changed in between.
+   - Check affected-row counts; roll back on any mismatch.
+   - No backend restart is needed.
+5. **Rollback:** restore those exact rows from the step-3 backup (`INSERT OR REPLACE … SELECT … FROM backup.user_profiles WHERE phoneNumber IN (…)`). Never restore the whole database, which would discard newer customer data.
+6. **Verify:** read-only re-query (masked columns), then `verify.py`.
+
+## A-01 compatible rollout plan (web first, then backend; each step separately authorized)
+1. **Merge** after review and owner approval.
+2. **Web first:** build a new web release from merged main (`deployment/requirements/prepare_release.py`) and deploy it with the guarded frontend workflow (`deploy.py <release>`, after `verify.py`).
+   - The new web client sends the customer token; the current backend ignores the header, so it works with the old backend.
+   - Verify sign-in, profile load and save in the real UI.
+3. **Backend second:** `backend-update.py verify`, then `update --execute`. This enforces A-01 and adds the review-account, A-02 and A-06 changes. Check the MSG91 variable names first, and do not set `ALLOW_DEV_OTP`.
+4. **Android:** a new signed build (upload certificate verified; versionCode confirmed) sends the token and works with old and new backends.
+   - Older installs (if any were distributed; check Play Console) will get 401 on profile calls after step 3 and must update.
+   - Monitor 401 counts on `/api/users` in the logs.
+5. **Session expiry:** tokens last 7 days. After expiry, profile calls return 401 and the app asks the user to sign in again when saving. Follow-up: route any 401 straight to sign-in.
+6. **Rollback:**
+   - backend: `backend-update.py rollback --execute`;
+   - web: the guarded frontend rollback to the previous release.
+   - The new web client stays compatible with the rolled-back backend.
 
 ## Remaining findings
-- **A-01 (Critical, pre-existing):** `/api/users/*` has no authentication (read or overwrite any profile; set KYC verified).
-  - Order of fix: release app and web builds that send the customer token, then enforce in `users.ts`. Separate PR.
-- **Owner decisions:**
-  - A-08 ownership model;
+- **A-03 (pre-existing, Critical/High):** the `index.ts` catch-all intercepts **every** path containing "callback". It rewrites `txns` from unauthenticated input, logs full callback bodies, and hides the KYC callback routes. That's why the KYC callback hardening only takes effect once A-03 is fixed. Separate change.
+- **Unresolved, owner decisions:**
   - commission and rate-card figures (Products "Earn up to ₹…", Payout Structure);
-  - About Us "Fully compliant with RBI and IRDAI guidelines";
-  - lender list;
-  - privacy URL.
+  - lender list (Financial features declaration);
+  - privacy-policy URL;
+  - A-08 ownership model (unchanged);
+  - "Pan India Reach" marketing copy (not verified).
 - **Signing and versioning:** the upload certificate is unverified; versionCode 8 is provisional; the source of versionCode 7 is unknown.
-
-## Backend deployment requirements (each separately authorized)
-1. **Merge:** PR review, CI and owner approval.
-2. **Read-only check:** on EC2, confirm the MSG91 variables are present (names only). With A-06, a missing provider makes `send-otp` return 503 instead of handing out a dev OTP. Never set `ALLOW_DEV_OTP` in production.
-3. **Release:** follow the guarded `deployment/requirements` workflow:
-   - `backend-update.py verify`;
-   - `verify.py`;
-   - `backend-update.py update --execute`, which backs up the source, `.env` and SQLite, rehearses migrations, and restarts PM2.
-
-   No schema migration is added by this branch.
-4. **Review account:** in the same restart window, add `REVIEW_ACCOUNT_ENABLED`, `_PHONE`, `_HMAC_KEY`, `_CODE_HASH` and `_EXPIRES_AT` (expiry 90 days or more) to the protected `.env`.
-5. **Synthetic records:** seed them through the app as the review phone (a production data change; needs approval). Verify on a production-pointed signed build, then enter the credentials in Play Console only.
-6. **Rollback:** `backend-update.py rollback --execute`.
-7. **Frontend:** no web release is needed for these backend changes.
+- **Reviewer phone:** not selected (paused). It must not be any incident number.
 
 ## How to resume (environment outside Git)
-- **WSL builds:** run from PowerShell with `wsl -d Ubuntu-22.04 -- [env EXPO_PUBLIC_API_URL=http://127.0.0.1:3901 CLEARTEXT_LOCAL=1] bash <wsl-build.sh>`. The script copy is in `docs/...`. Each build takes about 7 minutes.
-- **Emulator:** AVD `pm_review` (scratchpad `avd`). **Start it with `-dns-server 127.0.0.1`** so test builds cannot reach production. Then run `adb reverse tcp:3901 tcp:3901`.
-- **Local backend:** Bun at `.build-tools/bun-runtime`, `PORT=3901`, a scratch SQLite and random secrets. For local testing only, set `ALLOW_DEV_OTP=true` and the `REVIEW_ACCOUNT_*` variables (locally generated; never commit them).
-- **Tests:** `bun test <file>`, one file at a time.
+- **Builds:** from PowerShell, run `wsl -d Ubuntu-22.04 -- [env EXPO_PUBLIC_API_URL=http://127.0.0.1:3901 CLEARTEXT_LOCAL=1] bash <docs/.../wsl-build.sh>`.
+  - The test variant sets `EXPO_PUBLIC_TEST_ENV=1` and runs the bundle check automatically.
+- **Emulator:** AVD `pm_review` with **`-dns-server 127.0.0.1`**, then `adb reverse tcp:3901 tcp:3901`.
+- **Local backend:**
+  - Bun at `.build-tools/bun-runtime`, `PORT=3901`, a scratch SQLite and random secrets;
+  - `ALLOW_DEV_OTP=true` locally only;
+  - local `REVIEW_ACCOUNT_*` values are never committed.
+- **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root); the network guard loads automatically. Also run `node scripts/check-api-isolation.mjs`.
 
 ## Exact next action
-1. The owner decides on the production synthetic profiles (keep or remove) and the review phone number.
-2. With explicit authorization, push the branch and open the PR using `PR_DESCRIPTION.md`.
-3. Then, separately: run the backend release per the requirements above, verify the upload certificate, and build the signed AAB.
+1. With authorization, run the **read-only** production confirmation steps in the incident file and record the masked results.
+2. Owner reviews the recovery proposal per number.
+3. Then, separately authorized: push and PR; the web-first rollout above; Android signing; reviewer-phone selection.
 
 ---
 

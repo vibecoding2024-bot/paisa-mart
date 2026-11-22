@@ -1,4 +1,6 @@
-# Google Play remediation: honest financial UI, guarded review account, OTP binding, launcher icon
+# Google Play remediation: honest financial UI, private profiles (A-01), guarded review account, OTP binding, test isolation, launcher icon
+
+> **Status: submission and production deployment are paused.** An incident (synthetic test profiles written to production by local test builds) is under read-only assessment; see `docs/play-store-remediation-20261122/INCIDENT_2026-11-22_test-profiles-in-production.md`.
 
 Branch `fix/play-store-remediation-20261122` → `main` (base `595e521`). **Do not merge or deploy without explicit owner approval.**
 Merging does not release anything: the backend and the Android build each need their own authorized release.
@@ -48,6 +50,19 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
   - `verify-otp-token` requires the phone and issues a token only for the number MSG91 verified. There is no client-phone fallback, and raw provider data is not returned.
 - **A-06:** the dev OTP requires `ALLOW_DEV_OTP=true`. Without a provider, `send-otp` fails closed (503). OTPs come from a CSPRNG.
 
+**Private profile data (A-01, release blocker)**
+- `/api/users/profile` GET/POST require the customer token, and the token phone must match. Other phones get 403. A client-sent `kycStatus` is ignored.
+- `PATCH /api/users/profile/:phone/kyc` is admin/ops only. `GET /api/users/profiles` is admin only, with a bounded limit.
+- KYC start and status require the owning customer.
+- KYC callbacks never mark verified/rejected; only VimoPay's authenticated status API can. This takes effect once A-03's callback catch-all is fixed.
+- The app sends the customer token on profile and KYC calls, and the phone field is locked to the verified number.
+
+**Test isolation**
+- Every app client resolves its backend through `mobile/src/lib/api-base.ts`. A build with `EXPO_PUBLIC_TEST_ENV=1` refuses to start if it would use production.
+- A `bun test` preload blocks non-loopback network access unless `ALLOW_TEST_NETWORK=1`.
+- `scripts/check-api-isolation.mjs` (plus `api-isolation.test.ts`) fails on production fallbacks, absolute fetch URLs and WebView URLs. The build script verifies the APK bundle.
+- About Us: the unsupported "Fully compliant with RBI and IRDAI guidelines" claim is removed.
+
 **Docs:** `docs/play-store-remediation-20261122/`:
 - store listing (audience: customers and partners);
 - App access template;
@@ -65,46 +80,43 @@ Audit A-07 also found fabricated money and status shown to customers. A misleadi
 
 ## Tests
 
-- **Backend:** `bun test` on each of the 11 files separately: 65 pass, 0 fail at `2616f1c`. There are no type errors in changed files; the pre-existing tsc errors are elsewhere.
-- **Mobile:** `tsc --noEmit` reports 0 errors.
-- **Android (emulator, WSL release build, debug-signed, against an isolated local backend with synthetic data):**
-  - a fresh account shows ₹0.00 and empty states;
-  - a synthetic account with records shows its approved ₹1,500.00 and both applications;
-  - an admin stage change appeared in the app;
-  - the review account sees only its own TEST records; its payouts are refused (403); its code is refused for other phones (401).
-- Final runtime code was tested:
-  - backend `2616f1c`;
-  - mobile `28651cc` (the WSL test variant on the emulator with production DNS blocked).
-  - Results: profile saves went to the local backend; the fresh, synthetic and review accounts behaved as expected; an admin stage change showed in the app; the candidate launches to the login screen.
-- Test builds had written synthetic profiles to production. The cause is fixed in `28651cc`. Details and the cleanup decision: HANDOFF "INCIDENT".
+- `bun test`, every file run separately: **101 pass / 0 fail across 21 files** (12 backend, 9 repo-root), at `e61fa03`.
+  - New tests: `users-auth.test.ts`, `api-isolation.test.ts`, plus `review-account.test.ts` additions.
+  - `payout-guard.test.ts` was fixed: it had been failing since `d7c8a33` because it relied on the removed mock data.
+- No type errors in changed backend files; mobile `tsc --noEmit` reports 0 errors.
+- `node scripts/check-api-isolation.mjs` passes.
+- Android, on WSL release builds of `e61fa03`:
+  - Test variant: emulator with production DNS blocked, against a local backend. Authenticated profile GET 404 → POST 200 → GET 200; synthetic account ₹1,500.00 with both applications; review account sees only its own records; an admin stage change showed in the app.
+  - Candidate: launches to the login screen.
+- Live local API: unauthenticated profile read, write, list and KYC-PATCH all return 401.
 
-## Deployment requirements (each separately authorized)
+## Deployment requirements (PAUSED; each step separately authorized)
 
-1. **Backend release** via the guarded `deployment/requirements` workflow:
-   - `backend-update.py verify`, then `update --execute`, which handles backup, migration rehearsal and the PM2 restart.
-   - Before release, confirm (by name only) that the MSG91 variables exist in production. With A-06, a missing provider makes `send-otp` return 503.
-   - Do not set `ALLOW_DEV_OTP` in production.
-2. **Review account:** add the five `REVIEW_ACCOUNT_*` variables to the protected `.env` in the same authorized restart window. Seed 2–3 synthetic applications through the app (a production data change; needs approval). Verify, then enter the credentials in Play Console only. Steps: `REVIEWER_ACCESS_DESIGN.md`.
-3. **Android:**
-   - verify the upload certificate in Play Console → App integrity;
-   - confirm the highest versionCode;
-   - build a signed AAB with the matching key.
-4. **Play Console:**
-   - listing copy;
-   - screenshots 01–06;
-   - App access;
-   - Financial features declaration;
-   - privacy URL.
-5. **Web:** no web release is needed for this PR's backend changes. Current clients don't call `verify-otp-token`.
+Order matters. A-01 changes the API contract, so ship the **web release first, then the backend**. See HANDOFF "A-01 compatible rollout plan".
+1. **Web:** build and deploy a new web release from merged main via the guarded frontend workflow. It sends the token and works with the current backend.
+2. **Backend:** `backend-update.py verify`, then `update --execute`.
+   - Confirm the MSG91 variable names first.
+   - Never set `ALLOW_DEV_OTP`.
+   - No schema migration.
+3. **Review account:** only after the incident is resolved and an owner-selected phone (not an incident number) is chosen. Add the `REVIEW_ACCOUNT_*` values to `.env` in an authorized restart window. Steps: `REVIEWER_ACCESS_DESIGN.md`.
+4. **Android:**
+   - verify the upload certificate;
+   - confirm the versionCode;
+   - build a signed AAB.
+
+   Older installs, if any were distributed, must update.
+5. **Play Console:** listing, screenshots, App access, Financial features declaration, privacy URL.
 
 ## Open findings and owner decisions
 
-- **A-01 (Critical, pre-existing):** `/api/users/*` has no authentication. It needs an app release that sends the token first, then backend enforcement, as a separate PR.
-- A-08 ownership model.
-- Commission and rate-card figures.
-- About Us "Fully compliant with RBI and IRDAI guidelines" (regulatory claim; verify or remove).
-- Lender list for the Financial features declaration.
-- versionCode history.
-- Upload certificate.
+- **Incident:** the read-only production confirmation and the per-number recovery decision are pending. Profiles must not be deleted, overwritten or repurposed.
+- **A-03 (pre-existing):** the unsigned callback catch-all rewrites transactions and hides the KYC callbacks. Separate change.
+- **Unresolved:**
+  - commission and rate-card figures;
+  - lender list;
+  - privacy-policy URL;
+  - A-08 ownership model (unchanged).
+- **Signing and versioning:** upload certificate, versionCode history.
+- **Reviewer phone:** not selected yet.
 
 🤖 Generated with [Claude Code](https://claude.com/claude-code)
