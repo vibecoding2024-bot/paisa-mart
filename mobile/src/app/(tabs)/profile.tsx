@@ -46,7 +46,7 @@ const MENU_ITEMS: MenuItem[] = [
   {
     icon: CreditCard,
     label: "Bank Details",
-    description: "Manage payout account",
+    description: "Not available in the app yet",
     action: "route:/bank-details",
   },
   {
@@ -63,8 +63,8 @@ const MENU_ITEMS: MenuItem[] = [
   },
   {
     icon: Share2,
-    label: "Refer & Earn",
-    description: "Invite friends, earn ₹500",
+    label: "Invite friends",
+    description: "Invite friends to Paisa Mart",
     action: "share",
   },
   {
@@ -110,18 +110,22 @@ export default function ProfileScreen() {
   const displayName = profile?.name?.trim() || "Partner Name";
   const displayPhone = profile?.phoneNumber || "Add your mobile number";
   const avatarLetter = displayName.charAt(0).toUpperCase();
-  const isKYCVerified =
-    KYC_ENFORCEMENT_DISABLED || userKYC?.status === "verified";
-  const kycLabel = KYC_ENFORCEMENT_DISABLED
-    ? "KYC Disabled"
-    : isKYCVerified
+  // Only a verified server status is shown as verified; KYC being switched off is not verification.
+  const isKYCVerified = userKYC?.status === "verified";
+  const kycLabel = isKYCVerified
+    ? "KYC verified"
+    : KYC_ENFORCEMENT_DISABLED
+      ? "KYC not required yet"
+      : isKYCVerified
       ? "Verified"
       : userKYC?.status === "submitted"
         ? "Under Review"
         : "KYC Pending";
-  const kycBadgeClassName = KYC_ENFORCEMENT_DISABLED
-    ? "bg-blue-500"
-    : isKYCVerified
+  const kycBadgeClassName = isKYCVerified
+    ? "bg-green-500"
+    : KYC_ENFORCEMENT_DISABLED
+      ? "bg-blue-500"
+      : isKYCVerified
       ? "bg-green-500"
       : userKYC?.status === "submitted"
         ? "bg-amber-500"
@@ -131,7 +135,7 @@ export default function ProfileScreen() {
     try {
       await Share.share({
         message:
-          "Join me on Paisa Mart and start earning by selling financial products! Earn up to ₹1 Lakh and Reduce Your Expenses.",
+          "Join me on Paisa Mart to explore loans, credit cards, bank accounts and insurance from partner banks and insurers.",
       });
     } catch {
       toast.error("Could not open share sheet");

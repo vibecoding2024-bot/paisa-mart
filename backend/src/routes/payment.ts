@@ -1,12 +1,47 @@
+import { isReviewPhone, REVIEW_ACCOUNT_REFUSAL } from "../lib/review-account";
 import { Hono } from "hono";
 import { authorize, getStates, createPayment, config } from "../lib/vimopay";
-import { CHECKOUT_PAGE } from "../checkout-page";
+import { CHECKOUT_PAGE, CHECKOUT_CSP } from "../checkout-page";
+import { safePaymentUrl, MERCHANT_REF_PATTERN } from "../lib/payment-url";
 import { savePending, getTxn } from "../lib/txn-store";
+import { acknowledgeGatewayCallback } from "../lib/gateway-callback";
 
 export const paymentRouter = new Hono();
 
+/**
+ * Payments are PAUSED (owner decision): there is no authenticated payment reconciliation yet (A-04), so every payment
+ * route is refused on the server unless PAYMENTS_ENABLED=true is set explicitly. No call reaches VimoPay while paused.
+ * VimoPay configuration is untouched. Gateway callbacks are still acknowledged (never applied, A-03), so a stray
+ * callback is not retried endlessly.
+ */
+/**
+ * Fails closed: even with PAYMENTS_ENABLED=true, payments stay disabled unless the VimoPay configuration is complete and
+ * well-formed (same environment variables lib/vimopay.ts reads). Missing, empty or malformed values keep the routes shut.
+ */
+export function paymentConfigValid(): boolean {
+  const env = process.env;
+  let httpsBase = false;
+  try { httpsBase = new URL(env.VIMOPAY_BASE_URL ?? "https://gateway.vimopay.in").protocol === "https:"; } catch {}
+  const present = (v?: string) => typeof v === "string" && v.trim() !== "";
+  return httpsBase && present(env.VIMOPAY_SECRET_KEY) && Buffer.byteLength(env.VIMOPAY_SECRET_KEY!, "utf8") === 32 &&
+    present(env.VIMOPAY_SALT_KEY) && present(env.VIMOPAY_ED_KEY) && present(env.VIMOPAY_USER_ID);
+}
+export function paymentsEnabled(): boolean {
+  return process.env.PAYMENTS_ENABLED === "true" && paymentConfigValid();
+}
+export const PAYMENTS_PAUSED = "Payments are currently unavailable.";
+paymentRouter.use("*", async (c, next) => {
+  if (paymentsEnabled() || /\/vimopay-callback$/.test(new URL(c.req.url).pathname)) return next();
+  c.header("Cache-Control", "no-store");
+  return c.json({ success: false, paymentsPaused: true, error: PAYMENTS_PAUSED }, 503);
+});
+
 // hosted checkout/initiation page
-paymentRouter.get("/checkout", (c) => c.html(CHECKOUT_PAGE));
+paymentRouter.get("/checkout", (c) => {
+  c.header("Content-Security-Policy", CHECKOUT_CSP);
+  c.header("Cache-Control", "no-store");
+  return c.html(CHECKOUT_PAGE);
+});
 
 // sanity: are the env keys loaded?
 paymentRouter.get("/config", (c) => c.json(config()));
@@ -33,6 +68,10 @@ paymentRouter.get("/states", async (c) => {
 // step 3: create a payment -> returns paymentUrl to open in the app
 paymentRouter.post("/create", async (c) => {
   const body: any = await c.req.json().catch(() => ({}));
+  if (isReviewPhone(body.custMobile)) return c.json({ error: REVIEW_ACCOUNT_REFUSAL }, 403);
+  if (body.merchantRefId !== undefined && !(typeof body.merchantRefId === "string" && MERCHANT_REF_PATTERN.test(body.merchantRefId))) {
+    return c.json({ error: "Invalid merchantRefId" }, 400);
+  }
   const a = await authorize();
   if (!a.token) return c.json({ error: "auth failed", auth: a }, 502);
   const merchantRefId = body.merchantRefId ?? "PM" + Date.now();
@@ -62,7 +101,15 @@ paymentRouter.post("/create", async (c) => {
   } catch (e) {
     console.error("[CREATE] persist failed", e);
   }
-  return c.json({ merchantRefId, ...r });
+  // A-42: only an https link on an allowlisted gateway host is passed to the checkout page.
+  const offeredUrl = r?.data?.paymentUrl;
+  const payUrl = safePaymentUrl(offeredUrl);
+  if (offeredUrl !== undefined && offeredUrl !== null && !payUrl) {
+    let host = "unparseable";
+    try { host = new URL(String(offeredUrl)).host; } catch {}
+    console.warn("[CREATE] gateway paymentUrl rejected (not an allowlisted https host)", { host });
+  }
+  return c.json({ merchantRefId, ...r, data: r?.data ? { ...r.data, paymentUrl: payUrl } : r?.data });
 });
 
 // gateway/app return: query the stored status by merchantRefId. The authoritative
@@ -70,7 +117,8 @@ paymentRouter.post("/create", async (c) => {
 paymentRouter.get("/status/:ref", (c) => {
   const ref = c.req.param("ref");
   const txn = getTxn(ref);
-  if (!txn) return c.json({ found: false, merchantRefId: ref, status: "Unknown" });
+  // A-42: an unknown reference is not echoed back (it was reflected into the checkout page).
+  if (!txn) return c.json({ found: false, status: "Unknown" });
   return c.json({
     found: true,
     merchantRefId: txn.merchantRefId,
@@ -83,10 +131,5 @@ paymentRouter.get("/status/:ref", (c) => {
   });
 });
 
-// step 4: gateway -> us. VimoPay POSTs the final txn status here (plain JSON).
-paymentRouter.post("/vimopay-callback", async (c) => {
-  const body: any = await c.req.json().catch(() => ({}));
-  console.log("[VIMOPAY CALLBACK]", JSON.stringify(body));
-  // TODO: look up order by merchantRefId/txnId, mark success/failed via txnStatusCode (000/001/002)
-  return c.json({ successStatus: true, message: "Success", responseCode: "000" });
-});
+// step 4: gateway -> us. Acknowledged only; an unauthenticated callback never changes a transaction (A-03).
+paymentRouter.on(["GET", "POST"], "/vimopay-callback", acknowledgeGatewayCallback);

@@ -1,5 +1,6 @@
 import { submitDurableApplication } from './service-submission';
 import { ServiceSubmissionError } from './service-application-api';
+import { API_BASE } from './api-base';
 export type VehicleLoanSubmission = {
   full_name: string;
   cibil: string;
@@ -15,11 +16,7 @@ export type VehicleLoanSubmission = {
   phoneNumber: string;
 };
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 
 export async function submitVehicleLoanLead(payload: VehicleLoanSubmission) {
   const input = {

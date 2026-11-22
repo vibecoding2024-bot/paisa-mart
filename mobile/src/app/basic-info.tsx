@@ -432,7 +432,7 @@ function FormInput({ label, value, onChangeText, placeholder, icon, keyboardType
 // ─────────────────────────────────────────────
 // PhoneInput
 // ─────────────────────────────────────────────
-function PhoneInput({ value, onChangeText }: { value: string; onChangeText: (t: string) => void }) {
+function PhoneInput({ value, onChangeText, locked = false }: { value: string; onChangeText: (t: string) => void; locked?: boolean }) {
   const [isFocused, setIsFocused] = useState(false);
   return (
     <View
@@ -467,6 +467,8 @@ function PhoneInput({ value, onChangeText }: { value: string; onChangeText: (t: 
         keyboardType="number-pad"
         value={value}
         onChangeText={onChangeText}
+        editable={!locked}
+        accessibilityHint={locked ? 'Your verified mobile number cannot be changed here' : undefined}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
         maxLength={10}
@@ -691,8 +693,10 @@ export default function BasicInfoScreen() {
 
                 <View style={{ marginBottom: 16 }}>
                   <Text style={{ color: '#4B5563', fontSize: 13, marginBottom: 6, marginLeft: 2 }}>Phone Number</Text>
+                  {/* The profile belongs to the OTP-verified number; the server rejects any other number. */}
                   <PhoneInput
                     value={phoneNumber}
+                    locked={Boolean(phone || currentProfile?.phoneNumber)}
                     onChangeText={(t) => setPhoneNumber(t.replace(/\D/g, '').slice(0, 10))}
                   />
                 </View>

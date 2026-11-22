@@ -49,26 +49,8 @@ export function savePending(t: {
   );
 }
 
-// called on /vimopay-callback — upsert the final status
-export function applyCallback(cb: any) {
-  const ref = String(cb?.merchantRefId ?? cb?.txnId ?? "unknown");
-  const status = mapStatus(cb?.txnStatusCode, cb?.txnStatus);
-  const existing = getTxn(ref);
-  if (existing) {
-    db.run(
-      `UPDATE txns SET status=?, txnStatusCode=?, txnId=COALESCE(NULLIF(?,''),txnId),
-         responseMessage=?, payload=?, updatedAt=? WHERE merchantRefId=?`,
-      [status, cb?.txnStatusCode ?? "", cb?.txnId ?? "", cb?.responseMessage ?? "", JSON.stringify(cb), now(), ref],
-    );
-  } else {
-    db.run(
-      `INSERT INTO txns (merchantRefId,txnId,amount,status,txnStatusCode,responseMessage,payload,createdAt,updatedAt)
-       VALUES (?,?,?,?,?,?,?,?,?)`,
-      [ref, cb?.txnId ?? "", String(cb?.amount ?? ""), status, cb?.txnStatusCode ?? "", cb?.responseMessage ?? "", JSON.stringify(cb), now(), now()],
-    );
-  }
-  return { merchantRefId: ref, status };
-}
+// A-03: there is deliberately no callback writer. Unauthenticated gateway callbacks are acknowledged only
+// (lib/gateway-callback.ts); add a status writer only together with a verified (server-to-server) status source.
 
 export function getTxn(merchantRefId: string): any {
   return db.query(`SELECT * FROM txns WHERE merchantRefId = ?`).get(merchantRefId);

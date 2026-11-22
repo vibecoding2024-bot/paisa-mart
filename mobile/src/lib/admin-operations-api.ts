@@ -1,9 +1,6 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-const base =
-  (process.env.EXPO_PUBLIC_API_URL || "https://paisa-mart.com").replace(
-    /\/$/,
-    "",
-  ) + "/api/admin/operations";
+import { API_BASE } from './api-base';
+const base = API_BASE;
 export async function operations(
   path: string,
   body?: unknown,

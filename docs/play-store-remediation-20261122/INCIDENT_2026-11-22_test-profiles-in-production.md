@@ -1,0 +1,296 @@
+# Incident assessment — synthetic test profiles written to production (22 Nov 2026)
+
+Status: **RESOLVED (22 Nov 2026). The four incident test profiles were DELETED in production by the owner, using
+the reviewed targeted cleanup.** Do not repeat the cleanup.
+
+## Cleanup result (confirmed by the owner, 22 Nov 2026)
+- **What ran:** `incident_cleanup.py apply` (SHA-256 `46ddc713…f089`) after a passing read-only `plan`, with the owner-approved fingerprints in plan order: `d83914834dbd120f00e5, 32258238dc8d19e72ab3, 5db9ffcb75c137d9d2c4, 77dbce08a355552f92ef`.
+- **Result:**
+  - exactly **4** incident test profiles deleted;
+  - total profiles **9 → 5**;
+  - post-checks passed;
+  - the preserved full backup is unchanged.
+- **Row backup** (the exact 4 rows, private; needed for any targeted rollback): `/home/ec2-user/paisa-mart-data/backups/incident-cleanup-20261122T154044Z-3204996`.
+- **Full backup** (preserve): `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- **Rollback, only if ever required and separately authorized:** `incident_cleanup.py rollback <same 4 numbers> --backup-dir <row backup> --confirm RESTORE-4-INCIDENT-PROFILES`. It re-inserts only those rows and refuses to overwrite.
+- **Unchanged:** no other record, no restart, no deployment, no whole-database restore.
+- **Keep:** both backups until the owner releases them.
+- **Still unknown:** phone-number ownership. These numbers must never be used as the review phone.
+
+## Assessment (before cleanup)
+
+Read-only checks were run by the owner on EC2 (22 Nov 2026). All four profiles were classified as
+strongly supported incident-created records. Phone-number ownership remains unknown.
+- The findings below are the owner's **summary from the conversation**. The agent did not independently inspect the raw output.
+- The owner took a verified backup the same day: `LIVE-BEFORE-REMEDIATION-20261122T145011Z`. It must be **preserved**.
+- A targeted cleanup script is prepared **for review only**. Only its read-only `plan` command has been prepared for the owner, and nothing has been deleted.
+
+The agent has run no production command. Phone numbers are masked (`90XXXXXX01`).
+
+## What happened
+
+Local Android **test** builds (debug-signed, never distributed) were pointed at a local backend through
+`EXPO_PUBLIC_API_URL`. Two clients ignored that variable and used `EXPO_PUBLIC_BACKEND_URL`, which defaults to
+`https://paisa-mart.com`:
+- `mobile/src/lib/user-profile-api.ts` (profile read and save);
+- `mobile/src/lib/kyc-api.ts` (KYC start and status).
+
+All other clients (OTP, applications, payouts, intake forms) honoured `EXPO_PUBLIC_API_URL` and reached only the
+local backend. The production profile API had no authentication (A-01), so the requests succeeded.
+
+## Builds involved
+
+| Build (test variant) | Source | Installed (UTC) | Profile traffic went to |
+|---|---|---|---|
+| `4ed126ce…0b94` | `4d0557e` | 22 Nov 05:22:44 | production (affected) |
+| `b9d1bd22…8cfa` | `d7c8a33` | 22 Nov ~09:47:52 | production (affected) |
+| `1cc7e31a…c051` | `6d3a072` | 22 Nov 10:17:57 | production (affected) |
+| `28a53fbf…6869` | `fcebb6b` | 22 Nov 10:36:34 | production (affected) |
+| `97d9d5e3…6431` | `28651cc` (fix) | 22 Nov 11:41:52 | local only, on an emulator with production DNS blocked |
+
+Candidate builds (production API by design) were only launched to the login screen, with no sign-in and therefore no
+profile request. The `2616f1c` test build was stopped before installation.
+
+## Per-number assessment
+
+Times are UTC tool-call times from the agent session log. Each request followed within seconds.
+
+| Number | Requests to production | Fields written by the POST | Existed before? | Linked applications or transactions in production |
+|---|---|---|---|---|
+| 90XXXXXX01 | <ul><li>GET after OTP verify, ~05:26</li><li>POST at Submit Profile, ~05:29:21</li><li>GETs from the Home guard until ~05:47</li></ul> | name (synthetic), email (synthetic `@example.com`), occupation, qualification, annual-income band, pincode, date of birth; CIBIL band probably empty (see note); PAN not entered | **Probably not** (see "Prior existence") | None found (see below) |
+| 90XXXXXX03 | <ul><li>GET after verify, ~09:51</li><li>POST ~09:52:17</li><li>Home-guard GETs until 09:54:37</li></ul> | as above (synthetic `@example.test` email, DOB 2004) | Probably not | None found |
+| 90XXXXXX02 | <ul><li>GET after verify, ~09:56</li><li>POST ~09:56–09:57</li><li>GETs at sign-ins ~10:18 and ~10:37 (returned the record: the app skipped the profile form)</li><li>Home-guard GETs</li></ul> | as above | Probably not before ~09:56 | None found |
+| 90XXXXXX99 | <ul><li>GET after verify, ~09:59</li><li>POST ~09:59:32–10:01</li><li>Home-guard GETs</li></ul> | as above | Probably not | None found |
+
+Notes:
+- **Production write semantics** (`backend/src/lib/user-profile-store.ts`, unchanged in production per the release
+  records). The POST is an upsert.
+  - New phone: it inserts a row with `kycStatus='not_started'` and `createdAt=updatedAt=request time`.
+  - Existing phone: it overwrites name, email, occupation, qualification, annualIncome, pincode, panCard, cibilScore and dateOfBirth, and sets `updatedAt`. `createdAt` and `kycStatus` are preserved.
+- **GET requests** return only the requested number's own profile.
+- **CIBIL band for 90XXXXXX01:** the selector was opened but no option tap was recorded. Probably empty; unconfirmed.
+
+## Confirmed vs assumed
+
+**Confirmed (local evidence)**
+- The profile and KYC clients defaulted to production in these test builds (code at the listed commits; fixed in `28651cc`).
+- No `/api/users` request reached the local backend from the four affected builds. The local logs `localdb/backend.log` and `localdb2/backend.log` show 0 such requests, while the `28651cc` run shows 15.
+- After each Submit Profile, the app continued to MPIN. In code it does that only after an HTTP 2xx with `success:true`, so a server accepted each save.
+- The app skipped the profile form for 90XXXXXX02 at ~10:18, meaning a profile GET returned that record.
+- No KYC request was made: `kyc-api` was never invoked, there are no KYC taps in the session log, and KYC is disabled in the app.
+- OTP, home-loan and business-loan submissions, `customer-applications` and `customer-payouts` all reached the local backend (local logs).
+
+**Assumed / inferred (needs production confirmation)**
+- That the accepting server was production `https://paisa-mart.com`. It is the only other configured destination, and DNS was not blocked then.
+- That none of the four numbers had a production profile beforehand. At each first sign-in the profile form appeared empty, which is consistent with a 404. A network error would look the same.
+- That no production applications, payouts or KYC records link to these numbers.
+- That production request logs (PM2/Hono) still exist for these times.
+
+**Unknown**
+- Whether any of these numbers belongs to a real subscriber (they are valid-format Indian mobile numbers).
+- The production log retention.
+
+## Production read-only check (authorized; run by the owner on 22 Nov 2026)
+
+**Script:** [`incident_readonly_check.py`](incident_readonly_check.py). It uses only the Python standard library, and the four numbers are passed as arguments, so none is stored in Git. The owner pastes it as `python3 - <4 numbers> <<'PYEOF' … PYEOF` in EC2 Instance Connect as `ec2-user`. It runs from standard input, so it creates no file on the server.
+
+**What it does (all read-only):**
+
+0. **Re-verify the target.** Instance ID, Region and public IP come from instance metadata (IMDSv2, read). They should match `i-0e6f35bc4e48cde49` / `ap-southeast-2` / `54.252.33.16`.
+1. **Confirm the database before querying.**
+   - `pm2 jlist` (read only) must show exactly one `paisa-mart` process, running from `/home/ec2-user/paisa-mart-new/backend`. Environment values are never printed.
+   - The profile and lead DB paths are resolved with the same precedence as the code (`USER_DB ?? TXN_DB ?? payments.db`, `LEADS_DB ?? TXN_DB ?? payments.db`). The resolution uses a `bun -e` probe in the app directory, as the guarded updater does, and prints only paths and the *names* of any Postgres URL variables that are set.
+   - The resolved profile DB must be one of the files the live process actually holds open (`/proc/<pid>/fd`); otherwise the script STOPs. The recorded baseline path is `/home/ec2-user/paisa-mart-data/payments.db`.
+2. **Confirm the schema.**
+   - SQLite is opened with `mode=ro`, plus `PRAGMA query_only=ON`. It runs `quick_check` and lists tables with row counts.
+   - The `user_profiles` columns must equal the reviewed 13-column store; otherwise the script STOPs.
+3. **Live state of the four profiles** (exact match, plus substring match to catch other stored formats). It prints:
+   - `createdAt`, `updatedAt`, `kycStatus`;
+   - whether each timestamp falls in the incident window;
+   - whether the email uses a reserved test domain (`example.com`/`.test`), as a boolean only;
+   - which fields are non-empty (by name).
+
+   It also prints the count of all profiles created or updated in the window.
+4. **Verified pre-incident backup.**
+   - All `payments.db` files under `/home/ec2-user/paisa-mart-data/backups/` are listed, opened `mode=ro&immutable=1`.
+   - A backup is the **baseline** only if both the DB file's mtime and its `backup-ready.json` mtime predate 22 Nov 05:20Z, and the SHA-256 in `backup_hashes` matches the file. The newest such backup is used; the expected one is the PR #7 release backup `backend-before-20261121-595e5212-on-pr6-dashboard`.
+   - It runs `integrity_check` on the baseline, then gets each number's presence and timestamps in the baseline and in every older backup.
+5. **Overwritten-field comparison.** Each of the 9 overwritable fields gets `same` or `DIFFERENT` (live vs baseline). It also reports whether `createdAt` was preserved and whether `kycStatus` is unchanged. Values are never shown.
+6. **Linked records.** It scans every column of every table except `user_profiles`, in the live DB and in the baseline, and prints counts of substring matches only. That covers all lead and application tables, `txns.payload`, `admin_*`, workflow history and audit details.
+7. **Logs.**
+   - PM2 `paisa-mart*` log files, including rotated and `.gz` files.
+   - Per file: line count, mtime, and whether lines carry timestamps. It also counts, across all numbers:
+     - `POST /api/users/profile` responses;
+     - `GET /api/users/profiles` (list-all) lines;
+     - KYC `PATCH` lines.
+   - For lines mentioning one of the numbers it prints only the timestamp (if present), method, masked path without the query string, and status. Callback bodies and other lines are not shown.
+   - Web-server log directories are reported only as present/readable. They are **not** read (that would need `sudo`, which was not authorized).
+
+**Dry run (local WSL, synthetic replica, 22 Nov 14:40Z).**
+- **Set-up:** fake `pm2` and `bun`, a process holding the DB open, a checksum-verified backup dated 21 Nov, plus planted secrets, names, emails, a query-string token and an unrelated real-format number.
+- **Classification:** correctly reported one profile created in the window and absent from the baseline; one present in the baseline with `name`/`email` = `DIFFERENT` and `createdAt` preserved; two with no row.
+- **Linked records:** found `txns.payload` and `home_loan_leads.phone` matches.
+- **Logs:** printed masked GET paths with status codes.
+- **Safety:** the leak scan found no secret, token, name, email or unmasked number in the output. The DB and backup SHA-256 were unchanged, and no `-wal`/`-shm`/journal file was created.
+
+### How each profile will be classified
+
+Timestamps alone are not treated as conclusive. `createdAt` is server-generated and preserved on upsert, so it is strong evidence, but it says nothing about state before a request.
+
+| Classification | Required evidence (all) |
+|---|---|
+| **Newly created by the incident** | <ul><li>A live row exists.</li><li>No row in the checksum-verified pre-incident baseline, or in any older backup.</li><li>Live `createdAt` falls inside that number's request window.</li><li>No linked records in the baseline.</li><li>Reserved test email domain (consistent with the agent's synthetic input).</li></ul> |
+| **Pre-existing (overwritten)** | A row is present in the verified baseline. Overwritten fields are those flagged `DIFFERENT`. |
+| **Inconclusive** | Any of the following: <ul><li>No verified baseline.</li><li>Not in the baseline, but `createdAt` is before the window: created by someone else between the baseline and the incident, then overwritten, with no restorable prior values.</li><li>No live row.</li><li>Live linked records absent from the baseline.</li><li>A non-reserved email domain.</li><li>Multiple matching rows.</li></ul> |
+
+### Results (production) — owner's summary from the conversation, 22 Nov 2026
+
+These were not independently inspected by the agent:
+
+| Check | Finding |
+|---|---|
+| Target | Instance `i-0e6f35bc4e48cde49`, `ap-southeast-2` |
+| Live process | `paisa-mart`, PM2 ID 0, online |
+| Live database | `/home/ec2-user/paisa-mart-data/payments.db`; `quick_check` passed |
+| Verified baseline | All four profiles **absent** from `backend-before-20261121-595e5212-on-pr6-dashboard/payments.db` |
+| Request logs | For each profile, GET responses progressed from **404 to 200**. The PM2 logs have no timestamps; nginx logs were not inspected. |
+| Timestamps and email | All four creation and update timestamps fall **within the incident window**; all four use the reserved test email domain |
+| Linked records | **No matches across 170 scanned columns** |
+
+| Number | Classification |
+|---|---|
+| 90XXXXXX01 | **Strongly supported incident-created profile** |
+| 90XXXXXX03 | **Strongly supported incident-created profile** |
+| 90XXXXXX02 | **Strongly supported incident-created profile** |
+| 90XXXXXX99 | **Strongly supported incident-created profile** |
+
+**Ownership:** whether any of these phone numbers belongs to a real person remains **unknown**.
+
+**Consistency:** these findings agree with the local evidence (the empty profile form at first sign-in, the timing of each save). Exact per-row timestamps are not reproduced here; the cleanup re-verifies every row itself.
+
+**What "strongly supported" rests on**, by the classification rule above:
+- a live row exists;
+- no row in the verified pre-incident baseline;
+- `createdAt` inside the request window;
+- no linked records;
+- a reserved test email domain.
+
+**Scope of "no linked records":** the substring scan covers every table and column of the scanned SQLite database. It does not cover:
+- Postgres stores, if any are configured;
+- external systems (the SMS provider, VimoPay);
+- the browser or app storage of anyone who read these profiles while A-01 was open.
+
+### Limits of the available evidence
+
+- **Missing local logs prove nothing about other production traffic.**
+  - The production profile API was unauthenticated (A-01) for the whole period. Anyone could have read or written these four numbers, or listed every profile through `GET /api/users/profiles`, before, during or after the agent's requests.
+  - The list-all count in step 7 shows whether such calls happened. It cannot say who made them.
+- **PM2 logs are weak.**
+  - Hono's logger writes no timestamps unless PM2 adds them, so the script reports whether they exist.
+  - `POST /api/users/profile` carries no phone number, so a save cannot be attributed to a number from the PM2 log.
+  - Logs may have been rotated or truncated.
+  - No source IPs are recorded there. Web-server access logs (with time and IP) were not read, because that needs separate `sudo` authorization.
+- **The baseline is a single point in time** (the 21 Nov release backup). Changes between it and 05:22Z on 22 Nov are visible only through `createdAt`/`updatedAt`.
+- **A later legitimate edit would also show `DIFFERENT`.** A recovery must therefore re-check that `updatedAt` still equals the incident value.
+- **Substring matches can be false positives** (an ID containing the same digits), so each linked-record hit needs targeted review.
+- **Postgres-backed stores, if configured, are not scanned.** The script reports whether any are configured.
+- **Whether a number belongs to a real person cannot be established** from this data.
+
+## Proposed action per profile (for owner approval after the results; nothing executed)
+
+None of these is to be run until the results are recorded above and the owner approves the specific action. Each mutation is a separate authorization. It must:
+- start with a fresh checksum-verified backup;
+- run as a single transaction that re-checks the row's current `updatedAt` and does nothing if it changed;
+- touch only that one row;
+- have a row-level rollback from the backup. The whole database is never restored.
+
+| Number | If newly created | If pre-existing | If inconclusive, or linked or real-person signs |
+|---|---|---|---|
+| 90XXXXXX01 | Delete that single `user_profiles` row (it holds only synthetic data). Rollback re-inserts the saved row. | Restore only the `DIFFERENT` fields from the baseline. Keep `createdAt` and `kycStatus`. Rollback writes back the saved incident values. | No change. Escalate to the owner, who also assesses whether notification is needed. |
+| 90XXXXXX03 | same | same | same |
+| 90XXXXXX02 | same | same | same |
+| 90XXXXXX99 | same | same | same |
+
+**Given the classification, the proposed action for all four is the "newly created" column:** delete the single `user_profiles` row. The script below implements exactly that, for review.
+
+## Targeted cleanup script (FOR REVIEW ONLY; not authorized, not run)
+
+**Script:** [`incident_cleanup.py`](incident_cleanup.py), Python standard library only. The four numbers are arguments and are never in Git. Paste it in EC2 Instance Connect as `ec2-user`, in the same way as the check script. Modes:
+
+1. **`plan`** (read-only).
+   - Confirms the live DB the same way as the check: the PM2 process, path resolution, and the file held open. It refuses if profiles and leads are in different databases, because one transaction could not cover both.
+   - Confirms the 13-column schema and the `phoneNumber` primary key.
+   - Confirms each row is eligible: exactly one exact match, `createdAt` in the incident window, a reserved test email domain, `kycStatus = not_started`.
+   - Scans every other table and column for linked records.
+   - Prints a 20-hex **content fingerprint per row**. It is a SHA-256 over all 13 columns, so any change to any column changes it. It is not reversible, and no values are printed.
+   - Locates the preserved backup **`LIVE-BEFORE-REMEDIATION-20261122T145011Z`** by name (exactly one match is required). It reads the backup without writing: file hashes, `integrity_check` (opened immutable), and the fingerprints of the four rows it holds.
+2. **`apply --expect <4 reviewed fingerprints> --confirm DELETE-4-INCIDENT-PROFILES`**
+   1. Repeats every `plan` check. It aborts unless each live row's fingerprint equals the reviewed one **and** the preserved backup holds that same row, so the full backup can always recover it.
+   2. Creates a **new** directory `backups/incident-cleanup-<UTC>-<pid>` (mode 0700). It never writes inside the preserved backup.
+   3. `BEGIN IMMEDIATE`: takes the write lock first, so no other writer can commit during the check-and-delete.
+   4. Inside the transaction:
+      - re-reads the four rows and re-checks eligibility and fingerprints;
+      - re-scans linked records;
+      - writes `rows.json` (the exact four rows) and `manifest.json` (its SHA-256), both mode 0600, created with `O_EXCL`, fsynced, then read back and verified.
+   5. Deletes each row with a `DELETE` that matches **every column**, and requires exactly one deleted row each.
+   6. Verifies the four rows are gone and the total profile count dropped by exactly 4, then `COMMIT`s.
+   7. **Any failure:** `ROLLBACK`, nothing deleted, and this run's (unneeded) directory removed.
+   8. **After commit:** re-checks through a read-only connection, and confirms the preserved backup is byte-for-byte unchanged.
+3. **`rollback --backup-dir <incident-cleanup-dir> --confirm RESTORE-4-INCIDENT-PROFILES`**
+   - Verifies the manifest checksum, the table layout, the database path and the four numbers.
+   - In one `BEGIN IMMEDIATE` transaction it re-inserts exactly those rows. If any of the four numbers has a row again, it **aborts rather than overwrite**.
+   - Verifies the restored fingerprints. It never restores the whole database.
+
+**Locking:** the write lock is held for the transaction only (≈4 ms locally). WAL readers are unaffected. A backend write in that window waits or receives `SQLITE_BUSY`, so run it at a quiet time.
+
+**Local test.** Run in WSL on 22 Nov against a synthetic replica: WAL mode, a process holding the DB open, a copy of the preserved backup, 4 incident rows plus 2 unrelated rows, and a planted secret. All scenarios behaved as required:
+
+| Scenario | Result |
+|---|---|
+| `plan` | OK, 4 fingerprints, no linked records |
+| Wrong confirmation phrase | STOP, nothing changed |
+| Wrong fingerprints | STOP, nothing changed |
+| Linked record added | STOP, nothing changed |
+| A row edited after the plan | STOP (fingerprint differs), nothing changed |
+| Preserved backup missing | STOP, nothing changed |
+| Linked record appearing only **inside** the transaction | ROLLBACK, nothing deleted, no leftover directory |
+| Correct apply while a concurrent writer tries to edit a row | the writer was blocked (`database is locked`). COMMITTED: exactly the 4 rows deleted; the 2 unrelated rows untouched; the row backup at 0700/0600; the preserved backup unchanged |
+| Rollback | exactly 4 rows restored; a new `plan` gives fingerprints identical to the original |
+| Second rollback | STOP: rows exist, never overwritten |
+| Leak scan of all output | no secret, name, email or unmasked number |
+
+The first version of the test caught two defects, both fixed before this run:
+- an aborted run left a directory that blocked the next run;
+- a snapshot-based transaction let a concurrent write through. This is why it now uses `BEGIN IMMEDIATE`.
+
+**Second review (22 Nov):**
+- **`plan` makes no changes:**
+  - the live DB is opened `mode=ro` + `query_only`;
+  - the preserved backup is opened `mode=ro&immutable=1`;
+  - otherwise it only runs `pm2 jlist`, a path probe and `/proc` link reads.
+- **`apply`** compares full-row fingerprints inside the same `BEGIN IMMEDIATE` transaction as the linked-record scan and the delete.
+- **The row backup** is private (0700/0600, `O_EXCL`), fsynced and verified by read-back before any delete. **Added:** an fsync of the parent `backups/` directory, so the new directory entry is durable. All harness scenarios were re-run and pass.
+- **`rollback`** refuses to overwrite a profile created after the cleanup.
+
+**Script SHA-256** (LF line endings): `46ddc713e59285a336553dd9b29aec61a582377cacd98a9a2658b05af454f089`.
+
+**Read-only plan command:** a paste-ready file on the owner's Windows Desktop, `paisa-mart-incident-cleanup-PLAN-readonly.txt`. It is not in Git, because it contains the four numbers.
+1. It writes the script to a private `mktemp` file in `/tmp`.
+2. It runs `sha256sum -c` against the hash above and continues only if that passes.
+3. It runs `python3 <file> plan <n1> <n2> <n3> <n4>` (the script's own CLI).
+4. It deletes the temp file.
+
+It was tested as pasted on the WSL replica:
+- checksum OK, then plan OK;
+- a copy with one byte changed fails the checksum and nothing runs;
+- no temp file is left, the DB is unchanged, and no cleanup directory is created.
+
+**To run it later (each step needs separate authorization):**
+1. `plan`; send the masked output for review.
+2. The owner approves the four fingerprints.
+3. `apply` with them.
+4. Keep both the cleanup directory and `LIVE-BEFORE-REMEDIATION-20261122T145011Z` until the owner releases them.
+
+Also recommended, independent of the per-number outcome: ship the A-01 fix (owner-only profile access) so the exposure cannot recur, and decide separately whether to read web-server access logs (`sudo`, read-only) for timestamps and sources.
+
+See also "Recovery proposal" in HANDOFF.md. The profiles must not be deleted, overwritten or repurposed until this is confirmed and approved.

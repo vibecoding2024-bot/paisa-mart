@@ -20,9 +20,9 @@ const CONTACT_DETAILS = [
 
 const HIGHLIGHTS = [
   { icon: TrendingUp, title: 'Pan India Reach', desc: 'Serving customers across all major cities and states in India.' },
-  { icon: Users, title: 'Trusted Partners', desc: 'Empowering financial advisors and agents to earn through product distribution.' },
-  { icon: Shield, title: 'Secure & Compliant', desc: 'Fully compliant with RBI and IRDAI guidelines for financial product distribution.' },
-  { icon: Zap, title: 'Instant Payouts', desc: 'Fast and transparent payout cycles for all partner earnings.' },
+  { icon: Users, title: 'Trusted Partners', desc: 'Supporting financial advisors and agents who help customers find suitable products.' },
+  { icon: Shield, title: 'Partner-provided products', desc: 'Loans, cards, accounts and insurance are provided by partner banks, NBFCs and insurers under their own terms.' },
+  { icon: Zap, title: 'Approved payouts', desc: 'Payout amounts are shown only after Paisa Mart approval; the team contacts you about payment.' },
 ];
 
 export default function AboutUsScreen() {

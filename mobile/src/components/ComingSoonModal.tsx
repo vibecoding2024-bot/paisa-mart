@@ -12,6 +12,7 @@ import Animated, { FadeIn, FadeInDown, FadeInUp, ZoomIn } from 'react-native-rea
 import { Clock, Rocket, X, Bell, ArrowLeft } from 'lucide-react-native';
 import * as Haptics from '@/lib/haptics';
 import { LinearGradient } from 'expo-linear-gradient';
+import { API_BASE } from '@/lib/api-base';
 
 export type ComingSoonModule = 'gold-loans' | 'real-estate';
 
@@ -42,7 +43,7 @@ const MODULE_CONFIG = {
   },
 };
 
-const BACKEND_URL = process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL || '';
+const BACKEND_URL = API_BASE;
 
 export default function ComingSoonModal({ visible, module, onClose }: ComingSoonModalProps) {
   const [notified, setNotified] = useState(false);

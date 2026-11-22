@@ -1,12 +1,14 @@
 // Self-contained VimoPay checkout/initiation page served at /api/payment/checkout.
 // Collects details, calls POST /api/payment/create, then hands off to the gateway paymentUrl.
-export const CHECKOUT_PAGE = `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Paisa Mart — Payment</title>
-<style>
+//
+// A-42: every value shown on this page (URL parameters, the stored last reference, status/create/state API
+// responses) is rendered as TEXT through DOM APIs; there is no innerHTML/outerHTML/insertAdjacentHTML/
+// document.write. The gateway link is followed only if it is an https URL (the server also allowlists its
+// host). The page is served with a Content-Security-Policy that allows only this exact script and style
+// (SHA-256 hashes), so even an injected <script> or event handler could not run.
+import { createHash } from "node:crypto";
+
+const CHECKOUT_STYLE = `
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   body{margin:0;font-family:'Plus Jakarta Sans',-apple-system,system-ui,sans-serif;
     background:linear-gradient(145deg,#0d0d1a,#1a0a2e 40%,#0d1f3c);min-height:100vh;
@@ -48,7 +50,118 @@ export const CHECKOUT_PAGE = `<!doctype html>
   .spin{display:inline-block;width:15px;height:15px;border:2px solid rgba(255,255,255,.5);
     border-top-color:#fff;border-radius:50%;animation:s .6s linear infinite;vertical-align:-2px}
   @keyframes s{to{transform:rotate(360deg)}}
-</style>
+`;
+
+const CHECKOUT_SCRIPT = `
+const $=id=>document.getElementById(id);
+const amt=$('amount'), bamt=$('bamt');
+amt.addEventListener('input',()=>{bamt.textContent=amt.value||'0';});
+
+// Text-only DOM helpers: values are always assigned with textContent, never parsed as HTML.
+function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined&&text!==null)e.textContent=String(text);return e;}
+function line(k,v){const d=el('div','line');d.append(el('span','k',k));d.append(v instanceof Node?v:el('span','v',v));return d;}
+const PILL={Success:['#eafaf0','#1e7e45'],Failed:['#fdecec','#c0392b'],ValidationFailed:['#fdecec','#c0392b'],Pending:['#fff3e0','#e67e22']};
+function pill(st){const label=(typeof st==='string'&&st)?st:'Pending';const m=Object.prototype.hasOwnProperty.call(PILL,label)?PILL[label]:['#eef2ff','#555'];const s=el('span','pill',label);s.style.background=m[0];s.style.color=m[1];return s;}
+function safeHttpsUrl(u){try{const x=new URL(String(u));return (x.protocol==='https:'&&!x.username&&!x.password)?x.href:null;}catch(e){return null;}}
+function present(v){return v!==undefined&&v!==null&&v!=='';}
+
+// If the gateway returned the user here after payment, show the stored server status instead of the form.
+// The URL only identifies the transaction; its status parameters are never trusted or displayed.
+(function(){
+  const p=new URLSearchParams(location.search);
+  const isReturn=['merchantRefId','refId','ref','txnId','txnid','status','txnStatus','responseCode'].some(k=>p.has(k));
+  if(!isReturn) return;
+  let stored=null; try{stored=localStorage.getItem('pm_last_ref');}catch(e){}
+  const ref=p.get('merchantRefId')||p.get('refId')||p.get('ref')||stored;
+  const form=$('f'), msg=$('msg'), result=$('result');
+  if(form) form.style.display='none';
+  result.style.display='block';
+  msg.className='msg ok'; msg.textContent='Verifying your payment…';
+  function render(d){
+    const rows=[line('Ref',(d.found&&d.merchantRefId)||ref||'-')];
+    if(present(d.txnId)) rows.push(line('Txn ID',d.txnId));
+    if(present(d.amount)) rows.push(line('Amount','₹'+d.amount));
+    rows.push(line('Status',pill(d.status)));
+    if(present(d.responseMessage)) rows.push(line('Message',d.responseMessage));
+    result.replaceChildren(...rows);
+    if(d.status==='Success'){msg.className='msg ok';msg.textContent='Payment successful 🎉';}
+    else if(d.status==='Failed'||d.status==='ValidationFailed'){msg.className='msg err';msg.textContent='Payment failed.';}
+    else{msg.style.display='none';}
+  }
+  let tries=0;
+  function poll(){
+    if(!ref){result.replaceChildren(line('Status',pill('Unknown')));msg.className='msg err';msg.textContent='Could not identify the transaction.';return;}
+    fetch('/api/payment/status/'+encodeURIComponent(ref)).then(r=>r.json()).then(d=>{
+      render(d||{}); tries++;
+      if((!d||!d.found||!d.status||d.status==='Pending'||d.status==='Unknown')&&tries<15) setTimeout(poll,2000);
+    }).catch(function(){tries++; if(tries<15) setTimeout(poll,2000);});
+  }
+  poll();
+})();
+
+// load states for the dropdown
+fetch('/api/payment/states').then(r=>r.json()).then(d=>{
+  const sel=$('location');
+  if(d && Array.isArray(d.data)){
+    sel.replaceChildren(new Option('Select state',''),...d.data.map(s=>new Option(String((s&&s.description)??''),String((s&&s.code)??''))));
+  } else { sel.replaceChildren(new Option('(states unavailable)','')); }
+}).catch(()=>{ $('location').replaceChildren(new Option('(states unavailable)','')); });
+
+$('f').addEventListener('submit', async e=>{
+  e.preventDefault();
+  const msg=$('msg'), result=$('result'), btn=$('btn');
+  msg.className='msg'; result.style.display='none';
+  btn.disabled=true; btn.replaceChildren(el('span','spin'),document.createTextNode(' Processing…'));
+  try{
+    const body={
+      amount:parseFloat(amt.value), custName:$('custName').value.trim(),
+      custMobile:$('custMobile').value.trim(), email:$('email').value.trim(),
+      location:$('location').value
+    };
+    const r=await fetch('/api/payment/create',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const j=await r.json();
+    const d=j.data;
+    const payUrl=d?safeHttpsUrl(d.paymentUrl):null;
+    if(payUrl){
+      try{localStorage.setItem('pm_last_ref', String(j.merchantRefId||''));}catch(e){}
+      msg.className='msg ok'; msg.textContent='Payment created — proceed to pay.';
+      const status=el('span','pill prog',present(d.txnStatus)?d.txnStatus:'-');
+      const a=el('a','pay-btn','Proceed to Payment →'); a.href=payUrl; a.target='_blank'; a.rel='noopener noreferrer';
+      result.replaceChildren(line('Ref',j.merchantRefId||'-'),line('Txn ID',present(d.txnId)?d.txnId:'-'),
+        line('Amount','₹'+(present(d.amount)?d.amount:'-')),line('Status',status),a);
+      result.style.display='block';
+    } else {
+      msg.className='msg err';
+      msg.textContent=d&&present(d.paymentUrl)?'The payment link was rejected as unsafe.':
+        'Could not create payment: '+(j.error||(d&&d.responseMessage)||'unknown error');
+    }
+  }catch(err){ msg.className='msg err'; msg.textContent='Network error: '+err.message; }
+  finally{ btn.disabled=false; btn.textContent='Pay ₹'+(amt.value||'0'); }
+});
+`;
+
+const sha256 = (text: string) => "'sha256-" + createHash("sha256").update(text, "utf8").digest("base64") + "'";
+
+/** Allows only this page's own script and style; no other script can execute, even if markup were injected. */
+export const CHECKOUT_CSP = [
+  "default-src 'none'",
+  `script-src ${sha256(CHECKOUT_SCRIPT)}`,
+  `style-src ${sha256(CHECKOUT_STYLE)}`,
+  "connect-src 'self'",
+  "img-src 'self' data:",
+  "base-uri 'none'",
+  "form-action 'none'",
+  "frame-ancestors 'none'",
+].join("; ");
+
+export const CHECKOUT_PAGE = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Paisa Mart — Payment</title>
+<style>${CHECKOUT_STYLE}</style>
 </head>
 <body>
 <div class="card">
@@ -81,85 +194,6 @@ export const CHECKOUT_PAGE = `<!doctype html>
   </div>
   <div class="foot">🔒 Your details are encrypted end-to-end</div>
 </div>
-<script>
-const $=id=>document.getElementById(id);
-const amt=$('amount'), bamt=$('bamt');
-amt.addEventListener('input',()=>bamt.textContent=amt.value||'0');
-
-// If the gateway returned the user here after payment, show the result instead of the form.
-(function(){
-  const p=new URLSearchParams(location.search);
-  const isReturn=['merchantRefId','refId','ref','txnId','txnid','status','txnStatus','responseCode'].some(k=>p.has(k));
-  if(!isReturn) return;
-  const ref=p.get('merchantRefId')||p.get('refId')||p.get('ref')||localStorage.getItem('pm_last_ref');
-  const form=$('f'), msg=$('msg'), result=$('result');
-  if(form) form.style.display='none';
-  result.style.display='block';
-  msg.className='msg ok'; msg.textContent='Verifying your payment…';
-  function pill(st){var m=({Success:['#eafaf0','#1e7e45'],Failed:['#fdecec','#c0392b'],ValidationFailed:['#fdecec','#c0392b'],Pending:['#fff3e0','#e67e22']})[st]||['#eef2ff','#555'];return '<span class="pill" style="background:'+m[0]+';color:'+m[1]+'">'+(st||'Pending')+'</span>';}
-  function render(d){
-    result.innerHTML=
-      '<div class="line"><span class="k">Ref</span><span class="v">'+(d.merchantRefId||ref||'-')+'</span></div>'+
-      (d.txnId?'<div class="line"><span class="k">Txn ID</span><span class="v">'+d.txnId+'</span></div>':'')+
-      (d.amount?'<div class="line"><span class="k">Amount</span><span class="v">₹'+d.amount+'</span></div>':'')+
-      '<div class="line"><span class="k">Status</span>'+pill(d.status)+'</div>'+
-      (d.responseMessage?'<div class="line"><span class="k">Message</span><span class="v">'+d.responseMessage+'</span></div>':'');
-    if(d.status==='Success'){msg.className='msg ok';msg.textContent='Payment successful 🎉';}
-    else if(d.status==='Failed'||d.status==='ValidationFailed'){msg.className='msg err';msg.textContent='Payment failed.';}
-    else{msg.style.display='none';}
-  }
-  let tries=0;
-  function poll(){
-    if(!ref){result.innerHTML='<div class="line"><span class="k">Status</span>'+pill('Unknown')+'</div>';msg.className='msg err';msg.textContent='Could not identify the transaction.';return;}
-    fetch('/api/payment/status/'+encodeURIComponent(ref)).then(r=>r.json()).then(d=>{
-      render(d); tries++;
-      if((!d.found||!d.status||d.status==='Pending'||d.status==='Unknown')&&tries<15) setTimeout(poll,2000);
-    }).catch(function(){tries++; if(tries<15) setTimeout(poll,2000);});
-  }
-  poll();
-})();
-
-// load states for the dropdown
-fetch('/api/payment/states').then(r=>r.json()).then(d=>{
-  const sel=$('location');
-  if(d && Array.isArray(d.data)){
-    sel.innerHTML='<option value="">Select state</option>'+
-      d.data.map(s=>'<option value="'+s.code+'">'+s.description+'</option>').join('');
-  } else { sel.innerHTML='<option value="">(states unavailable)</option>'; }
-}).catch(()=>{ $('location').innerHTML='<option value="">(states unavailable)</option>'; });
-
-$('f').addEventListener('submit', async e=>{
-  e.preventDefault();
-  const msg=$('msg'), result=$('result'), btn=$('btn');
-  msg.className='msg'; result.style.display='none';
-  btn.disabled=true; btn.innerHTML='<span class="spin"></span> Processing…';
-  try{
-    const body={
-      amount:parseFloat(amt.value), custName:$('custName').value.trim(),
-      custMobile:$('custMobile').value.trim(), email:$('email').value.trim(),
-      location:$('location').value
-    };
-    const r=await fetch('/api/payment/create',{method:'POST',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    const j=await r.json();
-    const d=j.data;
-    if(d && d.paymentUrl){
-      try{localStorage.setItem('pm_last_ref', j.merchantRefId||'');}catch(e){}
-      msg.className='msg ok'; msg.textContent='Payment created — proceed to pay.';
-      result.style.display='block';
-      result.innerHTML=
-        '<div class="line"><span class="k">Ref</span><span class="v">'+(j.merchantRefId||'-')+'</span></div>'+
-        '<div class="line"><span class="k">Txn ID</span><span class="v">'+(d.txnId||'-')+'</span></div>'+
-        '<div class="line"><span class="k">Amount</span><span class="v">₹'+(d.amount||'-')+'</span></div>'+
-        '<div class="line"><span class="k">Status</span><span class="pill prog">'+(d.txnStatus||'-')+'</span></div>'+
-        '<a class="pay-btn" href="'+d.paymentUrl+'" target="_blank" rel="noopener">Proceed to Payment →</a>';
-    } else {
-      msg.className='msg err';
-      msg.textContent='Could not create payment: '+(j.error||(d&&d.responseMessage)||'unknown error');
-    }
-  }catch(err){ msg.className='msg err'; msg.textContent='Network error: '+err.message; }
-  finally{ btn.disabled=false; btn.innerHTML='Pay ₹'+(amt.value||'0'); }
-});
-</script>
+<script>${CHECKOUT_SCRIPT}</script>
 </body>
 </html>`;

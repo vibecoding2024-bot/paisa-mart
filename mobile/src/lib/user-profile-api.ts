@@ -1,9 +1,8 @@
 import type { UserProfile } from './user-profile-store';
+import { API_BASE } from './api-base';
+import { customerAuthHeaders } from './auth-api';
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 
 type ApiResponse<T> = {
   success: boolean;
@@ -19,7 +18,7 @@ export async function fetchUserProfile(phoneNumber: string): Promise<(UserProfil
   const phone = normalizePhone(phoneNumber);
   if (!phone) return null;
 
-  const response = await fetch(`${BACKEND_URL}/api/users/profile/${phone}`);
+  const response = await fetch(`${BACKEND_URL}/api/users/profile/${phone}`, { headers: await customerAuthHeaders() });
   if (response.status === 404) return null;
   if (!response.ok) throw new Error(`Profile lookup failed: ${response.status}`);
 
@@ -30,13 +29,15 @@ export async function fetchUserProfile(phoneNumber: string): Promise<(UserProfil
 export async function saveUserProfile(profile: UserProfile): Promise<UserProfile & { kycStatus?: string }> {
   const response = await fetch(`${BACKEND_URL}/api/users/profile`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...(await customerAuthHeaders()) },
     body: JSON.stringify({
       ...profile,
       phoneNumber: normalizePhone(profile.phoneNumber),
     }),
   });
 
+  if (response.status === 401) throw new Error('Please sign in again to save your profile.');
+  if (response.status === 403) throw new Error('You can only save the profile for your signed-in mobile number.');
   if (!response.ok) {
     throw new Error(`Profile save failed: ${response.status}`);
   }
@@ -47,19 +48,4 @@ export async function saveUserProfile(profile: UserProfile): Promise<UserProfile
   }
 
   return body.data;
-}
-
-export async function saveKycStatus(phoneNumber: string, status: 'not_started' | 'submitted' | 'verified' | 'rejected') {
-  const phone = normalizePhone(phoneNumber);
-  if (!phone) return null;
-
-  const response = await fetch(`${BACKEND_URL}/api/users/profile/${phone}/kyc`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status }),
-  });
-
-  if (!response.ok) return null;
-  const body = (await response.json()) as ApiResponse<UserProfile & { kycStatus?: string }>;
-  return body.success ? body.data ?? null : null;
 }

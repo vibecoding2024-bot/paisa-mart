@@ -1,4 +1,41 @@
-# PR #6 guarded release procedure — AWS EC2 / SQLite
+# Guarded release procedure — AWS EC2 / SQLite
+
+## 0. Current release: AWS Phase 1 on the deployed PR #7 baseline (22 Nov 2026) — read first
+
+This section supersedes the PR #6-specific details below (§1 build command, `17eac94b` baseline, "11 files") for the
+Phase 1 release. §2–§5 (upload, read-only verification, activation, rollback) are used unchanged, and their baseline
+values below are now the deployed PR #7 values.
+
+- **Live baseline:** the deployed PR #7 release `20261121-595e5212-on-pr6-dashboard` (source `595e521`).
+  - Its upload's `SHA256SUMS.txt` must hash to `4e7845d1e12f76c373d3c1d147bb2bfddd49dbd21c7f4d5d8b419da0938f46e9`.
+  - Its live frontend `index.html` is `3871e20960490df6f8589a227862ed39a7a8bf99881bad0b63af932a3c99f9c2`.
+- **Scope:** exactly the backend files recorded in the package's `backend/comparison.json` (12 for Phase 1, 3 of them new), plus the web release. The 4 Personal Loan files are preserved. No schema change. Payments stay **paused on the server** (`/api/payment/*` → 503 unless `PAYMENTS_ENABLED=true` and the VimoPay configuration is complete).
+- **Build:** run from a clean worktree at the approved (after merge: merged-main) commit.
+  1. Make a fresh production web export of that same commit from a clean clone with the frozen lockfile.
+  2. Then run:
+     ```powershell
+     python -B deployment/aws-release/prepare_aws_release_on_pr7.py <worktree> <full-commit-sha> <raw-web-export-dir> phase1
+     python -B deployment/aws-release/rehearse_aws_release_on_pr7.py <worktree> <upload-dir> <bun.exe>
+     ```
+  3. The packager refuses a dirty tree, a HEAD other than the named commit, a PR #7 checksum or payload mismatch, a hash delta that differs from the git delta, changed Personal Loan files, and tools that differ from the deployed PR #7 tools.
+  4. The rehearsal rebuilds the PR #7 live tree and checks drift refusal, the migration, the install, and a rollback to every PR #7 hash.
+  5. After merge, regenerate from merged `origin/main` and require its tree to equal the reviewed candidate tree before upload.
+- **Additional read-only preflight before activation** (names and set/empty only; never print values):
+  ```sh
+  cd /home/ec2-user/paisa-mart-new/backend && python3 - <<'PYEOF'
+  import re
+  for line in open('.env'):
+      m = re.match(r'\s*(MSG91_[A-Z_]+|ALLOW_DEV_OTP|PAYMENTS_ENABLED|REVIEW_ACCOUNT_ENABLED)\s*=\s*(.*)', line)
+      if m: print(m.group(1), 'set' if m.group(2).strip().strip('"\'') else 'empty')
+  PYEOF
+  ```
+  - The MSG91 auth and template or widget values must be **set**. This release makes OTP fail closed without a provider.
+  - `ALLOW_DEV_OTP` and `PAYMENTS_ENABLED` must be absent or empty.
+  - If the process takes its environment from PM2 instead of `.env`, check the same names there.
+
+---
+
+# Earlier PR #6 procedure (historical context; §2–§5 still apply)
 
 These are instructions for a later, separately authorized release. No feature-branch production package, upload, migration, restart or deployment was performed during review. Use this procedure only after the user approves merging the final reviewed PR head. Upload and deployment need separate authorization.
 
@@ -75,12 +112,12 @@ cd "/home/ec2-user/paisa-mart-deployment/incoming/$release_name"
 printf '%s  %s\n' "$checksum_sha" SHA256SUMS.txt | sha256sum -c -
 sha256sum -c SHA256SUMS.txt
 python3 -B backend/backend-update.py verify
-printf '%s  %s\n' '1eb63519c0a82bb4dfb470dabc33240d1e737bc8bb1980950489f8030251c79f' '/home/ec2-user/paisa-mart-new/backend/public/index.html' | sha256sum -c -
+printf '%s  %s\n' '3871e20960490df6f8589a227862ed39a7a8bf99881bad0b63af932a3c99f9c2' '/home/ec2-user/paisa-mart-new/backend/public/index.html' | sha256sum -c -
 python3 -B /home/ec2-user/paisa-mart-deployment/verify.py
 )
 ```
 
-The index hash is from the retained manifest for the user-confirmed `20261021-17eac94b-dashboard` release, not a newly observed live hash. Any mismatch stops the release for investigation; do not restore the old release to make the check pass.
+The index hash is the frontend `index.html` of the deployed PR #7 release `20261121-595e5212-on-pr6-dashboard`, taken from its retained, checksum-verified manifest. It is not a newly observed live hash. Any mismatch stops the release for investigation; do not restore the old release to make the check pass.
 
 `backend-update.py verify` checks the complete recorded source baseline, including unchanged Personal files, staged source hashes, exactly one existing PM2 `paisa-mart` process with cwd `/home/ec2-user/paisa-mart-new/backend` and `bun run src/index.ts`, online/health state, required secret **presence only**, and the effective SQLite path `/home/ec2-user/paisa-mart-data/payments.db`. It rejects any configured `DATABASE_URL`, `POSTGRES_URL`, `HOME_LOANS_DATABASE_URL`, `PERSONAL_LOANS_DATABASE_URL`, `BUSINESS_LOANS_DATABASE_URL`, `LIFE_INSURANCE_DATABASE_URL` or `VEHICLE_LOANS_DATABASE_URL`. The Bun probe does not import application code or run migrations. Verify results and current live UI must be reviewed before deployment approval.
 
@@ -96,7 +133,7 @@ python3 -B backend/backend-update.py update --execute
 
 The updater acquires the existing process lock and refuses drift/reused backup paths. Before stopping the process, it creates `/home/ec2-user/paisa-mart-data/backups/backend-before-<release_name>` with mode 0700, copies source/package/locks and protected `.env`/PM2 metadata, creates a consistent SQLite backup using SQLite's backup API with a read-only source connection, verifies integrity and hashes, and rehearses candidate migrations against a **separate disposable database/source copy**. Rehearsal checks all original table row counts and integrity. This is performed only by the authorized update command; read-only verification creates no backup/migration.
 
-The migration imports Business/Life/Vehicle stores, initializes the five new service tables and calls the existing admin migration. Changes are additive: nullable Business fields plus Life/Vehicle/five-service tables, and nullable submission-key/hash columns with unique key indexes on Business/Life/Vehicle. Existing rows retain NULL keys; no application is deduplicated or deleted by phone number. No payout calculation is enabled. After a final drift check, the updater stops only the identified PM2 process, atomically writes the 11 files, applies the same migration against SQLite, restarts that same process and checks health. On failure/interruption it attempts verified code restoration and health recovery. An unconfirmed recovery is a hard stop requiring inspection, not permission for a blind retry.
+The migration imports Business/Life/Vehicle stores, initializes the five new service tables and calls the existing admin migration. Changes are additive: nullable Business fields plus Life/Vehicle/five-service tables, and nullable submission-key/hash columns with unique key indexes on Business/Life/Vehicle. Existing rows retain NULL keys; no application is deduplicated or deleted by phone number. No payout calculation is enabled. After a final drift check, the updater stops only the identified PM2 process, atomically writes exactly the files listed in `comparison.json` (12 for Phase 1), applies the same migration against SQLite, restarts that same process and checks health. On failure/interruption it attempts verified code restoration and health recovery. An unconfirmed recovery is a hard stop requiring inspection, not permission for a blind retry.
 
 Verify authenticated admin/customer behavior and the four Personal hashes using the recorded manifest before frontend activation. Then, under that same explicit deployment approval:
 
@@ -120,7 +157,7 @@ python3 -B backend/backend-update.py rollback --execute
 python3 -B /home/ec2-user/paisa-mart-deployment/verify.py
 ```
 
-If the frontend never changed, omit its rollback. Backend rollback checks backup hashes, PM2 identity and allowed live file hashes, then restores only the 11 affected code paths (removing only files absent from the baseline). It preserves the SQLite database, all new applications, additive tables/columns, audit history, secrets and four Personal files. The database snapshot is recovery evidence; automatically restoring it would lose later submissions and is **not** part of rollback. Never select `FINAL-GOOD-20261006` for this procedure. Verify the live UI and authenticated flows after rollback.
+If the frontend never changed, omit its rollback. Backend rollback checks backup hashes, PM2 identity and allowed live file hashes, then restores only the affected code paths listed in `comparison.json` (12 for Phase 1), removing only files absent from the baseline. It preserves the SQLite database, all new applications, additive tables/columns, audit history, secrets and four Personal files. The database snapshot is recovery evidence; automatically restoring it would lose later submissions and is **not** part of rollback. Never select `FINAL-GOOD-20261006` for this procedure. Verify the live UI and authenticated flows after rollback.
 
 ## Review evidence and limitations
 

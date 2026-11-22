@@ -2,12 +2,9 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import type { HomeLoanData } from './home-loan-store';
+import { API_BASE } from './api-base';
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_API_URL ||
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 
 type HomeLoanLeadPayload = HomeLoanData & { phoneNumber: string };
 

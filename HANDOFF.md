@@ -1,3 +1,172 @@
+# HANDOFF — Google Play remediation (22 Nov 2026) — CURRENT STATE
+
+**Play submission and production rollout are PAUSED** (owner instruction).
+- Branch `fix/play-store-remediation-20261122`, worktree `.play-remediation`, base `origin/main` `595e521`.
+- Local commits only: no push, PR, merge, deploy, AWS change, production deletion, reviewer-account creation, Play upload or reviewer-phone selection. The agent has run no production command.
+- Earlier HEADs `09ffbdc` and `6d874d8` are preserved in history.
+- PR description: [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
+- Incident: [INCIDENT_2026-11-22_test-profiles-in-production.md](docs/play-store-remediation-20261122/INCIDENT_2026-11-22_test-profiles-in-production.md).
+
+## Tested commits
+
+| Code | Commit | Evidence |
+|---|---|---|
+| Backend runtime | `e1e362d` (A-01, A-02, A-06, review account, A-03) | `bun test`, every file run separately: **106 pass / 0 fail across 22 files** (13 backend, 9 repo-root). `node scripts/check-api-isolation.mjs` passes. The backend `tsc` crashes (stack overflow) at HEAD with or without these changes; with `node --stack-size=30000` it lists 119 pre-existing errors, none in changed code. Live local API at `e61fa03`: unauthenticated profile GET/POST/list/KYC-PATCH all return 401. |
+| Mobile runtime | `e61fa03` + welcome copy `48226fb` | `tsc` 0 errors. WSL release builds of `e61fa03` pass the bundle isolation check: test `5d4595f4…e52b`, candidate `3b7fd209…f842` (production API, debug-signed, versionCode 8). `48226fb` changes only welcome-page wording. It was checked in a local web export at 1440, 390 and 360 px (`evidence/WELCOME-*.png`); no Android rebuild was made for wording alone. |
+| Device run, `e61fa03` test variant | Emulator with production DNS blocked, local backend | <ul><li>Fresh account: profile GET 404 → POST 200 → GET 200, with the token.</li><li>Synthetic account: ₹1,500.00 and both applications.</li><li>Review account: only its own records.</li><li>Admin stage change → "Sanctioned" shown in the app.</li></ul> |
+| Cleanup script | `incident_cleanup.py`, SHA-256 `46ddc713e59285a336553dd9b29aec61a582377cacd98a9a2658b05af454f089` (LF) | WSL replica: all abort, apply, rollback and leak scenarios pass (incident file). The Desktop paste file was tested as pasted: checksum OK → plan OK; a one-byte change → checksum FAILED, nothing ran; no temp file left; DB unchanged. |
+
+## Done (latest round)
+1. **Incident evidence recorded** as the owner's EC2 summary from the conversation (not raw output inspected by the agent). The four profiles are **strongly supported incident-created records**; phone-number ownership is unknown. Preserve `LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+2. **Cleanup script reviewed again:**
+   - `plan` is read-only (live DB `mode=ro` plus `query_only`; preserved backup immutable).
+   - `apply` compares full-row fingerprints inside the same `BEGIN IMMEDIATE` transaction as the linked-record scan and the delete.
+   - The row backup is private (0700/0600, `O_EXCL`), fsynced and verified by read-back before the delete. **Added:** an fsync of the parent directory, so the new backup directory entry is durable.
+   - `rollback` refuses to overwrite a profile created after the cleanup.
+3. **Read-only plan command** on the owner's Desktop: `C:\Users\Swetha Anusha\Desktop\paisa-mart-incident-cleanup-PLAN-readonly.txt`.
+   - Uses the script's own CLI: `plan <n1> <n2> <n3> <n4>`.
+   - Includes the SHA-256 check and instructions.
+   - Contains the four numbers, so it is not in Git.
+4. **Welcome page** (`48226fb`):
+   - New factual copy: eyebrow, heading, paragraph, "Find what you need" card, right-hand supporting text.
+   - Removed the repeated discovery line and the Discover/Grow promotional rows.
+   - Form, +91, placeholder, validation, button, OTP flow, and the Terms/About/help links are unchanged.
+5. **A-03 described accurately:** untrusted callbacks no longer change payment records, but authenticated payment reconciliation is **not** implemented (see below).
+
+## A-03 — payment callbacks (fixed locally `e1e362d`; reconciliation still incomplete)
+- **Done:**
+  - The unauthenticated `*callback*` catch-all that created or rewrote `txns` (status, amount, ID, payload) from any request is removed, along with `applyCallback`.
+  - Gateway callbacks are acknowledged only, and their bodies (name, phone) are not logged.
+  - The fallback acknowledgement runs after the routers, so the KYC callback routes are reached.
+  - Tests: `gateway-callback.test.ts` drives the real app and fails on the old code (4 of 5).
+- **Not done (do not claim):**
+  - There is **no authenticated payment reconciliation**. A transaction stays at the status recorded when it was created (normally Pending). Nothing marks a payment successful, from a callback or from a browser redirect.
+  - End-to-end payment processing is **not** fixed or verified. The VimoPay integration uses UAT endpoints.
+  - **Needed:** VimoPay's server-to-server transaction-status API (or a verifiable callback signature), then a reconciliation step that checks amount and reference.
+- **Other payment-route findings remain** from the audit (e.g. A-42 checkout script injection; the `/api/payment/auth` and `/config` diagnostics).
+
+## Incident (summary — details in the incident file)
+- **Owner's EC2 findings (22 Nov):**
+  - Live process `paisa-mart` (PM2 0, online) on `i-0e6f35bc4e48cde49`, `ap-southeast-2`. DB `/home/ec2-user/paisa-mart-data/payments.db`; `quick_check` passed.
+  - All four profiles are absent from the verified baseline `backend-before-20261121-595e5212-on-pr6-dashboard/payments.db`.
+  - GET responses went from 404 to 200 for each number.
+  - Every creation and update time falls in the incident window, and every email uses the reserved test domain.
+  - No linked matches across 170 scanned columns.
+  - The logs have no timestamps; nginx logs were not inspected.
+- **Classification:** strongly supported incident-created profiles. Phone-number ownership remains unknown.
+- **Do not** delete, overwrite or repurpose them except through the reviewed cleanup, and never use these numbers as the review phone.
+
+## Release dependency: authenticated web client ↔ backend profile enforcement (A-01)
+- **The new backend refuses unauthenticated profile calls** (`/api/users/profile*` → 401, other phone → 403, KYC-status PATCH staff only). So any client that does not send the customer token breaks on profile load and save once that backend is live.
+- **Order (each step separately authorized; currently PAUSED):**
+  1. Merge.
+  2. **New web release first.** The new web client sends the token, and the current backend ignores the header, so web keeps working on the old backend. Verify sign-in, profile load and save in the real UI.
+  3. **Backend second** (`backend-update.py verify` → `update --execute`). This enforces A-01 and includes A-02, A-06, the review account and A-03. Do not set `ALLOW_DEV_OTP`; check the MSG91 variable names.
+  4. **New Android build** (upload certificate verified, versionCode confirmed). It works with both backends.
+- **Web caveat:** browser tabs still running the old web bundle behave like old clients until they reload.
+- **Older Android installs** (the current app, including any APK served at `/download-apk` and any distributed build) send no token:
+  - **Signed-in users with a saved profile:** the profile GET returns 401, which the old app logs and falls back to the locally saved profile. They can continue, but server profile changes no longer sync.
+  - **New sign-ins and users still completing their profile:** the profile POST returns 401, so the old app shows "Profile save failed" and **cannot complete onboarding** until it updates.
+  - **KYC start:** returns 401 (KYC is disabled in the app UI).
+  - **Mitigation:** release the new Android build before or with step 3. Replace the `/download-apk` APK with the new build. Monitor 401 counts on `/api/users`. Consider an in-app update prompt. Leaving the profile API public to keep old installs working is **not** an option (owner decision).
+- **Rollback:** backend `backend-update.py rollback --execute`; web via the guarded frontend rollback. The new web client stays compatible with the rolled-back backend.
+
+## Remaining release blockers
+1. **Production profile cleanup:**
+   1. Owner runs the read-only `plan` (Desktop file) and returns its output.
+   2. Owner approves the 4 fingerprints.
+   3. `apply` is separately authorized.
+2. **Owner approval, then push, PR, review and merge.**
+3. **Rollout as above** (web → backend → Android), each step authorized. The Android build must be ready by the backend step.
+4. **Android signing:** the upload certificate is unverified; versionCode 8 is provisional; the source of versionCode 7 is unknown. A signed build of the final commit is needed (the last builds are of `e61fa03`; `48226fb` changes only wording).
+5. **Payments:** authenticated reconciliation (VimoPay status API) before any payment is shown or treated as successful.
+6. **Reviewer access:** reviewer phone not selected; production `REVIEW_ACCOUNT_*` not set (paused). Never use an incident number.
+7. **Unresolved owner decisions:**
+   - commission and rate-card figures;
+   - lender list;
+   - privacy-policy URL;
+   - A-08 ownership model (unchanged);
+   - "Pan India Reach" copy.
+
+## How to resume (environment outside Git)
+- **Builds:** from PowerShell, run `wsl -d Ubuntu-22.04 -- [env EXPO_PUBLIC_API_URL=http://127.0.0.1:3901 CLEARTEXT_LOCAL=1] bash <docs/.../wsl-build.sh>`. The test variant sets `EXPO_PUBLIC_TEST_ENV=1` and runs the bundle check.
+- **Web check:** export inside the WSL clone `~/pm-play/src/mobile`, because the Windows `node_modules` has an incompatible `expo-router`. Use test API variables and serve on 127.0.0.1. For phone widths, use an iframe, because headless Chrome enforces a minimum window width.
+- **Emulator:** AVD `pm_review` with **`-dns-server 127.0.0.1`**, then `adb reverse tcp:3901 tcp:3901`.
+- **Local backend:** Bun at `.build-tools/bun-runtime/bun-windows-x64/bun.exe`, `PORT=3901`, a scratch SQLite and random secrets. `ALLOW_DEV_OTP=true` locally only; `REVIEW_ACCOUNT_*` values are never committed.
+- **Tests:** `bun test <file>`, one file at a time (backend files from `backend/`, repo-root files from the root). Also run `node scripts/check-api-isolation.mjs`.
+
+## INCIDENT RESOLVED (owner-confirmed, 22 Nov 2026) — do not repeat the cleanup
+- Exactly **4** incident test profiles deleted; total profiles **9 → 5**.
+- Post-checks passed; the preserved full backup is unchanged.
+- **Row backup:** `/home/ec2-user/paisa-mart-data/backups/incident-cleanup-20261122T154044Z-3204996`.
+- **Full backup:** `/home/ec2-user/paisa-mart-data/backups/LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- Keep both until the owner releases them. Rollback (only if ever required, separately authorized) is described in the incident file.
+
+## Final review and draft PR (22 Nov) — NOT release-ready
+- **VimoPay paused:** the owner paused VimoPay integration, reconciliation and the fingerprint check. That paste file was **not** created, and no payment configuration was touched. Do not resume without instruction.
+- **Final diff review** (`595e521..db05364`, 107 files): no issues. No runtime change since the last full validation (`e9ffd09`, 120 / 0), so no checks were outstanding.
+- **New finding recorded:** the tracked root `android/` project is stale (`com.paisamartroot`, debug-signed release). Release builds come only from `mobile/` via prebuild (A-49).
+- **Draft PR:** [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md), covering exact scope, test evidence, blockers and the rollout table. Readiness: [READINESS_REPORT.md](docs/play-store-remediation-20261122/READINESS_REPORT.md).
+- **Next action:** the owner revokes the 5 exposed AI provider keys (section 3 of `docs/security/KEY_ROTATION_2026-11-22.md`). It needs no code or configuration change, because nothing uses them.
+
+## A-05 secret cleanup, local (`e9ffd09`, 22 Nov) — ROTATION PENDING (owner)
+- **Inventory** (masked; details in [KEY_ROTATION_2026-11-22.md](docs/security/KEY_ROTATION_2026-11-22.md)):
+  - **5 AI provider keys:** OpenAI, Anthropic, xAI, Google and ElevenLabs. They were in the archive and in historical `.env` files, and current code does not use them.
+  - **3 VimoPay gateway keys:** secret, salt and ED. They are in a historical `backend/.env` (f423e2c), and `lib/vimopay.ts` still reads these variables.
+  - **Demo admin credentials** in the README.
+  - All of these commits are on GitHub `origin/main` and other branches. Repository visibility is unverified.
+- **Done:**
+  - `backend/paisa-mart-mvp.zip` and `backend/payments.db` are untracked and preserved outside Git in an owner-only folder (`%USERPROFILE%\paisa-mart-secure\2026-11-22-removed-from-git\`).
+  - The public `/download` route is removed.
+  - The README credentials are redacted.
+  - New ignore rules, plus `backend/.env.example` and `mobile/.env.example`.
+  - New `scripts/secret-scan.py` (masked output), its allowlist, and `scripts/no-secret-files.test.ts`.
+- **Kept:** the standard `android/app/debug.keystore`. There is no upload keystore or `keystore.properties` in Git, and signing is unchanged.
+- **History is not rewritten:** the exposure remains until the keys are rotated and revoked.
+- **Checks:**
+  - redacted scan: 0 findings needing action (23 allowlisted test/doc values); it still detects all keys in the preserved archive;
+  - **120 tests pass / 0 fail / 0 skipped across 25 files**;
+  - the isolation check passes.
+- **Next (owner):** revoke the 5 AI keys. Run the read-only VimoPay fingerprint check in the rotation doc, then request new VimoPay keys. Check GitHub visibility and secret-scanning alerts.
+
+## A-42 FIXED locally (`ede1a10`, 22 Nov)
+- **Fix:**
+  - The checkout page renders every value (URL parameters, the stored last reference, status/create/state responses) as text; there is no HTML insertion.
+  - The payment link must be `https`, and the server allowlists its host (`lib/payment-url.ts`: `vimopay.in`, the `VIMOPAY_BASE_URL` host, `VIMOPAY_PAYMENT_URL_HOSTS`).
+  - Strict hash-pinned CSP; `Cache-Control: no-store`.
+  - `/status` no longer echoes unknown references; `/create` rejects non-identifier `merchantRefId` values before any gateway call. The A-03 protection is unchanged.
+- **Tests:**
+  - `checkout-page.test.ts` (6) and `checkout-page.browser.test.ts` (5). The browser test needs Chrome or Edge (set `CHROME_PATH` to choose one); it is skipped with a message if neither is found, and it is loopback-only.
+  - On the old code the browser payloads executed and redirected; 4 of the 6 unit tests and all 5 browser tests fail there.
+  - Full suite: **117 pass / 0 fail / 0 skipped, 24 files**. The isolation check passes. Backend `tsc` errors are still at the 119 baseline, none in changed files.
+- **Release check:** create one UAT payment after the backend update. If the link host is not under `vimopay.in`, the log shows `gateway paymentUrl rejected` with the host.
+
+## Readiness (final review, 22 Nov)
+- See [READINESS_REPORT.md](docs/play-store-remediation-20261122/READINESS_REPORT.md) and the final [PR_DESCRIPTION.md](docs/play-store-remediation-20261122/PR_DESCRIPTION.md).
+- **Review result:** the only runtime change since the validated commits is the welcome wording, which is already validated. The isolation check passes at HEAD. The secret scan of the branch diff is clean. Incident numbers in `CHECKLIST.md` are now masked.
+- **A-42:** fixed locally, see above.
+- **Also open:**
+  - A-04 (payment API public, UAT);
+  - A-05 (secrets and signing material tracked in Git: `backend/paisa-mart-mvp.zip`, `backend/payments.db`, `android/app/debug.keystore`; keys need rotation);
+  - A-09 / A-52 (sessions);
+  - Android signing.
+- **Next action:** the owner revokes or rotates the A-05 credentials following `docs/security/KEY_ROTATION_2026-11-22.md`. The local cleanup is done (`e9ffd09`).
+
+## Previous step (done)
+- **The EC2 read-only `plan` passed** (owner, 22 Nov).
+- **The owner approved deleting only the four incident profiles,** guarded by these fingerprints, in plan order (01, 03, 02, 99): `d83914834dbd120f00e5, 32258238dc8d19e72ab3, 5db9ffcb75c137d9d2c4, 77dbce08a355552f92ef`.
+- **APPLY paste file:** `C:\Users\Swetha Anusha\Desktop\paisa-mart-incident-cleanup-APPLY.txt`.
+  - It runs the same reviewed script (SHA-256 `46ddc713…f089`), checksum-verified, using its own CLI: `apply <n1..n4> --expect <fps> --confirm DELETE-4-INCIDENT-PROFILES`.
+  - All checks stay enabled.
+- **Tested on the WSL replica:**
+  - the real file STOPs there, because the fingerprints differ, and nothing is deleted;
+  - an identical file with the replica's fingerprints deletes exactly 4 rows, keeps the preserved backup unchanged, leaves no temp file, and leaks nothing.
+- **Not executed by the agent.** The owner runs it, then returns the output, which includes the `incident-cleanup-*` row-backup folder needed for any rollback.
+- Keep that folder and `LIVE-BEFORE-REMEDIATION-20261122T145011Z`.
+- Then record the result in the incident file.
+
+---
+
 # Current status — PR #7 (updated November 21, 2026, fourth session; code unchanged since `109d514`)
 
 **Read this section first. The PR #6 handoff below is historical (PR #6 is merged as `18ae178`).**

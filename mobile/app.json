@@ -7,12 +7,19 @@
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "icon": "./assets/branding/app-icon.png",
     "ios": {
       "bundleIdentifier": "com.paisamart.app",
       "supportsTablet": true
     },
     "android": {
       "package": "com.paisamart.app",
+      "icon": "./assets/branding/app-icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/branding/adaptive-icon-foreground.png",
+        "monochromeImage": "./assets/branding/adaptive-icon-monochrome.png",
+        "backgroundColor": "#FD8702"
+      },
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
@@ -23,7 +30,7 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO"
       ],
-      "versionCode": 5
+      "versionCode": 8
     },
     "plugins": [
       "expo-router",

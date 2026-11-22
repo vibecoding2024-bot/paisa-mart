@@ -1,12 +1,9 @@
 import type { PolicyType, PremiumSlab } from './life-insurance-store';
 import { submitDurableApplication } from './service-submission';
 import { ServiceSubmissionError } from './service-application-api';
+import { API_BASE } from './api-base';
 
-const BACKEND_URL =
-  process.env.EXPO_PUBLIC_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_VIBECODE_BACKEND_URL ||
-  process.env.EXPO_PUBLIC_API_URL ||
-  'https://paisa-mart.com';
+const BACKEND_URL = API_BASE;
 
 export async function submitLifeInsuranceLead(input: {
   phoneNumber: string;

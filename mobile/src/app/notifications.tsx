@@ -96,7 +96,7 @@ export default function NotificationsScreen() {
             </View>
             <Text className="text-gray-800 font-semibold text-base">No notifications yet</Text>
             <Text className="text-gray-400 text-sm mt-1 text-center px-8">
-              You'll see updates on payouts, KYC and incentives here.
+              Updates about your account will appear here.
             </Text>
           </View>
         ) : (

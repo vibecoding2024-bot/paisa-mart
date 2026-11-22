@@ -173,9 +173,9 @@ A mobile app (GroMo clone) that allows partners to earn money by selling financi
 - **Ops** - Can update stages, assign leads, process payouts
 - **Viewer** - Read-only access
 
-## Demo Credentials
-- Email: admin@paisamart.com
-- Password: admin123
+## Admin Credentials
+Admin and staff credentials are configured on the server (`HOME_LOAN_ADMIN_PASSWORD` and the staff accounts) and are
+never documented in the repository. The demo credentials previously listed here must not be used anywhere.
 
 ## Design
 - Primary: Dark Blue (#002561)
