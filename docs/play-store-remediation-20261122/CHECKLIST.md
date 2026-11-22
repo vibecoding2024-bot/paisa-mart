@@ -10,9 +10,9 @@ uploaded, submitted, merged or deployed. No AWS or production access.
 | Rejected artifact | versionCode 7, `com.paisamart.app` | From Google email |
 | Source of versionCode 7 | Unknown. Git's highest recorded versionCode is 5 (`9594380`). Builds use EAS (owner `paisamart`). Not reproduced. | **UNKNOWN** |
 | Web release `20261121-595e5212-on-pr6-dashboard` | A separate artifact, not evidence of the Android contents | Distinct |
-| Candidate APK (local test only) | `paisamart-vc8-CANDIDATE-prodapi-6d3a072-debugsigned-LOCALTEST.apk`. SHA-256 and launch check: see HANDOFF. Production API, no cleartext, **debug-signed**. | NOT uploadable |
-| Test-variant APK (device tests, screenshots) | `…TESTVARIANT-localapi-6d3a072…`. Same source; differs only by `EXPO_PUBLIC_API_URL=http://127.0.0.1:3901` and cleartext. | Local only |
-| Earlier evidence build | `…TESTVARIANT-localapi-d7c8a33…` SHA-256 `b9d1bd22…8cfa`. A-07 and review tests ran on it. `6d3a072` changes only two strings: the per-item amount format and the notifications empty-state copy. | Local only |
+| Candidate APK (local test only) | `paisamart-vc8-CANDIDATE-prodapi-fcebb6b-debugsigned-LOCALTEST.apk`, SHA-256 `47a9e6d165cf231cf681d7a31bbd3e62dd6b644c2993645342464a177db17b2d`. Source `fcebb6b`. versionCode 8 / 1.0.0, minSdk 24, targetSdk 36. Production API, no cleartext, **debug-signed**. Installed; launches to the login screen (no production login). | NOT uploadable |
+| Test-variant APK (screenshots 01, 06) | `…TESTVARIANT-localapi-fcebb6b…`, SHA-256 `28a53fbf0cce7c4611a6d919e0e22d79c4ae8425b8efa6a28ea9afabd75f6869`. Differs from the candidate only by `EXPO_PUBLIC_API_URL=http://127.0.0.1:3901` and cleartext. | Local only |
+| Earlier test builds (evidence) | `d7c8a33` (`b9d1bd22…8cfa`): A-07, admin-stage and review-account device tests. `6d3a072` (`1cc7e31a…c051`). Later commits change only: the per-item amount format, the notifications empty-state copy, and the Home total kept on one line (it wrapped at ₹1,500.00). Device checks were re-run on `fcebb6b` for Home and Earnings. | Local only |
 | Build host | WSL Ubuntu-22.04, user-space JDK 17 + SDK/NDK 27.1.12297006, clean clone, `pnpm install --frozen-lockfile`, `expo prebuild --clean`. Script: `wsl-build.sh`. | Reproducible |
 | versionCode 8 | 7 is the highest code evidenced | **PROVISIONAL** |
 
