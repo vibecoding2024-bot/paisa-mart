@@ -1,19 +1,23 @@
-# HANDOFF — Customer application-list privacy fix (25 Nov 2026) — CURRENT STATE
+# HANDOFF — Customer privacy fixes: application lists + "My eligible payouts" (25 Nov 2026) — CURRENT STATE
 
-**Scope (owner decision, 25 Nov):** only the customer application-list privacy fix. Matrix: [docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md](docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md).
+**Scope (owner decisions, 25 Nov):** the customer application-list privacy fix, then a narrow extension to verify "My eligible payouts" cache isolation and fix it only if it leaks. Matrix: [docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md](docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md).
 
 - **Branch:** `fix/pdf-requirements-verify-20261124` in worktree `.pdf-requirements-verify`, based on `origin/main` `28713f2` (PR #9).
-- **Status:** pushed, with a **draft** PR (link in the PR section below). No merge, upload, restart or deployment. No production access or data. Phase 2 session/MPIN work is not included.
+- **PR:** draft [#10](https://github.com/vibecoding2024-bot/paisa-mart/pull/10). No merge, upload, restart or deployment. No production access or data. Phase 2 session/MPIN work is not included.
+- **Code tested: `f434e77`.** The final head is the docs commit after it (it adds this section, the matrix update and evidence); the exact head is reported in PR #10.
 - **Last confirmed production (unchanged):** backend Phase 1 `f4187f2`; frontend `28713f27`, release `20261123-28713f27-admin-ops-hotfix`, live index `36a657a9…76e1`. **Production is not fixed** until an approved release is deployed and its UI is verified.
 - **Local `main` is stale:** it is at `facbc4c` with dirty changes and has diverged from `origin/main`. It was not touched.
 
 ### Result
-- **Admin PDF:** verified working on current code; unchanged. Payout visibility, approval order and one-way Payout selection were kept by owner decision.
+- **Admin PDF:** verified working on current code; unchanged. Payout visibility, approval order and one-way Payout selection kept by owner decision.
 - **Gold Loans:** no persistent source; **still incomplete**.
-- **Customer privacy, two leaks fixed (tested locally):**
+- **Application lists, two leaks fixed (tested locally):**
   1. **Settled account switch:** fixed in `3797179` with `gcTime: 0`.
-  2. **Logout while the list request was still in flight:** the next customer's screen joined the pending request and rendered the previous customer's records, which persisted through back/forward. Fixed in `7a0ed91` by scoping the query key to the signed-in customer's phone and not running without one.
-- **Out of scope, untested, unchanged:** "My eligible payouts" uses the same shared-key pattern.
+  2. **Logout while the list request was in flight:** the next customer joined the pending request and saw the previous customer's records. Fixed in `7a0ed91` with a query key scoped to the signed-in customer's phone, not run without one.
+- **"My eligible payouts" (shares its cache with the Home total and the Earnings tab):**
+  - **Normal switch:** no visible leak on `7a0ed91`.
+  - **Logout mid-request:** **leaked on `7a0ed91`.** B's Home showed A's approved total ₹4,321.09; the signed-out payout screen joined A's pending request.
+  - **Fixed in `f434e77`:** the same customer-scoped key and options in `useApprovedPayouts`; the payout screen uses that hook. Amounts, approvals, visibility rules, backend and admin tabs unchanged.
 
 ### Changed runtime files (vs `28713f2`)
 | File | Why |
@@ -21,33 +25,33 @@
 | `mobile/src/lib/customer-private-query.ts` | `CUSTOMER_PRIVATE_QUERY` (`gcTime 0` etc.) and `customerQueryKey(list, phone)` |
 | `mobile/src/app/my-applications.tsx` | Identity-scoped key, `enabled: !!phone`, private options |
 | `mobile/src/app/home-loan-applications.tsx` | Same leak path, same change |
-| `scripts/customer-private-query.test.ts` | Real React Query observers for settled and in-flight logout, with controls proving the old keys leak; screen guard |
+| `mobile/src/lib/customer-payout-api.ts` | `useApprovedPayouts` (Home, Earnings, My eligible payouts): identity-scoped key, `enabled: !!phone`, private options; 15 s refresh kept |
+| `mobile/src/app/customer-payouts.tsx` | Uses `useApprovedPayouts` instead of its own query copy; existing sign-in message when signed out |
+| `scripts/customer-private-query.test.ts` | Real React Query observers for settled and in-flight logout (lists and payouts), with controls proving the old keys leak; source guards |
 
 No backend file changed. Docs: `docs/pdf-requirements-20261124/` (matrix, harness, evidence) and this section.
 
-### Tests (code tested: `7a0ed91`; later commits are docs only)
-- **`bun test`, each file separately:** **128 pass / 0 fail across 28 files**, including the PR #9 prefix test (baseline `28713f2`: 125 / 0 across 27).
-- **Other checks:**
-  - `check-api-isolation` passes.
-  - Mobile `tsc` passes.
-  - Backend `tsc` was not run (no backend change; known crash baseline).
-- **Real local backend plus built test web export:**
+**Behaviour note:** signed out, the Home and Earnings payout totals now show their loading placeholder instead of "Unavailable" (the query no longer runs without a signed-in customer).
 
-| Commit | API | Browser | Privacy |
-|---|---|---|---|
-| `28713f2` | 216 / 0 | 99 / 2 | 8 / 3 |
-| `3797179` | 216 / 0 | 101 / 0 | 8 / 3 |
-| `7a0ed91` | **216 / 0** | **101 / 0** | **11 / 0** |
+### Tests (code tested: `f434e77`)
+- **`bun test`, each file separately:** **129 pass / 0 fail across 28 files**, including the PR #9 prefix test (`7a0ed91`: 128 / 0; baseline `28713f2`: 125 / 0 across 27).
+- **Other checks:** `check-api-isolation` passes. Mobile `tsc` passes (clean WSL clone of `f434e77`, TypeScript 5.9.3). Backend `tsc` was not run (no backend change; known crash baseline).
+- **Real local backend plus built test web export** (`f434e77` export index `3be7cad3…8dc4`; synthetic identities; scratch SQLite; outbound blocked, the only attempt being the Vibecode proxy start-up):
 
+| Commit | API | Browser | List privacy | Payout privacy |
+|---|---|---|---|---|
+| `28713f2` | 216 / 0 | 99 / 2 | 8 / 3 | not run |
+| `3797179` | 216 / 0 | 101 / 0 | 8 / 3 | not run |
+| `7a0ed91` | 216 / 0 | 101 / 0 | 11 / 0 | **24 / 5** |
+| `f434e77` | **216 / 0** | **101 / 0** | **11 / 0** | **29 / 0** |
+
+- **Payout scenarios:** normal switch; logout with A's requests held in flight and released during B's session; delayed B responses; signed-out `/customer-payouts`; back ×4 / forward ×4. Only on-screen renders count as leaks.
 - **Browser coverage:** the 14 admin tabs at desktop and phone width; no `/api/` response returned `index.html`.
-- **Outbound traffic:** blocked; the only attempt was Vibecode proxy start-up.
-- **Secret scan:** 2 findings, classified with redacted evidence; nothing bypassed or allowlisted. One synthetic fixture already on `main` (`scripts/admin-operations-api.test.ts:23`), one false positive (harness variable `t.viewer1`).
-
-### PR
-- Draft PR: see GitHub (opened from this branch; link recorded in the final report).
+- **Evidence:** `evidence/payout-baseline-7a0ed91/`, `evidence/payout-fix-f434e77/` (with `regression/`).
+- **Secret scan:** the same 2 findings, classified with redacted evidence; nothing bypassed or allowlisted. One synthetic fixture already on `main` (`scripts/admin-operations-api.test.ts:23`), one false positive (harness variable `t.viewer1`).
 
 ### Next action
-Owner reviews the draft PR. After approval, merge, then build a new uniquely named frontend-only release from the merged commit and deploy it separately under authorization. Verify customer sign-out → sign-in in the real UI afterwards.
+The owner reviews draft PR #10. After approval: merge, build a new uniquely named frontend-only release from the merged commit and deploy it separately under authorization. Then verify customer sign-out → sign-in in the real UI, including the Home payout total.
 
 ---
 

@@ -1,0 +1,36 @@
+PASS create staff ops1@example.test
+PASS create staff exec1@example.test
+PASS create staff mgr1@example.test
+PASS profile 9876500007
+PASS profile 9876500008
+PASS seeded approved payout BL-f3f6efc0-38eb-482b-bc7f-01c57e30b3bb for 9876500007
+PASS seeded approved payout BL-b7acd38c-841b-4a39-80fa-53ee2e1d2002 for 9876500008
+PASS API: A gets only A payout, B only B, no token 401
+PASS [settled] A sees own payout (control)
+PASS [settled] logout cleared the token
+PASS [settled] signed-out payout screen asks to sign in and shows no A payout
+PASS [settled] B Home shows B total and never A's
+PASS [settled] B Earnings shows B payout and never A's
+PASS [settled] B Earnings never renders A
+PASS [settled] B My eligible payouts shows B's payout
+PASS [settled] B My eligible payouts never renders A
+PASS [settled] back/forward stayed in the same page session (no reload)
+PASS [settled] back/forward never renders A's payout for B
+[settled] delayed B; delayed B; delayed B; delayed B; delayed B
+[settled] visible A renders: []
+[settled] hidden-only A renders: ["BL-f3f6efc0-38eb-482b-bc7f-01c57e30b3bb @ /profile","4,321.09 @ /profile"]
+PASS [in-flight] A payout requests still in flight at logout
+PASS [in-flight] logout cleared the token
+PASS [in-flight] signed-out payout screen asks to sign in and shows no A payout
+PASS [in-flight] B Home shows B total and never A's
+PASS [in-flight] B Earnings shows B payout and never A's
+PASS [in-flight] B Earnings never renders A
+PASS [in-flight] B My eligible payouts shows B's payout
+PASS [in-flight] B My eligible payouts never renders A
+PASS [in-flight] back/forward stayed in the same page session (no reload)
+PASS [in-flight] back/forward never renders A's payout for B
+[in-flight] held A; delayed B; delayed B; delayed B; delayed B; delayed B
+[in-flight] visible A renders: []
+[in-flight] hidden-only A renders: []
+PASS no uncaught runtime errors
+Payout privacy verification: 29 pass / 0 fail

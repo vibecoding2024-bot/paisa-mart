@@ -5,6 +5,7 @@ Branch `fix/pdf-requirements-verify-20261124` from `origin/main` `28713f2` (PR #
 **Summary:**
 - Admin requirements are **verified working** on the current code, with no change.
 - **Customer application-list privacy fix: tested locally only, not deployed.**
+- **"My eligible payouts" cache isolation: leak found and fixed (`f434e77`); tested locally only, not deployed.**
 - **Gold Loan dependency: still incomplete.**
 
 | Source | SHA-256 | Pages |
@@ -17,6 +18,7 @@ Both are byte-identical to the copies without "(1)" and to the files PR #7 audit
 ## Owner decisions applied (25 Nov)
 
 - **Proceed only with the customer application-list privacy fix.**
+- **Extension (25 Nov):** verify "My eligible payouts" cache isolation with the same scenarios; fix only if it leaks. No change to payout amounts, approvals, visibility rules, backend or admin tabs.
 - **Unchanged by decision:** current payout visibility, approval order (either order) and the one-way Payout selection.
 - **Not implemented by decision:** Gold, Open Plots, WhatsApp, admin-session or logout-navigation changes.
 
@@ -40,7 +42,10 @@ Old handoff claims and unit tests were **not** taken as proof.
 |---|---|---|---|
 | Baseline `28713f2` | 216 / 0 | 99 / **2** (settled account-switch leak, both screens) | 8 / **3** (in-flight leak, both screens, back/forward) |
 | Intermediate `3797179` (`gcTime 0` only) | 216 / 0 | 101 / 0 | 8 / **3** (in-flight leak remained) |
-| **Final `7a0ed91`** | **216 / 0** | **101 / 0** | **11 / 0** |
+| `7a0ed91` (application lists fixed) | 216 / 0 | 101 / 0 | 11 / 0 |
+| **Final `f434e77`** (payouts fixed) | **216 / 0** | **101 / 0** | **11 / 0** |
+
+Payout scenarios ([payout-privacy-verify.cjs](harness/payout-privacy-verify.cjs)): `7a0ed91` **24 / 5**, `f434e77` **29 / 0**. Details in the payouts section below.
 
 - **Results files:** `evidence/baseline-28713f2/`, `evidence/fix-7a0ed91/` (with screenshots) and `evidence/fix-3797179-privacy/`. The Change Stage modal screenshots in `evidence/admin-ui-3797179/` come from a build with identical admin code.
 - **To rerun:** copy `harness/` to a scratch folder, then run `bash wsl-web-export.sh <commit> http://127.0.0.1:3911 <web-dir>` (in WSL), and `bash verify-all.sh <commit> <web-dir> <tag>` plus `bash privacy-run.sh <commit> <web-dir> <tag>` (Git Bash).
@@ -110,4 +115,30 @@ Old handoff claims and unit tests were **not** taken as proof.
 - **Payout visibility, either approval order and the one-way Payout selection:** kept as-is by owner decision.
 - **Admin page reload returns to sign-in;** customer logout lands on `/basic-info`. Not changed.
 - **Backend `tsc`:** not run. No backend file changed; its known baseline (stack-overflow crash) remains.
-- **Not in scope, not tested:** "My eligible payouts" (`customer-payouts.tsx`) still uses a shared query key with `gcTime: 0`, the same pattern that had the in-flight gap. It was not exercised by these scenarios and was not changed (owner scope).
+- **Signed-out Home and Earnings totals:** with no signed-in customer the payout query no longer runs, so these show their loading placeholder instead of "Unavailable". A signed-out visitor normally can't reach these tabs; the payout screen itself still says "Please sign in to view your payout details".
+
+## "My eligible payouts" cache isolation (extension, 25 Nov)
+
+**Scope:** "My eligible payouts" (`/customer-payouts`) shares one React Query cache with the Home tab total and the Earnings tab (`useApprovedPayouts`, key `['my-approved-payouts']`), so all three were watched.
+
+**Scenarios** (real local backend, built test web app, synthetic customers `9876500007` (A) and `9876500008` (B), approved payouts seeded through the real admin routes: ops enters the amount, executive and manager approve; outbound traffic blocked):
+- **Normal account switch:** A loads Home, Earnings and My eligible payouts, closes them, logs out; B signs in through the OTP UI in the same tab with B's payout responses delayed 1.5 s.
+- **Logout during a pending request:** A's payout requests are held in flight through A's logout and released during B's session.
+- **Signed-out access:** after logout, `/customer-payouts` is opened with no token.
+- **Back ×4 / forward ×4** afterwards, in the same page session.
+- A DOM observer, armed at A's logout, records any of A's reference number or amount (`4321.09`, `4,321.09`) that renders **visibly on screen**. Renders inside hidden screens are reported separately.
+
+| Check | `7a0ed91` (before) | `f434e77` (after) |
+|---|---|---|
+| API: A gets only A, B only B, no token 401 | Pass | Pass |
+| Normal switch: Home, Earnings, My eligible payouts, back/forward | **Pass: no visible A render** | Pass |
+| Signed-out payout screen | Pass after a normal switch; **in-flight: joins A's pending request** ("Loading…" instead of the sign-in message) | Pass |
+| Logout mid-request: B's Home | **Fail: B's Home showed A's total ₹4,321.09** (`payout-baseline-7a0ed91/payout-in-flight-leak-1-phone.png`) | Pass |
+| Logout mid-request: Earnings, My eligible payouts, back/forward | Fail (the A render above counts for every later check) | Pass |
+| Total | **24 / 5** | **29 / 0** |
+
+- **Hidden-only renders, both commits, normal switch:** A's values remain in A's own Profile-stack screens for a moment after logout, while they are being closed, before B signs in. They are not visible (the element-visibility check fails) and not B's session.
+- **Fix (`f434e77`):** `useApprovedPayouts` now uses `customerQueryKey('my-approved-payouts', phone)`, `enabled: !!phone` and `CUSTOMER_PRIVATE_QUERY` (still `gcTime: 0`, 15 s refresh). `customer-payouts.tsx` uses that hook instead of its own copy of the query and shows the existing sign-in message when no customer is signed in.
+- **Unchanged:** payout amounts, approvals, approval order, visibility rules and the customer response shape (`{referenceNumber, productType, customerAmount, currency}`), backend and admin tabs.
+- **Regression test:** `scripts/customer-private-query.test.ts` gains a payout case (settled and in-flight logout; control proves the old key leaked) and source guards for the hook and screen.
+- **Evidence:** `evidence/payout-baseline-7a0ed91/`, `evidence/payout-fix-f434e77/`. To rerun: `bash payout-privacy-run.sh <commit> <web-dir> <tag>` (Git Bash).

@@ -1,0 +1,152 @@
+{
+  "pass": 29,
+  "fail": 0,
+  "results": [
+    {
+      "label": "create staff ops1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "create staff exec1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "create staff mgr1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "profile 9876500007",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "profile 9876500008",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "seeded approved payout BL-f3f6efc0-38eb-482b-bc7f-01c57e30b3bb for 9876500007",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "seeded approved payout BL-b7acd38c-841b-4a39-80fa-53ee2e1d2002 for 9876500008",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "API: A gets only A payout, B only B, no token 401",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] A sees own payout (control)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] logout cleared the token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] signed-out payout screen asks to sign in and shows no A payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] B Home shows B total and never A's",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] B Earnings shows B payout and never A's",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] B Earnings never renders A",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] B My eligible payouts shows B's payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] B My eligible payouts never renders A",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] back/forward stayed in the same page session (no reload)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[settled] back/forward never renders A's payout for B",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] A payout requests still in flight at logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] logout cleared the token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] signed-out payout screen asks to sign in and shows no A payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] B Home shows B total and never A's",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] B Earnings shows B payout and never A's",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] B Earnings never renders A",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] B My eligible payouts shows B's payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] B My eligible payouts never renders A",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] back/forward stayed in the same page session (no reload)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[in-flight] back/forward never renders A's payout for B",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "no uncaught runtime errors",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}
