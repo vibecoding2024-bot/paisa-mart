@@ -102,8 +102,8 @@ Old handoff claims and unit tests were **not** taken as proof.
 
 | Finding | Redacted evidence | Classification |
 |---|---|---|
-| `scripts/admin-operations-api.test.ts:23` `HOME_LOAN_ADMIN_PASSWORD` | `process.env.HOME_LOAN_ADMIN_PASSWORD = 'synt…<masked>';` — length 24, sha256 `c4345558…`. Added in `ed50d03` (PR #9). Found in no other tracked file. The test drives the app in-process with a mocked `fetch` (`http://local.test`). | **Synthetic test fixture, pre-existing on `main`; not a credential.** It was not compared with the production value, because there is no production access. Any change (rename, or a narrow per-file allowlist with reason) is the owner's decision. |
-| `docs/pdf-requirements-20261124/harness/http-verify.mjs:110` `token` | The matched text is the identifier `token: t.viewer1` (length 9). `t` is filled at run time from `staffToken()` on the local backend (lines 64–65). | **False positive:** a variable reference with no literal value. |
+| `scripts/admin-operations-api.test.ts:23` `HOME_LOAN_ADMIN_PASSWORD` | The test assigns a 24-character string literal beginning `synt` (masked; sha256 `c4345558…`) to that environment variable. Added in `ed50d03` (PR #9). Found in no other tracked file. The test drives the app in-process with a mocked `fetch` (`http://local.test`). | **Synthetic test fixture, pre-existing on `main`; not a credential.** It was not compared with the production value, because there is no production access. Any change (rename, or a narrow per-file allowlist with reason) is the owner's decision. |
+| `docs/pdf-requirements-20261124/harness/http-verify.mjs:110` `token` | The matched “value” is the 9-character identifier `t.viewer1`, passed as the request token option. `t` is filled at run time from `staffToken()` on the local backend (lines 64–65). | **False positive:** a variable reference with no literal value. |
 
 ## Recorded, unchanged
 
