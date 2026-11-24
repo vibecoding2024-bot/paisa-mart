@@ -272,7 +272,9 @@ async function seed(phone, which) {
     check('F', 'all 11 of A’s records still listed after admin processing', la.json.data.length === 11 && customerIdsA.every(id => by[id]), la.text.slice(0, 300));
     check('F', 'customer sees admin-set stages (HL disbursed, BL disbursed, BA activation)', by[ids.HL].stage === 'disbursed' && by[ids.BL].stage === 'disbursed' && by[ids.BA].stage === 'approved', JSON.stringify([by[ids.HL].stage, by[ids.BL].stage, by[ids.BA].stage]));
     const raw = la.text;
-    const leaks = [note, 'ops1@example.test', 'exec1', 'mgr1', 'Synthetic local evidence', '760', '01/02/1990', '85000', '4500.25', '0.02', '9.99', 'paisamart', 'priority', 'assignedOwner', 'notes'].filter(s => raw.toLowerCase().includes(s.toLowerCase()));
+    // Values are matched as exact JSON strings: bare digits also occur inside timestamps (e.g. ...02.760Z).
+    const leaks = [note, 'ops1@example.test', 'exec1', 'mgr1', 'Synthetic local evidence', 'paisamart', 'priority', 'assignedOwner', 'notes'].filter(s => raw.toLowerCase().includes(s.toLowerCase()))
+      .concat(['760', '01/02/1990', '85000', '4500.25', '0.02', '9.99'].filter(v => raw.includes('"' + v + '"')));
     check('F', 'customer list excludes notes, staff, evidence, credit/DOB/income, payout amounts', leaks.length === 0, leaks.join(','));
     check('F', 'customer list fields limited to reference/product/stage/dates/details', la.json.data.every(r => Object.keys(r).sort().join() === 'createdAt,details,productType,referenceNumber,stage,updatedAt'));
   }

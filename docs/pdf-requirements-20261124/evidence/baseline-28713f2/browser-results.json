@@ -1,12 +1,12 @@
 {
   "ids": {
-    "HL": "HL-ce333025-a313-40ca-92e0-6d026adf2e7f",
-    "BL": "BL-f75fbcc0-3461-4876-818d-80716006794d",
-    "PL": "PL-3b01ede5-4252-4c8f-8535-0ebb111e574a",
-    "VL": "VL-2e64f570-0f1b-480e-ba22-ce44b78ed2d4",
-    "BA": "BA-9a857a4f-5067-4804-8b18-f49119f7a065",
-    "IL": "IL-f26ce11d-e834-4777-aaff-14857d9488b6",
-    "BLD": "BL-751c39a2-48f9-4f52-8c87-c0f737f09835"
+    "HL": "HL-5b015b53-be34-4a74-b086-3d0c10239a39",
+    "BL": "BL-f8cfc15b-77e7-473c-9397-34c43c3a282b",
+    "PL": "PL-c3f200f6-fb14-4f95-acaa-0b39a726c333",
+    "VL": "VL-21296be4-687c-4ac1-ba36-14306bfdd762",
+    "BA": "BA-5bb9f48d-4c3b-41ee-892c-d8c48d45b1e4",
+    "IL": "IL-2b52b14f-0b99-47e0-8bed-95e2a166a1d9",
+    "BLD": "BL-42991934-41a4-496e-b68f-3f53fb26a59e"
   },
   "pass": 99,
   "fail": 2,
@@ -422,7 +422,7 @@
       "area": "F",
       "label": "after logout, customer D never sees customer C's cached records (in-app navigation)",
       "pass": false,
-      "detail": "C reference numbers rendered on D screen: HL-ce333025-a313-40ca-92e0-6d026adf2e7f, BL-f75fbcc0-3461-4876-818d-80716006794d, PL-3b01ede5-4252-4c8f-8535-0ebb111e574a, VL-2e64f570-0f1b-480e-ba22-ce44b78ed2d4, BA-9a857a4f-5067-4804-8b18-f49119f7a065, IL-f26ce11d-e834-4777-aaff-14857d9488b6"
+      "detail": "C reference numbers rendered on D screen: HL-5b015b53-be34-4a74-b086-3d0c10239a39, BL-f8cfc15b-77e7-473c-9397-34c43c3a282b, PL-c3f200f6-fb14-4f95-acaa-0b39a726c333, VL-21296be4-687c-4ac1-ba36-14306bfdd762, BA-5bb9f48d-4c3b-41ee-892c-d8c48d45b1e4, IL-2b52b14f-0b99-47e0-8bed-95e2a166a1d9"
     },
     {
       "area": "F",

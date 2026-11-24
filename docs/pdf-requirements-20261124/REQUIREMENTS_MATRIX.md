@@ -1,6 +1,11 @@
 # PDF requirements — verification matrix (24–25 Nov 2026)
 
-Branch `fix/pdf-requirements-verify-20261124` from `origin/main` `28713f2` (PR #9, the confirmed production frontend). Backend source unchanged from `f4187f2` (Phase 1). Local commits only: no push, merge, upload, restart or deployment.
+Branch `fix/pdf-requirements-verify-20261124` from `origin/main` `28713f2` (PR #9, the confirmed production frontend). Backend source unchanged from `f4187f2` (Phase 1).
+
+**Summary:**
+- Admin requirements are **verified working** on the current code, with no change.
+- **Customer application-list privacy fix: tested locally only, not deployed.**
+- **Gold Loan dependency: still incomplete.**
 
 | Source | SHA-256 | Pages |
 |---|---|---|
@@ -9,29 +14,36 @@ Branch `fix/pdf-requirements-verify-20261124` from `origin/main` `28713f2` (PR #
 
 Both are byte-identical to the copies without "(1)" and to the files PR #7 audited.
 
+## Owner decisions applied (25 Nov)
+
+- **Proceed only with the customer application-list privacy fix.**
+- **Unchanged by decision:** current payout visibility, approval order (either order) and the one-way Payout selection.
+- **Not implemented by decision:** Gold, Open Plots, WhatsApp, admin-session or logout-navigation changes.
+
 ## How this was verified
 
-Old handoff claims and unit tests were **not** taken as proof. Every result below comes from this run:
+Old handoff claims and unit tests were **not** taken as proof.
 
 - **Real backend:** an unmodified `backend/src/index.ts` from each commit, on `127.0.0.1:3911` with a fresh scratch SQLite database. Synthetic identities only (`98765000xx`, `@example.test`).
-- **Real OTP route** in dev-OTP mode (MSG91 unconfigured). No provider was called.
+- **Real OTP route** in dev-OTP mode (MSG91 unconfigured; no provider called). Staff and admin passwords are random per run.
 - **Outbound traffic blocked:**
-  - A Bun preload refuses every non-loopback `fetch`. Its only hit was the Vibecode proxy's start-up `proxy.vibecodeapp.com/v1/domains` call, which was blocked.
+  - A Bun preload refuses every non-loopback `fetch`. Its only hit was the Vibecode proxy's start-up call, which was blocked.
   - Dead `HTTP(S)_PROXY`.
   - The browser aborts every non-loopback request (Google Fonts only).
-- **Built web app:** a clean WSL clone with a frozen `pnpm` install and `expo export -p web`. It is a test build: `EXPO_PUBLIC_TEST_ENV=1` and a loopback API URL, so it refuses production. The backend served it the same way production does (from `public/`).
-- **Two layers:**
-  - [harness/http-verify.mjs](harness/http-verify.mjs): 216 HTTP checks.
-  - [harness/browser-verify.cjs](harness/browser-verify.cjs): 101 headless Chrome checks at 1440 px and 390 px.
-- **Same harness on both commits:**
+- **Built web app:** a clean WSL clone with a frozen `pnpm` install and `expo export -p web`, served by the backend from `public/` as in production. It is a test build (`EXPO_PUBLIC_TEST_ENV=1`, loopback API), so it refuses production.
+- **Harness:**
+  - [http-verify.mjs](harness/http-verify.mjs): 216 API checks.
+  - [browser-verify.cjs](harness/browser-verify.cjs): 101 Chrome checks at 1440 px and 390 px.
+  - [privacy-verify.cjs](harness/privacy-verify.cjs): customer A's list requests are **held in flight** through A's logout; B signs in through the real OTP UI in the **same tab** with **delayed** responses; A's held responses are **released during B's session**; then browser **back ×4 / forward ×4**. A DOM observer records any A reference number that ever renders.
 
-| Commit | HTTP | Browser |
-|---|---|---|
-| Baseline `28713f2` | 216 / 0 | **99 / 2** (the two leaks below) |
-| Fix `3797179` | 216 / 0 | **101 / 0** |
+| Commit | API | Browser | Privacy scenario |
+|---|---|---|---|
+| Baseline `28713f2` | 216 / 0 | 99 / **2** (settled account-switch leak, both screens) | 8 / **3** (in-flight leak, both screens, back/forward) |
+| Intermediate `3797179` (`gcTime 0` only) | 216 / 0 | 101 / 0 | 8 / **3** (in-flight leak remained) |
+| **Final `7a0ed91`** | **216 / 0** | **101 / 0** | **11 / 0** |
 
-- **Results files:** `evidence/baseline-28713f2/*.json`, `evidence/fix-3797179/*.json`; screenshots in `evidence/fix-3797179/`.
-- **To rerun:** copy `harness/` to a scratch folder, then run `bash wsl-web-export.sh <commit> http://127.0.0.1:3911 <web-dir>` (in WSL) and `bash verify-all.sh <commit> <web-dir> <tag>` (Git Bash). Staff and admin passwords are random per run.
+- **Results files:** `evidence/baseline-28713f2/`, `evidence/fix-7a0ed91/` (with screenshots) and `evidence/fix-3797179-privacy/`. The Change Stage modal screenshots in `evidence/admin-ui-3797179/` come from a build with identical admin code.
+- **To rerun:** copy `harness/` to a scratch folder, then run `bash wsl-web-export.sh <commit> http://127.0.0.1:3911 <web-dir>` (in WSL), and `bash verify-all.sh <commit> <web-dir> <tag>` plus `bash privacy-run.sh <commit> <web-dir> <tag>` (Git Bash).
 
 ## Loan-type inventory (Admin PDF "all loan types")
 
@@ -42,65 +54,60 @@ Old handoff claims and unit tests were **not** taken as proof. Every result belo
 | Personal | `personal_loan_applications` (PL) and legacy `personal_loan_leads` (PL-LEGACY) | Leads list and lead details modal |
 | Vehicle | `vehicle_loan_leads` (VL) | Leads list and lead details modal |
 | Insta | `insta_loan_applications` (IL) | Leads list and lead details modal |
-| **Gold** | **None.** Catalogue entry only: no intake form, table, route or admin record | — |
+| **Gold** | **None.** Catalogue entry only: no intake, table, route or admin record | — **dependency, incomplete** |
 
-## Matrix: Admin Portal Updates (U, page 1)
+## Admin Portal Updates (U, page 1) — verified, unchanged
 
-| ID | Requirement (verbatim) | Current screen / persistence | Result | Evidence and reproduction | Correction |
-|---|---|---|---|---|---|
-| U1 | "In all loan types, a separate **Payout** column should be added immediately after the *Rejected* stage in the Change Stage section. This should be manually updated." | **Screen:** Change Stage lists `… Disbursed, Rejected / dropped, Payout` (Insta: `Leads, Logins, Loan Net Disbursement, Rejected, Payout`). Home shows the same order in its pipeline dropdown. **Persistence:** separate `payoutStatus: 'selected'` in `admin_operations`. The stage and the provider decision are untouched. | **Verified working:** HL, BL, PL, PL-LEGACY, VL, IL. **Dependency:** Gold. | **HTTP (A, 16/16):** save, reload, stage and provider decision unchanged for all 6 sources; non-loans (CC, LI, BA) refused; viewer refused. **UI (A, 14/14):** exact option order in the modal for BL/PL/VL/IL and the Home dropdown; selection persists after reload and is marked "(current)" while the stage stays "New leads". **Screenshots:** `A-change-stage-modal-{desktop,phone}.png`, `A-home-pipeline-dropdown-desktop.png`. | None. Gold needs an intake/persistence source first; nothing was fabricated. |
-| U2 | "In the Change Stage section, the **Sanctioned** button is not working. This functionality needs to be fixed." (Business Loan) | Business Sanctioned = stage `approved`. Saved without provider evidence (an internal stage), with stage history and an audit before/after. | **Verified working** (fixed earlier in PR #7; not broken now) | **HTTP (B, 6/6):** 200; persists after reload; history `new → approved` by `ops1`; audit `changes.stage` before/after; provider decision still `unconfirmed`; the customer sees Sanctioned. **UI (B, 3/3):** select Sanctioned → Update Stage → reload and sign in again → badge "Sanctioned"; Journey shows "New leads → Sanctioned". **Screenshot:** `B-business-sanctioned-desktop.png`. | None |
-| U3 | Home, Business, Personal and Vehicle: "After the Disbursed stage, a separate Payout box … 1. Customer Eligible Payout 2. Paisamart Eligible Payout. Both fields should have an Edit option…" | **Screen:** an "Eligible payout" box on lead details, the Payouts tab and the Home pipeline. Before Disbursed it says "Available after Disbursed."; at Disbursed both inputs are editable, then saved with "Save payout amounts". **Persistence:** `admin_operations.payload.payout` stores exact decimal strings (`1234.50`), a revision and the editor. | **Verified working** | **HTTP (C, 56/56):** refused before Disbursed (including at Sanctioned); 13 invalid inputs refused with no change (`-1`, `1e3`, `NaN`, `Infinity`, `1.234`, `''`, `' 10'`, `10.`, `0x10`, `1,000`, `01`, over 12 digits, a JSON number); executive, manager, viewer and customer cannot edit; exact values persist (`999999999999.99` / `0.01`, `0` / `1200`); stage not overwritten; Home stage regression hides the payout and requires fresh approvals. **UI (C, 15/15):** prerequisite message; Disbursed via UI; negative input disables Save; UI-entered amounts persist after reload. | None |
-| U4 | "Visibility Requirement: The Payout box and its details should be visible only after executive level approval and manager level approval." | Applicant release is gated on both approvals; staff review applies before release (table below). | **Verified working** under the settled 21 Nov rules. **Ambiguity A1** below. | **HTTP (E, 91/91):** one approval is not enough; the same role cannot approve twice; stale-version approval refused (409); an approval with the pre-edit version after an edit is refused; concurrent approvals on one version: exactly one 200 + one 409; either order (manager → executive) accepted; an editor later given an approver role cannot approve their own entry (403); admin, ops and viewer cannot approve; every amount edit (including Paisamart-only) clears both approvals; the applicant receives only `{referenceNumber, productType, customerAmount, currency}`; another customer gets nothing; audit `payout_amount_edit` / `payout_approval` for each product. **UI (E, 10/10):** the customer sees nothing → executive approves (read-only amounts) → still hidden → manager approves → the applicant sees only customer amounts → editing hides them again; a viewer sees no amounts or controls. **Screenshots:** `E-executive-payouts-phone.png`, `E-customer-payouts-phone.png`. | None |
-| U5 | Bank Account: "After the Bank Account reaches the Account Activation stage, the following two fields should be added: Customer Eligible Payout, Paisamart Eligible Payout. Both fields should have an Edit option…" | The stored stage `approved` is labelled "Account Activation" (`SERVICE_STAGE_LABELS`). Reaching it requires a recorded provider decision and evidence (existing rule). | **Verified working** | **HTTP (D, 14/14):** not eligible at Logins (`submitted`); eligible at Activation; same validation and roles as U3. **UI (D, 3/3):** fields appear only at Account Activation; amounts persist. **Screenshot:** `C-bank-account-payout-entry-desktop.png`. | None |
-| U6 | Bank Account visibility: "Payout details should be visible only after executive level approval and manager level approval." | Same mechanism as U4 | **Verified working** (A1 applies) | Covered in the E rows for BA | None |
+| ID | Requirement (verbatim) | Current screen / persistence | Result | Evidence |
+|---|---|---|---|---|
+| U1 | "In all loan types, a separate **Payout** column should be added immediately after the *Rejected* stage in the Change Stage section. This should be manually updated." | **Screen:** Change Stage lists `… Disbursed, Rejected / dropped, Payout` (Insta: `… Loan Net Disbursement, Rejected, Payout`); Home shows the same order in its dropdown. **Persistence:** separate `payoutStatus: 'selected'`; stage and provider decision untouched. One-way by owner decision. | **Verified:** HL, BL, PL, PL-LEGACY, VL, IL. **Gold: dependency (incomplete).** | **API (A, 16/16):** save, reload, stage and decision unchanged for 6 sources; non-loans and viewer refused. **UI (A, 14/14):** exact order, persistence after reload, "(current)" marker. **Screenshots:** `admin-ui-3797179/A-change-stage-modal-{desktop,phone}.png`, `fix-7a0ed91/A-home-pipeline-dropdown-desktop.png`. |
+| U2 | Business Loan: "the **Sanctioned** button is not working. This functionality needs to be fixed." | Sanctioned = stage `approved`. No provider evidence needed; stage history and audit before/after recorded. | **Verified working** (fixed in PR #7; not broken now) | **API (B, 6/6):** history `new → approved` by ops; audit; decision still unconfirmed; customer sees Sanctioned. **UI (B, 3/3):** saved, badge after reload, Journey entry. **Screenshot:** `B-business-sanctioned-desktop.png`. |
+| U3 | Home/Business/Personal/Vehicle: "After the Disbursed stage, a separate Payout box … Customer Eligible Payout, Paisamart Eligible Payout … Edit option" | An "Eligible payout" box on lead details, Payouts and the Home pipeline; editable inputs at Disbursed. Exact decimal strings in `admin_operations.payload.payout`. | **Verified working** | **API (C, 56/56):** refused before Disbursed; 13 invalid inputs refused with no change; non-editors refused; exact persistence (`999999999999.99` / `0.01`); stage not overwritten; Home stage regression requires fresh approvals. **UI (C, 15/15).** |
+| U4 | "The Payout box and its details should be visible only after executive level approval and manager level approval." | Customer release gated on both approvals; authorised staff review beforehand (unchanged by owner decision; table below). | **Verified working** | **API (E, 91/91):** one approval insufficient; no duplicate role; stale and post-edit approvals 409; concurrent approvals exactly one 200; either order accepted; editor-turned-approver self-approval 403; admin, ops and viewer cannot approve; every edit clears approvals; applicant gets only `{referenceNumber, productType, customerAmount, currency}`; other customers get nothing; audit for each product. **UI (E, 10/10).** |
+| U5 | Bank Account: "After … Account Activation … Customer Eligible Payout, Paisamart Eligible Payout … Edit option" | Stored stage `approved`, labelled "Account Activation"; needs a recorded provider decision and evidence (existing rule). | **Verified working** | **API (D, 14/14):** not eligible at Logins; eligible at Activation. **UI (D, 3/3).** **Screenshot:** `C-bank-account-payout-entry-desktop.png`. |
+| U6 | Bank Account: "Payout details should be visible only after executive level approval and manager level approval." | Same as U4 | **Verified working** | E rows for BA |
 
-### Who sees what (traced through the API and UI)
+### Who sees what (unchanged)
 
 | Role | Before both approvals | After both approvals |
 |---|---|---|
-| **Admin / Ops** (authorised editors) | API rows include `payout` (both amounts and approval state) and `payoutEligible`. UI: editable inputs. Cannot approve (403). | Same; any edit clears both approvals |
-| **Executive / Manager** | API rows include both amounts and approval state. UI: read-only amounts and "Approve as executive/manager". Cannot edit (403), cannot approve twice, cannot approve an entry they edited. | Same |
-| **Viewer** | API rows contain no `payout` or `payoutEligible` key; masked phone. UI: "Payout review requires authorized staff access." | Same |
-| **Applicant** (OTP token, owner phone) | `/api/customer-payouts` omits the record; `/api/customer-applications` never has payout fields | Customer amount only (no Paisamart amount, no staff identity); `no-store` |
-| **Another customer / no token** | Nothing / 401 | Nothing / 401 |
+| Admin / Ops (editors) | API rows include both amounts and approval state; editable inputs; cannot approve (403) | Same; any edit clears approvals |
+| Executive / Manager | API includes amounts and approvals; read-only plus "Approve as …"; cannot edit, approve twice or approve their own entry | Same |
+| Viewer | No `payout` / `payoutEligible` keys; masked phone; no controls | Same |
+| Applicant | Nothing in `/api/customer-payouts`; no payout fields in `/api/customer-applications` | Customer amount only (no Paisamart amount, no staff identity); `no-store` |
+| Other customer / no token | Nothing / 401 | Nothing / 401 |
 
-## Matrix: Customer Portal (P, page 1)
+## Customer Portal (P, page 1) — privacy fix tested locally
 
-"Lead profile" here means the lead/application **records the customer submitted**, not the account profile page. They are listed at Profile → "My applications & status" (`/my-applications`, `GET /api/customer-applications`). Ownership is the OTP-verified token phone only.
+"Lead profile" here means the **lead/application records the customer submitted**, listed at Profile → "My applications & status" (`/my-applications`, `GET /api/customer-applications`). Home loans also appear on "My home loan applications". Ownership is the OTP-verified token phone only.
 
-| ID | Requirement (verbatim) | Current screen / persistence | Result | Evidence and reproduction | Correction |
-|---|---|---|---|---|---|
-| P1 | "Customers can view their previously created lead profiles in the Customer Portal." | Lists every submission across the **11 persisted sources**: HL, PL, PL-LEGACY, BL, VL, LI, CC, BA, IL, HI, MI. Shows only customer-entered details. | **Broken (privacy), fixed.** Listing itself worked. | **HTTP (F, 12/12):** customer A sees all 11 own records; B sees only B's 3; missing, forged, admin and ops tokens get 401; `no-store`; fields are limited to reference, product, stage, dates and details; no notes, staff, evidence, CIBIL, DOB, income or payout amounts. **Defect reproduced on `28713f2`:** C opens My applications → logs out → D signs in on the same tab → D's screen rendered **all six of C's reference numbers** until D's list loaded. "My home loan applications" leaked the same way. **After the fix:** neither screen leaks (F 17/17). **Screenshots:** `F-my-applications-phone.png`, `F-customer-D-after-switch-phone.png`. | `gcTime: 0` (the existing My eligible payouts policy) via `CUSTOMER_PRIVATE_QUERY` on both screens |
-| P2 | "Customers can track the current status of their applications." | Shows the admin-set stage with product labels (Home pipeline mapped; Sanctioned, Disbursed, Account Activation, Logins). "Refresh status" plus a 15 s poll. | **Verified working** | An admin stage change appears after "Refresh status" and after a full reload. The error state (503) shows the message and hides previously loaded records. | None |
-| P3 | "The lead profile should remain visible in the Customer Portal even after being fetched to the Admin Portal." | Source rows are never moved or deleted. Admin metadata lives separately in `admin_operations`. | **Verified working** | After listing, opening, stage changes, Payout, assignment, notes and payout approval in admin, all 11 of A's records are still listed, with current stages. | None |
+| ID | Requirement (verbatim) | Result | Evidence | Correction |
+|---|---|---|---|---|
+| P1 | "Customers can view their previously created lead profiles in the Customer Portal." | **Listing worked. Privacy defect found and fixed; tested locally, not deployed.** | **API (F, 12/12):** all 11 sources (HL, PL, PL-LEGACY, BL, VL, LI, CC, BA, IL, HI, MI); ownership; 401 for missing, forged, admin and ops tokens; no notes, staff, evidence, CIBIL, DOB, income or payout amounts. **Defect 1 (`28713f2`):** after logout and a new sign-in on the same tab, B's screens rendered all of A's cached reference numbers. **Defect 2 (still present in `3797179`):** if A logged out while A's list request was in flight, B's screen joined A's pending request and rendered A's records, which persisted through back/forward. **Final `7a0ed91`:** browser F 17/17, privacy 11/11. **Screenshots:** `F-customer-D-after-switch-phone.png`, `privacy-B-my-applications-phone.png`. | Both list screens use `gcTime: 0` and a query key scoped to the signed-in customer's phone, and do not run without one (`mobile/src/lib/customer-private-query.ts`). |
+| P2 | "Customers can track the current status of their applications." | **Verified working** | Admin stage changes appear after "Refresh status" and after a full reload. The error state hides earlier records. | None |
+| P3 | "The lead profile should remain visible in the Customer Portal even after being fetched to the Admin Portal." | **Verified working** | All 11 records remain after admin listing, opening, stage, Payout, assignment, notes and approvals. | None |
 
-**Missing persistence, reported separately (not built):**
-
-- **Gold Loans:** catalogue only.
-- **Open Plots and WhatsApp leads:** stored only in device-local `zustand`/AsyncStorage. There is no server record, so they never reach another device's admin portal or a customer's server-backed list.
-- **Vehicle-insurance leads:** the admin route redirects to the Motor Insurance source (covered).
+**Not built (owner decision):**
+- **Gold Loans:** no persistent source; **incomplete**.
+- **Open Plots and WhatsApp leads:** device-local storage only.
 
 ## Admin regression smoke (built frontend, real routes)
 
-- **Tabs:** Overview, Leads, Home Loan Pipeline, Pipeline, Products, Incentives, Payouts, Tasks, Analytics, Settings, Utility Txns, Health Ins., Motor Ins. and Life Ins. each opened at 1440 px and 390 px. **28 / 28 pass**, with no runtime errors.
-- **No HTML for JSON:** no `/api/` response was `text/html`, which preserves PR #9's `/api/admin/operations` prefix fix.
+- 14 tabs at 1440 px and 390 px: **28 / 28**, with no runtime errors.
+- No `/api/` response was `text/html`; the PR #9 `/api/admin/operations` prefix is preserved (`scripts/admin-operations-api.test.ts` passes).
 
-## Ambiguities and dependencies (separate from fixes)
+## Secret-scan findings (classified, not bypassed)
 
-- **A1 – "visible only after executive and manager approval".** This is applied to the **released** display: the applicant's Customer Eligible Payout. The rule that authorised staff (admin/ops/executive/manager) see amounts before approval follows the owner's 21 Nov decision, since they must enter and review them.
-  - **Open question:** does the PDF also intend to hide the box from *other* admin/ops staff (for example someone who neither entered nor approved it) until both approvals? Today every admin/ops user sees it. Viewers see nothing.
-- **A2 – "Payout column".** This is implemented as a selectable Change Stage action stored separately from the stage. Once selected, it cannot be cleared from the UI.
-  - **Open question:** should it be reversible, or is it a one-way marker? Unchanged.
-- **A3 – "Edit option".** The fields are always-editable inputs with "Save payout amounts", not a separate Edit button. This meets "manual updating … whenever required"; a visual Edit button would be a design choice. Unchanged.
-- **D1 – Approval order.** Either order is accepted (unchanged; settled unless the owner says otherwise).
-- **G1 – Gold Loans** has no persistent source. Its Payout action and payout box cannot apply until an intake exists.
+`python scripts/secret-scan.py` reports 2 findings; values are masked. No allowlist entry was added and no code was reshaped to avoid the scanner.
 
-## Observations outside the PDFs (not changed)
+| Finding | Redacted evidence | Classification |
+|---|---|---|
+| `scripts/admin-operations-api.test.ts:23` `HOME_LOAN_ADMIN_PASSWORD` | `process.env.HOME_LOAN_ADMIN_PASSWORD = 'synt…<masked>';` — length 24, sha256 `c4345558…`. Added in `ed50d03` (PR #9). Found in no other tracked file. The test drives the app in-process with a mocked `fetch` (`http://local.test`). | **Synthetic test fixture, pre-existing on `main`; not a credential.** It was not compared with the production value, because there is no production access. Any change (rename, or a narrow per-file allowlist with reason) is the owner's decision. |
+| `docs/pdf-requirements-20261124/harness/http-verify.mjs:110` `token` | The matched text is the identifier `token: t.viewer1` (length 9). `t` is filled at run time from `staffToken()` on the local backend (lines 64–65). | **False positive:** a variable reference with no literal value. |
 
-- An admin browser reload returns to sign-in, because the admin store is in-memory.
-- Customer logout lands on `/basic-info` ("Complete Your Profile") rather than sign-in: the tabs guard redirects before the logout handler's `router.replace('/')`. The token is cleared and no data is shown.
-- Secret scan (`scripts/secret-scan.py`) shows 2 findings:
-  - `scripts/admin-operations-api.test.ts:23`: already on `main` (PR #9) and not touched here.
-  - `harness/http-verify.mjs:110` (`token: t.viewer1`): a variable reference, not a value (false positive).
-- Backend `tsc`: not run. No backend file changed, and its known baseline (stack-overflow crash) remains as documented.
+## Recorded, unchanged
+
+- **Payout visibility, either approval order and the one-way Payout selection:** kept as-is by owner decision.
+- **Admin page reload returns to sign-in;** customer logout lands on `/basic-info`. Not changed.
+- **Backend `tsc`:** not run. No backend file changed; its known baseline (stack-overflow crash) remains.
+- **Not in scope, not tested:** "My eligible payouts" (`customer-payouts.tsx`) still uses a shared query key with `gcTime: 0`, the same pattern that had the in-flight gap. It was not exercised by these scenarios and was not changed (owner scope).
