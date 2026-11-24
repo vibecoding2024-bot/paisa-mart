@@ -3,6 +3,8 @@ import { Pressable } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Page, Typography as Text, Surface, palette } from '@/components/brand';
 import { fetchCustomerApplications } from '@/lib/customer-application-api';
+import { CUSTOMER_PRIVATE_QUERY, customerQueryKey } from '@/lib/customer-private-query';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 import { leadStageLabel } from '@/lib/loan-product-stages';
 import { PRODUCT_MODULES } from '@/lib/product-catalog';
 
@@ -10,7 +12,8 @@ const productLabel = (id: string) => PRODUCT_MODULES.find(p => p.id === id)?.lab
 
 export default function MyApplications() {
   const router = useRouter();
-  const query = useQuery({ queryKey: ['my-applications'], queryFn: fetchCustomerApplications, staleTime: 0, refetchOnMount: 'always', refetchInterval: 15000, retry: false });
+  const phone = useUserProfileStore(s => s.profile?.phoneNumber);
+  const query = useQuery({ queryKey: customerQueryKey('my-applications', phone), queryFn: fetchCustomerApplications, enabled: !!phone, refetchInterval: 15000, ...CUSTOMER_PRIVATE_QUERY });
   return <Page>
     <Stack.Screen options={{ headerShown: false }} />
     <Pressable accessibilityRole="button" onPress={() => router.back()} style={{ paddingVertical: 16 }}><Text style={{ color: palette.blue }}>← Back</Text></Pressable>

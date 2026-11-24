@@ -4,10 +4,13 @@ import { useRouter } from 'expo-router';
 import { Page as Screen, Typography as Text, Surface, palette } from '@/components/brand';
 import { fetchCustomerApplications } from '@/lib/home-loan-api';
 import { HOME_LOAN_STAGE_LABELS } from '@/lib/home-loan-stages';
+import { CUSTOMER_PRIVATE_QUERY, customerQueryKey } from '@/lib/customer-private-query';
+import { useUserProfileStore } from '@/lib/user-profile-store';
 
 export default function HomeLoanApplications() {
   const router = useRouter();
-  const query = useQuery({ queryKey: ['my-home-loan-applications'], queryFn: fetchCustomerApplications, refetchInterval: 15000, staleTime: 0, retry: false });
+  const phone = useUserProfileStore(s => s.profile?.phoneNumber);
+  const query = useQuery({ queryKey: customerQueryKey('my-home-loan-applications', phone), queryFn: fetchCustomerApplications, enabled: !!phone, refetchInterval: 15000, ...CUSTOMER_PRIVATE_QUERY });
   return <Screen>
     <Pressable onPress={() => router.back()} style={{ paddingVertical: 16 }}><Text style={{ color: palette.blue }}>← Back</Text></Pressable>
     <Text style={{ fontSize: 28, fontWeight: '700', marginBottom: 16 }}>My home loan applications</Text>

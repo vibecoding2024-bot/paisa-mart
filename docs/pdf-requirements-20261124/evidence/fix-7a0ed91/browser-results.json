@@ -1,0 +1,626 @@
+{
+  "ids": {
+    "HL": "HL-22ae6035-3ca9-408b-9f0e-098aab8c29d5",
+    "BL": "BL-6c19f5a9-ca6f-4737-a3c6-45f58768027a",
+    "PL": "PL-aef3e104-f31a-48e6-b338-bf71f10d39af",
+    "VL": "VL-4f376534-2190-4685-bbc0-5c63b10e2f11",
+    "BA": "BA-df9fa2f9-9dd4-40ae-b340-bd06f16cb8d4",
+    "IL": "IL-6479db13-65ad-4889-9fb3-dac43878e8a9",
+    "BLD": "BL-77fd407c-9911-4750-9d5c-1f5f18280967"
+  },
+  "pass": 101,
+  "fail": 0,
+  "blockedOrigins": [
+    "https://fonts.googleapis.com"
+  ],
+  "htmlForJson": [],
+  "pageErrors": [],
+  "results": [
+    {
+      "area": "setup",
+      "label": "synthetic profile 9876500003",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "synthetic profile 9876500004",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/home-loans/leads Home C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/business-loans/leads Business C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/personal-loans/applications Personal C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/vehicle-loans/leads Vehicle C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/services/bank-accounts/applications Bank C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/services/insta-loans/applications Insta C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "seed /api/business-loans/leads Business D",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BL Change Stage lists Payout immediately after Rejected (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BL Payout selection persists after full reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BL Payout marked current and stage unchanged (New/Leads still current)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PL Change Stage lists Payout immediately after Rejected (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PL Payout selection persists after full reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PL Payout marked current and stage unchanged (New/Leads still current)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "VL Change Stage lists Payout immediately after Rejected (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "VL Payout selection persists after full reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "VL Payout marked current and stage unchanged (New/Leads still current)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "IL Change Stage lists Payout immediately after Rejected (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "IL Payout selection persists after full reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "IL Payout marked current and stage unchanged (New/Leads still current)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "Business Sanctioned saved via UI and shown after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "Business Sanctioned persisted in backend with stage history",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "Journey shows Stage: New leads → Sanctioned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL payout box says it is available after Disbursed before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL reaches Disbursed via UI; payout fields appear",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL payout box says it is available after Disbursed before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL reaches Disbursed via UI; payout fields appear",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL payout box says it is available after Disbursed before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL reaches Disbursed via UI; payout fields appear",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA Account Activation recorded (provider evidence via ops API)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA at Account Activation shows editable payout fields",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "HL pipeline dropdown lists Payout immediately after Rejected / dropped",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "HL Payout selection persists after reload without changing pipeline stage",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL Disbursed via pipeline shows payout fields",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL UI disables save for a negative amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL amounts entered in UI persist after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL UI disables save for a negative amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL amounts entered in UI persist after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL UI disables save for a negative amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL amounts entered in UI persist after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BA UI disables save for a negative amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA amounts entered in UI persist after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL amounts entered in pipeline persist after reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "customer sees no payout before approvals (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "executive sees amounts read-only (no edit fields) on Payouts tab",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "executive approved all five products in UI",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "one approval keeps customer payout hidden (UI)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "manager approved all five in lead details",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "after both approvals applicant sees only customer amounts for all five",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "customer payout page fits phone width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "UI edit of Paisamart amount clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "edited BL amount hidden from applicant again",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "viewer sees no payout amounts or controls",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer C reaches My applications from Profile and sees all 6 own records",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "list shows admin stages (Sanctioned→Disbursed, Account Activation)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "no internal data on customer screen",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "My applications fits phone width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "admin moves IL to Logins",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "stage change appears after Refresh status",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "stage change and record retained after full reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "error state hides previously loaded records",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "C list loaded in-app before logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "C home loan status loaded in-app before logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "logout clears the customer token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "same tab reaches sign-in without reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "D session is the same page session (no reload)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "after logout, customer D never sees customer C's cached records (in-app navigation)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer D's list shows only D's record",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "after logout, customer D never sees customer C's cached home loan status",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "API: customer D list excludes C",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Overview opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Leads opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Home Loan Pipeline opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Pipeline opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Products opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Incentives opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Payouts opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Tasks opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Analytics opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Settings opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Utility Txns opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Health Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Motor Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "desktop Life Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Overview opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Leads opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Home Loan Pipeline opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Pipeline opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Products opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Incentives opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Payouts opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Tasks opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Analytics opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Settings opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Utility Txns opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Health Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Motor Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "smoke",
+      "label": "phone Life Ins. opens without runtime error",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "safety",
+      "label": "no /api/ request received index.html",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "safety",
+      "label": "no uncaught browser runtime errors",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}

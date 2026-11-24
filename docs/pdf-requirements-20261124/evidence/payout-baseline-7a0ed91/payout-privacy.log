@@ -1,0 +1,36 @@
+PASS create staff ops1@example.test
+PASS create staff exec1@example.test
+PASS create staff mgr1@example.test
+PASS profile 9876500007
+PASS profile 9876500008
+PASS seeded approved payout BL-1194ebb2-dccc-40b1-bb8b-6bae148c1d21 for 9876500007
+PASS seeded approved payout BL-7e91a216-470a-49bd-a902-3625c7e04696 for 9876500008
+PASS API: A gets only A payout, B only B, no token 401
+PASS [settled] A sees own payout (control)
+PASS [settled] logout cleared the token
+PASS [settled] signed-out payout screen asks to sign in and shows no A payout
+PASS [settled] B Home shows B total and never A's
+PASS [settled] B Earnings shows B payout and never A's
+PASS [settled] B Earnings never renders A
+PASS [settled] B My eligible payouts shows B's payout
+PASS [settled] B My eligible payouts never renders A
+PASS [settled] back/forward stayed in the same page session (no reload)
+PASS [settled] back/forward never renders A's payout for B
+[settled] delayed B; delayed B; delayed B; delayed B; delayed B
+[settled] visible A renders: []
+[settled] hidden-only A renders: ["BL-1194ebb2-dccc-40b1-bb8b-6bae148c1d21 @ /profile","4,321.09 @ /profile"]
+PASS [in-flight] A payout requests still in flight at logout
+PASS [in-flight] logout cleared the token
+FAIL [in-flight] signed-out payout screen asks to sign in and shows no A payout  -> A:  | ← Back
+FAIL [in-flight] B Home shows B total and never A's  -> A: 4,321.09 | p
+PASS [in-flight] B Earnings shows B payout and never A's
+FAIL [in-flight] B Earnings never renders A  -> A: 4,321.09
+PASS [in-flight] B My eligible payouts shows B's payout
+FAIL [in-flight] B My eligible payouts never renders A  -> A: 4,321.09
+PASS [in-flight] back/forward stayed in the same page session (no reload)
+FAIL [in-flight] back/forward never renders A's payout for B  -> A: 4,321.09
+[in-flight] held A; delayed B; delayed B; delayed B; delayed B; delayed B
+[in-flight] visible A renders: ["4,321.09 @ /"]
+[in-flight] hidden-only A renders: []
+PASS no uncaught runtime errors
+Payout privacy verification: 24 pass / 5 fail

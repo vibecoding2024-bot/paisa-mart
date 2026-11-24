@@ -3,6 +3,8 @@ import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { API_BASE } from './api-base';
+import { CUSTOMER_PRIVATE_QUERY, customerQueryKey } from './customer-private-query';
+import { useUserProfileStore } from './user-profile-store';
 export type CustomerPayout = { referenceNumber: string; productType: string; customerAmount: string; currency: string };
 export async function fetchCustomerPayouts(): Promise<CustomerPayout[]> {
   const token = Platform.OS === 'web' ? await AsyncStorage.getItem('paisa_mart_auth_token') : await SecureStore.getItemAsync('paisa_mart_auth_token');
@@ -13,9 +15,14 @@ export async function fetchCustomerPayouts(): Promise<CustomerPayout[]> {
   if (!response.ok || !body.success || !Array.isArray(body.data)) throw new Error(body.message || 'Payout details are unavailable');
   return body.data;
 }
-/** Current server response only; stale or failed data is never shown as a figure. */
+/**
+ * Current server response only; stale or failed data is never shown as a figure.
+ * Shared by Home, Earnings and "My eligible payouts". The key is scoped to the signed-in customer so a request
+ * still in flight when one customer logs out can never resolve into the next customer's screens.
+ */
 export function useApprovedPayouts() {
-  return useQuery({ queryKey: ['my-approved-payouts'], queryFn: fetchCustomerPayouts, staleTime: 0, gcTime: 0, refetchOnMount: 'always', refetchInterval: 15000, retry: false });
+  const phone = useUserProfileStore(s => s.profile?.phoneNumber);
+  return useQuery({ queryKey: customerQueryKey('my-approved-payouts', phone), queryFn: fetchCustomerPayouts, enabled: !!phone, refetchInterval: 15000, ...CUSTOMER_PRIVATE_QUERY });
 }
 /** Sums server decimal strings as integer paise (no floating-point drift); formats ₹ with Indian grouping. */
 export function formatPayoutTotal(payouts: CustomerPayout[]): string {

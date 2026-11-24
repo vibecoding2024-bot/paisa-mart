@@ -1,0 +1,62 @@
+{
+  "pass": 8,
+  "fail": 3,
+  "results": [
+    {
+      "label": "profile 9876500005",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "profile 9876500006",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "seeded A (home + business) and B (business)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "A has 2 list requests still in flight at logout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "logout cleared the token while A requests were pending",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "B My applications shows B's record",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "B My applications never shows A's records (held A responses released during B session)",
+      "pass": false,
+      "detail": "A refs rendered: HL-87dfd4bd-7e9d-47a6-8dfc-8aff34e18c3c, BL-774bd029-f726-478a-98d7-fae1cc000307"
+    },
+    {
+      "label": "B My home loan applications shows none and never A's",
+      "pass": false,
+      "detail": "A refs: HL-87dfd4bd-7e9d-47a6-8dfc-8aff34e18c3c, BL-774bd029-f726-478a-98d7-fae1cc000307 | ← Back\nMy home loan applications\nYour latest application status from our team.\nRefresh status\nNo applications found for your signed-in mobile number."
+    },
+    {
+      "label": "back/forward stayed in the same page session (no reload)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "back/forward never renders A's records for B",
+      "pass": false,
+      "detail": "A refs: HL-87dfd4bd-7e9d-47a6-8dfc-8aff34e18c3c, BL-774bd029-f726-478a-98d7-fae1cc000307"
+    },
+    {
+      "label": "no uncaught runtime errors",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "pageErrors": []
+}

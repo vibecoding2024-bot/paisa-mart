@@ -1,0 +1,1319 @@
+{
+  "base": "http://127.0.0.1:3911",
+  "ids": {
+    "HL": "HL-fcf07808-e4fe-4f8a-95e2-91aaa660478d",
+    "BL": "BL-02865cd2-99cf-4cb2-859d-c826aa5b5d35",
+    "PL": "PL-52dfb175-7fb0-4e8a-8acb-c69cc7214705",
+    "PLL": "PL-LEGACY-0a2a4aeb-db5c-4852-bc6a-c6149ee3a896",
+    "VL": "VL-302a42e0-3fcb-4cbb-b1ca-11db1862e760",
+    "LI": "LI-3102d38e-2062-41dd-8fe6-536442dbbf1b",
+    "CC": "CC-881c5e76-12ff-46f5-8e71-b3e8ace818cb",
+    "BA": "BA-72a81611-3446-4364-9069-4a6b547b5471",
+    "IL": "IL-cf4662e2-e099-4fcd-a575-d8ae9be05185",
+    "HI": "HI-922e9d75-08ca-4f64-992c-ed0a70853e43",
+    "MI": "MI-98e7545e-9276-4f9a-bd0f-78764983edec",
+    "HLB": "HL-33c9fb90-5f6d-4737-bfb8-220cecc48bc8",
+    "BLB": "BL-3d7871ba-9ee4-4c86-967a-68bef40e772b",
+    "BAB": "BA-12cf035c-c070-4531-ad07-212d523f0892"
+  },
+  "pass": 216,
+  "fail": 0,
+  "results": [
+    {
+      "area": "setup",
+      "label": "create staff ops1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "create staff ops2@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "create staff exec1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "create staff exec2@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "create staff mgr1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "create staff viewer1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "HL submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "PL submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "PL-LEGACY submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "BL submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "VL submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "LI submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "CC submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "BA submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "IL submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "HI submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "MI submitted for 9876500001",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "HL submitted for 9876500002",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "BL submitted for 9876500002",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "seed",
+      "label": "BA submitted for 9876500002",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "setup",
+      "label": "every seeded record listed in admin",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer A lists all 11 own submissions across products",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer B lists only own 3 submissions",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "A's list contains none of B's records",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list is no-store JSON",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list refuses missing token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list refuses forged token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list refuses admin token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list refuses ops token",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "HL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "HL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PLL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "PLL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "VL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "VL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "IL Payout selection saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "IL Payout persists on reload and leaves stage/provider decision unchanged",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "CC (not a loan) refuses Payout selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "LI (not a loan) refuses Payout selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "BA (not a loan) refuses Payout selection",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "A",
+      "label": "viewer cannot select Payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "Business Sanctioned saves without provider evidence",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "Sanctioned persists on reload",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "stage history records new → Sanctioned with actor",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "provider decision not overwritten by Sanctioned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B",
+      "label": "audit records stage before/after",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "B/F",
+      "label": "customer B sees Sanctioned on their Business lead",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL not payout-eligible before prerequisite (stage new)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL amount entry refused before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL reaches Disbursed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL payout-eligible at prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL rejects 13 invalid/negative/non-finite/over-precise amounts with no change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL executive cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL manager cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL viewer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL customer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL authorised staff saves both amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL amounts persist exactly after reload (15000.50 / 4500.25)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL stage/provider decision unchanged by payout save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL ops editor cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL admin cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL viewer cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL stale-version approval refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL executive approves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL one approval keeps customer amount hidden",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL second executive cannot fill the manager approval",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL edit (Paisamart amount only) saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL amount edit clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL stale approval of the previous amounts refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL concurrent approvals on one version: exactly one succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL second role approves after refresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL both approvals: applicant sees own customer amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL applicant response has no Paisamart amount / staff identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL other customer cannot see it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL viewer API row has no payout amounts or approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "HL executive API row shows both amounts for review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL stage still disbursed after approvals (not overwritten)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL moved to Sanctioned",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL not payout-eligible before prerequisite (stage approved)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL amount entry refused before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL reaches Disbursed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL payout-eligible at prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL rejects 13 invalid/negative/non-finite/over-precise amounts with no change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL executive cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL manager cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL viewer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL customer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL authorised staff saves both amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL amounts persist exactly after reload (999999999999.99 / 0.01)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL stage/provider decision unchanged by payout save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL ops editor cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL admin cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL viewer cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL stale-version approval refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL executive approves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL one approval keeps customer amount hidden",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL second executive cannot fill the manager approval",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL edit (Paisamart amount only) saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL amount edit clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL stale approval of the previous amounts refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL concurrent approvals on one version: exactly one succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL second role approves after refresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL both approvals: applicant sees own customer amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL applicant response has no Paisamart amount / staff identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL other customer cannot see it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL viewer API row has no payout amounts or approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BL executive API row shows both amounts for review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "BL stage still disbursed after approvals (not overwritten)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL not payout-eligible before prerequisite (stage new)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL amount entry refused before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL reaches Disbursed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL payout-eligible at prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL rejects 13 invalid/negative/non-finite/over-precise amounts with no change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL executive cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL manager cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL viewer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL customer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL authorised staff saves both amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL amounts persist exactly after reload (0.00 / 1200.00)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL stage/provider decision unchanged by payout save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL ops editor cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL admin cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL viewer cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL stale-version approval refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL executive approves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL one approval keeps customer amount hidden",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL second executive cannot fill the manager approval",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL edit (Paisamart amount only) saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL amount edit clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL stale approval of the previous amounts refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL concurrent approvals on one version: exactly one succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL second role approves after refresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL both approvals: applicant sees own customer amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL applicant response has no Paisamart amount / staff identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL other customer cannot see it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL viewer API row has no payout amounts or approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "PL executive API row shows both amounts for review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "PL stage still disbursed after approvals (not overwritten)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL not payout-eligible before prerequisite (stage new)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL amount entry refused before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL reaches Disbursed",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL payout-eligible at prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL rejects 13 invalid/negative/non-finite/over-precise amounts with no change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL executive cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL manager cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL viewer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL customer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL authorised staff saves both amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL amounts persist exactly after reload (3210.70 / 0.00)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL stage/provider decision unchanged by payout save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL ops editor cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL admin cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL viewer cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL stale-version approval refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL executive approves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL one approval keeps customer amount hidden",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL second executive cannot fill the manager approval",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL edit (Paisamart amount only) saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL amount edit clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL stale approval of the previous amounts refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL concurrent approvals on one version: exactly one succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL second role approves after refresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL both approvals: applicant sees own customer amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL applicant response has no Paisamart amount / staff identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL other customer cannot see it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL viewer API row has no payout amounts or approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL executive API row shows both amounts for review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "VL stage still disbursed after approvals (not overwritten)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA moved to Logins",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA not payout-eligible before prerequisite (stage submitted)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA amount entry refused before prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA reaches Account Activation",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA payout-eligible at prerequisite",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA rejects 13 invalid/negative/non-finite/over-precise amounts with no change",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA executive cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA manager cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA viewer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA customer cannot enter amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA authorised staff saves both amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA amounts persist exactly after reload (250.00 / 750.40)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA stage/provider decision unchanged by payout save",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA ops editor cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA admin cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA viewer cannot approve",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA stale-version approval refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA executive approves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA one approval keeps customer amount hidden",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA second executive cannot fill the manager approval",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA edit (Paisamart amount only) saves",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA amount edit clears both approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA stale approval of the previous amounts refused",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA concurrent approvals on one version: exactly one succeeds",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA second role approves after refresh",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA both approvals: applicant sees own customer amount",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA applicant response has no Paisamart amount / staff identity",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA other customer cannot see it",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA viewer API row has no payout amounts or approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "BA executive API row shows both amounts for review",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "D",
+      "label": "BA stage still approved after approvals (not overwritten)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "ops2 edits VL amounts (approvals reset)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "admin changes ops2 to executive",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "maker self-approval refused (editor cannot approve own entry)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "VL hidden from applicant after re-edit",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "manager-then-executive order accepted; ₹0.00 customer amount released",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL moved back to Sanctioned hides the approved payout",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "HL back at Disbursed requires fresh approvals",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "C",
+      "label": "Credit card (out of scope) has no payout amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "E",
+      "label": "audit has payout_amount_edit and payout_approval entries for each product",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "all 11 of A’s records still listed after admin processing",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer sees admin-set stages (HL disbursed, BL disbursed, BA activation)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list excludes notes, staff, evidence, credit/DOB/income, payout amounts",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "area": "F",
+      "label": "customer list fields limited to reference/product/stage/dates/details",
+      "pass": true,
+      "detail": ""
+    }
+  ]
+}
