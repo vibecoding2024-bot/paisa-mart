@@ -1,4 +1,59 @@
-# HANDOFF — Google Play remediation (22 Nov 2026) — CURRENT STATE
+# HANDOFF — PDF requirements verification (24–25 Nov 2026) — CURRENT STATE
+
+**Scope:** only `Admin Portal Updates (1).pdf` and `Customer_Portal_Only (1).pdf`. Full matrix: [docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md](docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md).
+
+- **Branch:** `fix/pdf-requirements-verify-20261124` in worktree `.pdf-requirements-verify`, based on `origin/main` `28713f2` (PR #9).
+- **Status:** local commits only. No push, PR, merge, upload, restart or deployment. No production access or production data. Phase 2 session/MPIN work is not included.
+- **Last confirmed production (unchanged):** backend Phase 1 `f4187f2`; frontend `28713f27`, release `20261123-28713f27-admin-ops-hotfix`, live index `36a657a9…76e1`. **Production is not fixed** until an approved release is deployed and its UI is verified.
+- **Local `main` is stale:** it is at `facbc4c` with dirty changes and has diverged from `origin/main`. It was not touched; work from `origin/main`.
+
+### Result
+- **Admin PDF:**
+  - Payout after Rejected (HL, BL, PL, PL-LEGACY, VL, IL), Business Sanctioned, payout boxes (HL/BL/PL/VL after Disbursed; BA after Account Activation) and dual approval all **verified working on the current code**. No change was needed.
+  - Gold Loans has no persistent source; reported as a dependency.
+- **Customer PDF:**
+  - Listing, status tracking and retention all work.
+  - **One defect fixed (`3797179`):** after logout, the next customer on the same tab briefly saw the previous customer's cached "My applications" and "My home loan applications" records. Both screens now use `gcTime: 0` (`mobile/src/lib/customer-private-query.ts`), the same policy as My eligible payouts.
+
+### Changed files (`3797179`)
+| File | Why |
+|---|---|
+| `mobile/src/lib/customer-private-query.ts` | Shared `staleTime 0 / gcTime 0 / refetchOnMount always / retry false` options |
+| `mobile/src/app/my-applications.tsx` | Uses those options (the leak was reproduced here) |
+| `mobile/src/app/home-loan-applications.tsx` | Same leak path; uses those options |
+| `scripts/customer-private-query.test.ts` | Real React Query observers. Includes a control showing the old options leaked; fails if a screen drops the policy. |
+
+The docs commit adds `docs/pdf-requirements-20261124/` (matrix, harness, evidence) and this section.
+
+### Tests
+- **Code tested:** `3797179`. The docs commit changes no runtime code.
+- **`bun test`, each file separately:** **127 pass / 0 fail across 28 files** (baseline `28713f2`: 125 / 0 across 27).
+- **Other checks:**
+  - `node scripts/check-api-isolation.mjs` passes.
+  - Mobile `tsc --noEmit` passes.
+  - Backend `tsc` was not run (no backend change; known crash baseline).
+- **Real local backend plus built test web export, same harness:**
+
+| Commit | HTTP | Browser |
+|---|---|---|
+| Baseline `28713f2` | 216 / 0 | 99 / 2 (the two leaks) |
+| Fix `3797179` | 216 / 0 | **101 / 0** |
+
+- **Browser coverage:** includes desktop and phone smoke of all 14 admin tabs, and no `/api/` response returned `index.html`.
+- **Outbound traffic:** blocked; the only attempt was Vibecode proxy start-up.
+- **Secret scan:** 2 findings, neither new: one already on `main` (`scripts/admin-operations-api.test.ts:23`), one false positive (a harness variable reference).
+
+### Open questions for the owner (not implemented)
+- **A1:** should payout amounts be hidden from admin/ops staff who did not enter or approve them, until both approvals? Today all admin/ops staff see them; customers see only the approved customer amount.
+- **A2:** should the Payout selection be reversible?
+- **Gold Loans:** needs an intake/persistence source before Payout amounts can apply.
+
+### Next action
+Owner reviews `docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md` and answers A1/A2. Then, with authorization, push this branch and open a PR. Any release must be a new uniquely named frontend-only package built from the merged commit and deployed separately under authorization.
+
+---
+
+# HANDOFF — Google Play remediation (22 Nov 2026) — previous state
 
 **Play submission and production rollout are PAUSED** (owner instruction).
 - Branch `fix/play-store-remediation-20261122`, worktree `.play-remediation`, base `origin/main` `595e521`.
