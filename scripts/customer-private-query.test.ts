@@ -60,3 +60,18 @@ test('customer application/status list screens use identity-scoped private queri
     expect(source).toContain('enabled: !!phone');
   }
 });
+
+test("approved payouts (Home, Earnings, My eligible payouts) never resolve into the next customer's screens", async () => {
+  expect(await afterSettledLogout(CUSTOMER_PRIVATE_QUERY, p => customerQueryKey('my-approved-payouts', p))).toBeUndefined();
+  expect(await afterInFlightLogout(p => customerQueryKey('my-approved-payouts', p))).toEqual([['BL-customer-B']]);
+  // Control: the previous shared payout key let B join A's pending request.
+  expect((await afterInFlightLogout(() => ['my-approved-payouts'])).some(d => JSON.stringify(d).includes('customer-A'))).toBe(true);
+  const hook = readFileSync(new URL('../mobile/src/lib/customer-payout-api.ts', import.meta.url), 'utf8');
+  expect(hook).toContain("customerQueryKey('my-approved-payouts', phone)");
+  expect(hook).toContain('enabled: !!phone');
+  expect(hook).toContain('...CUSTOMER_PRIVATE_QUERY');
+  expect(hook).not.toContain("queryKey: ['my-approved-payouts']");
+  const screen = readFileSync(new URL('../mobile/src/app/customer-payouts.tsx', import.meta.url), 'utf8');
+  expect(screen).toContain('useApprovedPayouts()');
+  expect(screen).not.toContain('useQuery(');
+});
