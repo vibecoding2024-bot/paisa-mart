@@ -1,0 +1,107 @@
+PASS create staff ops1@example.test
+PASS create staff exec1@example.test
+PASS create staff mgr1@example.test
+PASS profile 9876500021
+PASS profile 9876500022
+PASS seed approved payout BL-541163fe-2f4d-446a-b7e5-3ab96e9ddfd8
+PASS [P 360px] absent: "Invite a friend"
+PASS [P 360px] absent: "Invite friends to Paisa Mart"
+PASS [P 360px] absent: "BETTER, TOGETHER"
+PASS [P 360px] absent: "Invite friends to start their journey"
+PASS [P 360px] absent: "Earn Upto"
+PASS [P 360px] absent: "Earn upto"
+PASS [P 360px] absent: "1 Lakh"
+PASS [P 360px] absent: "Total Earnings"
+PASS [P 360px] Learn card present
+PASS [P 360px] approved payout total ₹2,468.10
+PASS [P 360px] no horizontal page overflow
+PASS [P 360px] Learn card inside viewport width
+PASS [P 360px] nav: Learn card opens /learn
+PASS [P 360px] nav: Home tab shows "Learn. Build. Grow." (/)
+PASS [P 360px] nav: Products tab opens (/products)
+PASS [P 360px] nav: Earnings tab shows "₹2,468.10" (/earnings)
+PASS [P 360px] nav: Profile tab shows "Invite friends" (/profile)
+PASS [P 360px] nav: Home tab shows "₹2,468.10" (/)
+PASS [E 360px] absent: "Invite a friend"
+PASS [E 360px] absent: "Invite friends to Paisa Mart"
+PASS [E 360px] absent: "BETTER, TOGETHER"
+PASS [E 360px] absent: "Invite friends to start their journey"
+PASS [E 360px] absent: "Earn Upto"
+PASS [E 360px] absent: "Earn upto"
+PASS [E 360px] absent: "1 Lakh"
+PASS [E 360px] absent: "Total Earnings"
+PASS [E 360px] Learn card present
+PASS [E 360px] approved payout total ₹0.00
+PASS [E 360px] no horizontal page overflow
+PASS [E 360px] Learn card inside viewport width
+PASS [P 390px] absent: "Invite a friend"
+PASS [P 390px] absent: "Invite friends to Paisa Mart"
+PASS [P 390px] absent: "BETTER, TOGETHER"
+PASS [P 390px] absent: "Invite friends to start their journey"
+PASS [P 390px] absent: "Earn Upto"
+PASS [P 390px] absent: "Earn upto"
+PASS [P 390px] absent: "1 Lakh"
+PASS [P 390px] absent: "Total Earnings"
+PASS [P 390px] Learn card present
+PASS [P 390px] approved payout total ₹2,468.10
+PASS [P 390px] no horizontal page overflow
+PASS [P 390px] Learn card inside viewport width
+PASS [P 390px] nav: Learn card opens /learn
+PASS [P 390px] nav: Home tab shows "Learn. Build. Grow." (/)
+PASS [P 390px] nav: Products tab opens (/products)
+PASS [P 390px] nav: Earnings tab shows "₹2,468.10" (/earnings)
+PASS [P 390px] nav: Profile tab shows "Invite friends" (/profile)
+PASS [P 390px] nav: Home tab shows "₹2,468.10" (/)
+PASS [E 390px] absent: "Invite a friend"
+PASS [E 390px] absent: "Invite friends to Paisa Mart"
+PASS [E 390px] absent: "BETTER, TOGETHER"
+PASS [E 390px] absent: "Invite friends to start their journey"
+PASS [E 390px] absent: "Earn Upto"
+PASS [E 390px] absent: "Earn upto"
+PASS [E 390px] absent: "1 Lakh"
+PASS [E 390px] absent: "Total Earnings"
+PASS [E 390px] Learn card present
+PASS [E 390px] approved payout total ₹0.00
+PASS [E 390px] no horizontal page overflow
+PASS [E 390px] Learn card inside viewport width
+PASS [P 768px] absent: "Invite a friend"
+PASS [P 768px] absent: "Invite friends to Paisa Mart"
+PASS [P 768px] absent: "BETTER, TOGETHER"
+PASS [P 768px] absent: "Invite friends to start their journey"
+PASS [P 768px] absent: "Earn Upto"
+PASS [P 768px] absent: "Earn upto"
+PASS [P 768px] absent: "1 Lakh"
+PASS [P 768px] absent: "Total Earnings"
+PASS [P 768px] Learn card present
+PASS [P 768px] approved payout total ₹2,468.10
+PASS [P 768px] no horizontal page overflow
+PASS [P 768px] Learn card inside viewport width
+PASS [P 768px] nav: Learn card opens /learn
+PASS [P 768px] nav: Home tab shows "Learn. Build. Grow." (/)
+PASS [P 768px] nav: Products tab opens (/products)
+PASS [P 768px] nav: Earnings tab shows "₹2,468.10" (/earnings)
+PASS [P 768px] nav: Profile tab shows "Invite friends" (/profile)
+PASS [P 768px] nav: Home tab shows "₹2,468.10" (/)
+PASS [P 1440px] absent: "Invite a friend"
+PASS [P 1440px] absent: "Invite friends to Paisa Mart"
+PASS [P 1440px] absent: "BETTER, TOGETHER"
+PASS [P 1440px] absent: "Invite friends to start their journey"
+PASS [P 1440px] absent: "Earn Upto"
+PASS [P 1440px] absent: "Earn upto"
+PASS [P 1440px] absent: "1 Lakh"
+PASS [P 1440px] absent: "Total Earnings"
+PASS [P 1440px] Learn card present
+PASS [P 1440px] approved payout total ₹2,468.10
+PASS [P 1440px] no horizontal page overflow
+PASS [P 1440px] Learn card inside viewport width
+PASS [P 1440px] nav: Learn card opens /learn
+PASS [P 1440px] nav: Home tab shows "Learn. Build. Grow." (/)
+PASS [P 1440px] nav: Products tab opens (/products)
+PASS [P 1440px] nav: Earnings tab shows "₹2,468.10" (/earnings)
+PASS [P 1440px] nav: Profile tab shows "Invite friends" (/profile)
+PASS [P 1440px] nav: Home tab shows "₹2,468.10" (/)
+PASS no uncaught runtime errors
+INFO pre-existing backend-injected font requests aborted: 6
+PASS no other non-loopback browser requests
+
+Home verification: 104 pass / 0 fail

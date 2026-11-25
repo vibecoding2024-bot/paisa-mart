@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Share, useWindowDimensions } from "react-native";
+import { View, useWindowDimensions } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
   Bell,
@@ -11,7 +11,6 @@ import {
   Users,
   Wallet,
   Star,
-  Gift,
   Zap,
   Home,
   Car,
@@ -47,7 +46,6 @@ import {
 import { useFeatureFlags } from "@/lib/feature-flags";
 import { useNotificationStore } from "@/lib/notification-store";
 import { useApprovedPayouts, formatPayoutTotal } from "@/lib/customer-payout-api";
-import { toast } from "@/lib/toast-store";
 import PressableScale from "@/components/PressableScale";
 import ComingSoonModal, {
   type ComingSoonModule,
@@ -215,17 +213,6 @@ export default function HomeScreen() {
         pathname: "/(tabs)/products",
         params: { category: categoryId },
       });
-    }
-  };
-
-  const handleInvite = async () => {
-    try {
-      await Share.share({
-        message:
-          "Join me on Paisa Mart to explore loans, credit cards, bank accounts and insurance from partner banks and insurers.",
-      });
-    } catch {
-      toast.error("Could not open share sheet");
     }
   };
 
@@ -525,76 +512,6 @@ export default function HomeScreen() {
           delay={120}
           style={{ flexDirection: wide ? "row" : "column", gap: 16 }}
         >
-          <View style={{ flex: 1 }}>
-            <PressableScale
-              onPress={handleInvite}
-              style={{
-                backgroundColor: "#E6F3EC",
-                borderRadius: 24,
-                padding: 23,
-                flex: 1,
-                borderWidth: 1,
-                borderColor: "#D5EBDD",
-              }}
-            >
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  marginBottom: 18,
-                }}
-              >
-                <IconBadge
-                  icon={Gift}
-                  background="#D2EBDD"
-                  color={palette.teal}
-                  size={42}
-                />
-                <ArrowUpRight size={20} color={palette.teal} />
-              </View>
-              <Text
-                style={{
-                  color: palette.teal,
-                  fontSize: 10,
-                  letterSpacing: 1.8,
-                  fontWeight: "700",
-                }}
-              >
-                BETTER, TOGETHER
-              </Text>
-              <Text
-                style={{
-                  fontSize: 22,
-                  letterSpacing: -0.6,
-                  fontWeight: "800",
-                  marginTop: 7,
-                }}
-              >
-                Invite friends to Paisa Mart
-              </Text>
-              <Text
-                style={{
-                  color: "#547464",
-                  fontSize: 12,
-                  lineHeight: 20,
-                  marginTop: 7,
-                }}
-              >
-                Invite friends to start their journey.
-              </Text>
-              <Text
-                style={{
-                  color: palette.teal,
-                  fontWeight: "700",
-                  fontSize: 12,
-                  marginTop: 18,
-                }}
-              >
-                Invite a friend →
-              </Text>
-            </PressableScale>
-          </View>
           <View style={{ flex: 1 }}>
             <PressableScale
               onPress={() => router.push("/(tabs)/learn")}

@@ -1,0 +1,218 @@
+PASS setup :: create staff ops1@example.test
+PASS setup :: create staff ops2@example.test
+PASS setup :: create staff exec1@example.test
+PASS setup :: create staff exec2@example.test
+PASS setup :: create staff mgr1@example.test
+PASS setup :: create staff viewer1@example.test
+PASS seed :: HL submitted for 9876500001
+PASS seed :: PL submitted for 9876500001
+PASS seed :: PL-LEGACY submitted for 9876500001
+PASS seed :: BL submitted for 9876500001
+PASS seed :: VL submitted for 9876500001
+PASS seed :: LI submitted for 9876500001
+PASS seed :: CC submitted for 9876500001
+PASS seed :: BA submitted for 9876500001
+PASS seed :: IL submitted for 9876500001
+PASS seed :: HI submitted for 9876500001
+PASS seed :: MI submitted for 9876500001
+PASS seed :: HL submitted for 9876500002
+PASS seed :: BL submitted for 9876500002
+PASS seed :: BA submitted for 9876500002
+PASS setup :: every seeded record listed in admin
+PASS F :: customer A lists all 11 own submissions across products
+PASS F :: customer B lists only own 3 submissions
+PASS F :: A's list contains none of B's records
+PASS F :: customer list is no-store JSON
+PASS F :: customer list refuses missing token
+PASS F :: customer list refuses forged token
+PASS F :: customer list refuses admin token
+PASS F :: customer list refuses ops token
+PASS A :: HL Payout selection saves
+PASS A :: HL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: BL Payout selection saves
+PASS A :: BL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: PL Payout selection saves
+PASS A :: PL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: PLL Payout selection saves
+PASS A :: PLL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: VL Payout selection saves
+PASS A :: VL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: IL Payout selection saves
+PASS A :: IL Payout persists on reload and leaves stage/provider decision unchanged
+PASS A :: CC (not a loan) refuses Payout selection
+PASS A :: LI (not a loan) refuses Payout selection
+PASS A :: BA (not a loan) refuses Payout selection
+PASS A :: viewer cannot select Payout
+PASS B :: Business Sanctioned saves without provider evidence
+PASS B :: Sanctioned persists on reload
+PASS B :: stage history records new → Sanctioned with actor
+PASS B :: provider decision not overwritten by Sanctioned
+PASS B :: audit records stage before/after
+PASS B/F :: customer B sees Sanctioned on their Business lead
+PASS C :: HL not payout-eligible before prerequisite (stage new)
+PASS C :: HL amount entry refused before prerequisite
+PASS C :: HL reaches Disbursed
+PASS C :: HL payout-eligible at prerequisite
+PASS C :: HL rejects 13 invalid/negative/non-finite/over-precise amounts with no change
+PASS C :: HL executive cannot enter amounts
+PASS C :: HL manager cannot enter amounts
+PASS C :: HL viewer cannot enter amounts
+PASS C :: HL customer cannot enter amounts
+PASS C :: HL authorised staff saves both amounts
+PASS C :: HL amounts persist exactly after reload (15000.50 / 4500.25)
+PASS C :: HL stage/provider decision unchanged by payout save
+PASS E :: HL ops editor cannot approve
+PASS E :: HL admin cannot approve
+PASS E :: HL viewer cannot approve
+PASS E :: HL stale-version approval refused
+PASS E :: HL executive approves
+PASS E :: HL one approval keeps customer amount hidden
+PASS E :: HL second executive cannot fill the manager approval
+PASS E :: HL edit (Paisamart amount only) saves
+PASS E :: HL amount edit clears both approvals
+PASS E :: HL stale approval of the previous amounts refused
+PASS E :: HL concurrent approvals on one version: exactly one succeeds
+PASS E :: HL second role approves after refresh
+PASS E :: HL both approvals: applicant sees own customer amount
+PASS E :: HL applicant response has no Paisamart amount / staff identity
+PASS E :: HL other customer cannot see it
+PASS E :: HL viewer API row has no payout amounts or approvals
+PASS E :: HL executive API row shows both amounts for review
+PASS C :: HL stage still disbursed after approvals (not overwritten)
+PASS C :: BL moved to Sanctioned
+PASS C :: BL not payout-eligible before prerequisite (stage approved)
+PASS C :: BL amount entry refused before prerequisite
+PASS C :: BL reaches Disbursed
+PASS C :: BL payout-eligible at prerequisite
+PASS C :: BL rejects 13 invalid/negative/non-finite/over-precise amounts with no change
+PASS C :: BL executive cannot enter amounts
+PASS C :: BL manager cannot enter amounts
+PASS C :: BL viewer cannot enter amounts
+PASS C :: BL customer cannot enter amounts
+PASS C :: BL authorised staff saves both amounts
+PASS C :: BL amounts persist exactly after reload (999999999999.99 / 0.01)
+PASS C :: BL stage/provider decision unchanged by payout save
+PASS E :: BL ops editor cannot approve
+PASS E :: BL admin cannot approve
+PASS E :: BL viewer cannot approve
+PASS E :: BL stale-version approval refused
+PASS E :: BL executive approves
+PASS E :: BL one approval keeps customer amount hidden
+PASS E :: BL second executive cannot fill the manager approval
+PASS E :: BL edit (Paisamart amount only) saves
+PASS E :: BL amount edit clears both approvals
+PASS E :: BL stale approval of the previous amounts refused
+PASS E :: BL concurrent approvals on one version: exactly one succeeds
+PASS E :: BL second role approves after refresh
+PASS E :: BL both approvals: applicant sees own customer amount
+PASS E :: BL applicant response has no Paisamart amount / staff identity
+PASS E :: BL other customer cannot see it
+PASS E :: BL viewer API row has no payout amounts or approvals
+PASS E :: BL executive API row shows both amounts for review
+PASS C :: BL stage still disbursed after approvals (not overwritten)
+PASS C :: PL not payout-eligible before prerequisite (stage new)
+PASS C :: PL amount entry refused before prerequisite
+PASS C :: PL reaches Disbursed
+PASS C :: PL payout-eligible at prerequisite
+PASS C :: PL rejects 13 invalid/negative/non-finite/over-precise amounts with no change
+PASS C :: PL executive cannot enter amounts
+PASS C :: PL manager cannot enter amounts
+PASS C :: PL viewer cannot enter amounts
+PASS C :: PL customer cannot enter amounts
+PASS C :: PL authorised staff saves both amounts
+PASS C :: PL amounts persist exactly after reload (0.00 / 1200.00)
+PASS C :: PL stage/provider decision unchanged by payout save
+PASS E :: PL ops editor cannot approve
+PASS E :: PL admin cannot approve
+PASS E :: PL viewer cannot approve
+PASS E :: PL stale-version approval refused
+PASS E :: PL executive approves
+PASS E :: PL one approval keeps customer amount hidden
+PASS E :: PL second executive cannot fill the manager approval
+PASS E :: PL edit (Paisamart amount only) saves
+PASS E :: PL amount edit clears both approvals
+PASS E :: PL stale approval of the previous amounts refused
+PASS E :: PL concurrent approvals on one version: exactly one succeeds
+PASS E :: PL second role approves after refresh
+PASS E :: PL both approvals: applicant sees own customer amount
+PASS E :: PL applicant response has no Paisamart amount / staff identity
+PASS E :: PL other customer cannot see it
+PASS E :: PL viewer API row has no payout amounts or approvals
+PASS E :: PL executive API row shows both amounts for review
+PASS C :: PL stage still disbursed after approvals (not overwritten)
+PASS C :: VL not payout-eligible before prerequisite (stage new)
+PASS C :: VL amount entry refused before prerequisite
+PASS C :: VL reaches Disbursed
+PASS C :: VL payout-eligible at prerequisite
+PASS C :: VL rejects 13 invalid/negative/non-finite/over-precise amounts with no change
+PASS C :: VL executive cannot enter amounts
+PASS C :: VL manager cannot enter amounts
+PASS C :: VL viewer cannot enter amounts
+PASS C :: VL customer cannot enter amounts
+PASS C :: VL authorised staff saves both amounts
+PASS C :: VL amounts persist exactly after reload (3210.70 / 0.00)
+PASS C :: VL stage/provider decision unchanged by payout save
+PASS E :: VL ops editor cannot approve
+PASS E :: VL admin cannot approve
+PASS E :: VL viewer cannot approve
+PASS E :: VL stale-version approval refused
+PASS E :: VL executive approves
+PASS E :: VL one approval keeps customer amount hidden
+PASS E :: VL second executive cannot fill the manager approval
+PASS E :: VL edit (Paisamart amount only) saves
+PASS E :: VL amount edit clears both approvals
+PASS E :: VL stale approval of the previous amounts refused
+PASS E :: VL concurrent approvals on one version: exactly one succeeds
+PASS E :: VL second role approves after refresh
+PASS E :: VL both approvals: applicant sees own customer amount
+PASS E :: VL applicant response has no Paisamart amount / staff identity
+PASS E :: VL other customer cannot see it
+PASS E :: VL viewer API row has no payout amounts or approvals
+PASS E :: VL executive API row shows both amounts for review
+PASS C :: VL stage still disbursed after approvals (not overwritten)
+PASS D :: BA moved to Logins
+PASS D :: BA not payout-eligible before prerequisite (stage submitted)
+PASS D :: BA amount entry refused before prerequisite
+PASS D :: BA reaches Account Activation
+PASS D :: BA payout-eligible at prerequisite
+PASS D :: BA rejects 13 invalid/negative/non-finite/over-precise amounts with no change
+PASS D :: BA executive cannot enter amounts
+PASS D :: BA manager cannot enter amounts
+PASS D :: BA viewer cannot enter amounts
+PASS D :: BA customer cannot enter amounts
+PASS D :: BA authorised staff saves both amounts
+PASS D :: BA amounts persist exactly after reload (250.00 / 750.40)
+PASS D :: BA stage/provider decision unchanged by payout save
+PASS E :: BA ops editor cannot approve
+PASS E :: BA admin cannot approve
+PASS E :: BA viewer cannot approve
+PASS E :: BA stale-version approval refused
+PASS E :: BA executive approves
+PASS E :: BA one approval keeps customer amount hidden
+PASS E :: BA second executive cannot fill the manager approval
+PASS E :: BA edit (Paisamart amount only) saves
+PASS E :: BA amount edit clears both approvals
+PASS E :: BA stale approval of the previous amounts refused
+PASS E :: BA concurrent approvals on one version: exactly one succeeds
+PASS E :: BA second role approves after refresh
+PASS E :: BA both approvals: applicant sees own customer amount
+PASS E :: BA applicant response has no Paisamart amount / staff identity
+PASS E :: BA other customer cannot see it
+PASS E :: BA viewer API row has no payout amounts or approvals
+PASS E :: BA executive API row shows both amounts for review
+PASS D :: BA stage still approved after approvals (not overwritten)
+PASS E :: ops2 edits VL amounts (approvals reset)
+PASS E :: admin changes ops2 to executive
+PASS E :: maker self-approval refused (editor cannot approve own entry)
+PASS E :: VL hidden from applicant after re-edit
+PASS E :: manager-then-executive order accepted; ₹0.00 customer amount released
+PASS C :: HL moved back to Sanctioned hides the approved payout
+PASS C :: HL back at Disbursed requires fresh approvals
+PASS C :: Credit card (out of scope) has no payout amounts
+PASS E :: audit has payout_amount_edit and payout_approval entries for each product
+PASS F :: all 11 of A’s records still listed after admin processing
+PASS F :: customer sees admin-set stages (HL disbursed, BL disbursed, BA activation)
+PASS F :: customer list excludes notes, staff, evidence, credit/DOB/income, payout amounts
+PASS F :: customer list fields limited to reference/product/stage/dates/details
+
+HTTP verification: 216 pass / 0 fail
