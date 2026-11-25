@@ -1,0 +1,535 @@
+{
+  "pass": 104,
+  "fail": 0,
+  "results": [
+    {
+      "label": "create staff ops1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "create staff exec1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "create staff mgr1@example.test",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "profile 9876500021",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "profile 9876500022",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "seed approved payout BL-541163fe-2f4d-446a-b7e5-3ab96e9ddfd8",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] approved payout total ₹2,468.10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Learn card opens /learn",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Home tab shows \"Learn. Build. Grow.\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Products tab opens (/products)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Earnings tab shows \"₹2,468.10\" (/earnings)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Profile tab shows \"Invite friends\" (/profile)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 360px] nav: Home tab shows \"₹2,468.10\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] approved payout total ₹0.00",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 360px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] approved payout total ₹2,468.10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Learn card opens /learn",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Home tab shows \"Learn. Build. Grow.\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Products tab opens (/products)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Earnings tab shows \"₹2,468.10\" (/earnings)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Profile tab shows \"Invite friends\" (/profile)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 390px] nav: Home tab shows \"₹2,468.10\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] approved payout total ₹0.00",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[E 390px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] approved payout total ₹2,468.10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Learn card opens /learn",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Home tab shows \"Learn. Build. Grow.\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Products tab opens (/products)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Earnings tab shows \"₹2,468.10\" (/earnings)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Profile tab shows \"Invite friends\" (/profile)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 768px] nav: Home tab shows \"₹2,468.10\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Invite a friend\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Invite friends to Paisa Mart\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"BETTER, TOGETHER\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Invite friends to start their journey\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Earn Upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Earn upto\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"1 Lakh\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] absent: \"Total Earnings\"",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] Learn card present",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] approved payout total ₹2,468.10",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] no horizontal page overflow",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] Learn card inside viewport width",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Learn card opens /learn",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Home tab shows \"Learn. Build. Grow.\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Products tab opens (/products)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Earnings tab shows \"₹2,468.10\" (/earnings)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Profile tab shows \"Invite friends\" (/profile)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "[P 1440px] nav: Home tab shows \"₹2,468.10\" (/)",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "no uncaught runtime errors",
+      "pass": true,
+      "detail": ""
+    },
+    {
+      "label": "no other non-loopback browser requests",
+      "pass": true,
+      "detail": ""
+    }
+  ],
+  "pageErrors": [],
+  "external": [
+    "P@360 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+    "E@360 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+    "P@390 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+    "E@390 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+    "P@768 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+    "P@1440 https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+  ]
+}

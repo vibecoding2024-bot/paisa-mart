@@ -1,0 +1,18 @@
+PASS profile 9876500005
+PASS profile 9876500006
+PASS seeded A (home + business) and B (business)
+PASS A has 2 list requests still in flight at logout
+PASS logout cleared the token while A requests were pending
+PASS B My applications shows B's record
+PASS B My applications never shows A's records (held A responses released during B session)
+PASS B My home loan applications shows none and never A's
+PASS back/forward stayed in the same page session (no reload)
+PASS back/forward never renders A's records for B
+held A /api/customer-applications
+held A /api/home-loans/applications
+delayed B /api/customer-applications
+delayed B /api/home-loans/applications
+delayed B /api/home-loans/applications
+PASS no uncaught runtime errors
+
+Privacy verification: 11 pass / 0 fail

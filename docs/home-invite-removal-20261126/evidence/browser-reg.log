@@ -1,0 +1,103 @@
+PASS setup :: synthetic profile 9876500003
+PASS setup :: synthetic profile 9876500004
+PASS setup :: seed /api/home-loans/leads Home C
+PASS setup :: seed /api/business-loans/leads Business C
+PASS setup :: seed /api/personal-loans/applications Personal C
+PASS setup :: seed /api/vehicle-loans/leads Vehicle C
+PASS setup :: seed /api/services/bank-accounts/applications Bank C
+PASS setup :: seed /api/services/insta-loans/applications Insta C
+PASS setup :: seed /api/business-loans/leads Business D
+PASS A :: BL Change Stage lists Payout immediately after Rejected (UI)
+PASS A :: BL Payout selection persists after full reload
+PASS A :: BL Payout marked current and stage unchanged (New/Leads still current)
+PASS A :: PL Change Stage lists Payout immediately after Rejected (UI)
+PASS A :: PL Payout selection persists after full reload
+PASS A :: PL Payout marked current and stage unchanged (New/Leads still current)
+PASS A :: VL Change Stage lists Payout immediately after Rejected (UI)
+PASS A :: VL Payout selection persists after full reload
+PASS A :: VL Payout marked current and stage unchanged (New/Leads still current)
+PASS A :: IL Change Stage lists Payout immediately after Rejected (UI)
+PASS A :: IL Payout selection persists after full reload
+PASS A :: IL Payout marked current and stage unchanged (New/Leads still current)
+PASS B :: Business Sanctioned saved via UI and shown after reload
+PASS B :: Business Sanctioned persisted in backend with stage history
+PASS B :: Journey shows Stage: New leads → Sanctioned
+PASS C :: BL payout box says it is available after Disbursed before prerequisite
+PASS C :: BL reaches Disbursed via UI; payout fields appear
+PASS C :: PL payout box says it is available after Disbursed before prerequisite
+PASS C :: PL reaches Disbursed via UI; payout fields appear
+PASS C :: VL payout box says it is available after Disbursed before prerequisite
+PASS C :: VL reaches Disbursed via UI; payout fields appear
+PASS D :: BA Account Activation recorded (provider evidence via ops API)
+PASS D :: BA at Account Activation shows editable payout fields
+PASS A :: HL pipeline dropdown lists Payout immediately after Rejected / dropped
+PASS A :: HL Payout selection persists after reload without changing pipeline stage
+PASS C :: HL Disbursed via pipeline shows payout fields
+PASS C :: BL UI disables save for a negative amount
+PASS C :: BL amounts entered in UI persist after reload
+PASS C :: PL UI disables save for a negative amount
+PASS C :: PL amounts entered in UI persist after reload
+PASS C :: VL UI disables save for a negative amount
+PASS C :: VL amounts entered in UI persist after reload
+PASS C :: BA UI disables save for a negative amount
+PASS D :: BA amounts entered in UI persist after reload
+PASS C :: HL amounts entered in pipeline persist after reload
+PASS E :: customer sees no payout before approvals (UI)
+PASS E :: executive sees amounts read-only (no edit fields) on Payouts tab
+PASS E :: executive approved all five products in UI
+PASS E :: one approval keeps customer payout hidden (UI)
+PASS E :: manager approved all five in lead details
+PASS E :: after both approvals applicant sees only customer amounts for all five
+PASS E :: customer payout page fits phone width
+PASS E :: UI edit of Paisamart amount clears both approvals
+PASS E :: edited BL amount hidden from applicant again
+PASS E :: viewer sees no payout amounts or controls
+PASS F :: customer C reaches My applications from Profile and sees all 6 own records
+PASS F :: list shows admin stages (Sanctioned→Disbursed, Account Activation)
+PASS F :: no internal data on customer screen
+PASS F :: My applications fits phone width
+PASS F :: admin moves IL to Logins
+PASS F :: stage change appears after Refresh status
+PASS F :: stage change and record retained after full reload
+PASS F :: error state hides previously loaded records
+PASS F :: C list loaded in-app before logout
+PASS F :: C home loan status loaded in-app before logout
+PASS F :: logout clears the customer token
+PASS F :: same tab reaches sign-in without reload
+PASS F :: D session is the same page session (no reload)
+PASS F :: after logout, customer D never sees customer C's cached records (in-app navigation)
+PASS F :: customer D's list shows only D's record
+PASS F :: after logout, customer D never sees customer C's cached home loan status
+PASS F :: API: customer D list excludes C
+PASS smoke :: desktop Overview opens without runtime error
+PASS smoke :: desktop Leads opens without runtime error
+PASS smoke :: desktop Home Loan Pipeline opens without runtime error
+PASS smoke :: desktop Pipeline opens without runtime error
+PASS smoke :: desktop Products opens without runtime error
+PASS smoke :: desktop Incentives opens without runtime error
+PASS smoke :: desktop Payouts opens without runtime error
+PASS smoke :: desktop Tasks opens without runtime error
+PASS smoke :: desktop Analytics opens without runtime error
+PASS smoke :: desktop Settings opens without runtime error
+PASS smoke :: desktop Utility Txns opens without runtime error
+PASS smoke :: desktop Health Ins. opens without runtime error
+PASS smoke :: desktop Motor Ins. opens without runtime error
+PASS smoke :: desktop Life Ins. opens without runtime error
+PASS smoke :: phone Overview opens without runtime error
+PASS smoke :: phone Leads opens without runtime error
+PASS smoke :: phone Home Loan Pipeline opens without runtime error
+PASS smoke :: phone Pipeline opens without runtime error
+PASS smoke :: phone Products opens without runtime error
+PASS smoke :: phone Incentives opens without runtime error
+PASS smoke :: phone Payouts opens without runtime error
+PASS smoke :: phone Tasks opens without runtime error
+PASS smoke :: phone Analytics opens without runtime error
+PASS smoke :: phone Settings opens without runtime error
+PASS smoke :: phone Utility Txns opens without runtime error
+PASS smoke :: phone Health Ins. opens without runtime error
+PASS smoke :: phone Motor Ins. opens without runtime error
+PASS smoke :: phone Life Ins. opens without runtime error
+PASS safety :: no /api/ request received index.html
+PASS safety :: no uncaught browser runtime errors
+
+Browser verification: 101 pass / 0 fail; aborted outside origins: https://fonts.googleapis.com

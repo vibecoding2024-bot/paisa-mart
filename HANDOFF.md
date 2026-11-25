@@ -1,4 +1,39 @@
-# HANDOFF — Customer privacy fixes: application lists + "My eligible payouts" (25 Nov 2026) — CURRENT STATE
+# HANDOFF — Customer Home: "Invite a friend" removed (26 Nov 2026) — CURRENT STATE
+
+**Source:** `customer_portal_home_section.pdf` (page 1: instructions; page 2: promotional image). Only this change is in scope.
+
+- **Branch:** `feature/home-invite-removal-20261126`, worktree `.home-invite-removal`, based on `origin/main` `adcfdf6` (PR #10 merge = deployed release `20261125-adcfdf6c-customer-privacy`). There are no newer commits on `origin/main`.
+- **Code commit tested: `4f40485`**. It changes one file: `mobile/src/app/(tabs)/index.tsx`. It removes the Home "Invite friends to Paisa Mart" card, its Home-only `handleInvite` share handler and the unused `Share`, `Gift` and `toast` imports. The Profile "Invite friends" item, shared components and routes are unchanged. Backend, database, payments and admin are unchanged.
+- **Not pushed. No PR, merge, upload, restart or deployment. No production access.**
+
+### Outstanding input: approved replacement artwork
+The PDF's image claims "Earn upto ₹1 Lakh", gives per-product commission amounts and states "Total Earnings ₹1,00,000", "100% Secure" and "High Commission". These are the unsupported earnings claims removed in the earlier Play remediation, so the image is **not** added, and none of its claims are recreated. No approved replacement exists in the repository: the tracked images are bank banners, branding, store assets and four unreferenced 1080×2340 phone screenshots. The card slot is left empty until the owner supplies artwork with verified content. If artwork is approved, add it as a non-interactive image with a fixed aspect ratio, full width, and an accessibility label taken from its approved text.
+
+### Tests (commit `4f40485`; synthetic data; local backend on 127.0.0.1:3911; scratch SQLite; outbound blocked)
+- `bun test`, each file run separately: **129 pass / 0 fail across 28 files**, including the `/api/admin/operations` prefix test and `customer-private-query.test.ts`. `check-api-isolation` passes.
+- Mobile `tsc --noEmit`: 0 errors (TypeScript 5.9.3, clean WSL clone of `4f40485`).
+- Test web export: index `f897690c…218c`, with the loopback API guard present.
+- **Home** ([harness/home-verify.cjs](docs/home-invite-removal-20261126/harness/home-verify.cjs)): **104 / 0**.
+  - Checked at 360, 390, 768 and 1440 px.
+  - The removed card text is absent from the active screen.
+  - The Learn card is present and inside the viewport, with no horizontal overflow.
+  - Totals: the approved payout total (₹2,468.10) and the empty state (₹0.00) are shown.
+  - Navigation: the Learn card opens `/learn`; Home, Products, Earnings and Profile tabs work; Profile still shows "Invite friends".
+- **Regression:** HTTP **216 / 0**, browser **101 / 0** (14 admin tabs at desktop and phone width), list privacy **11 / 0**, payout privacy **29 / 0**. These match PR #10's `f434e77` counts.
+- **Outbound:** the only backend attempt was the Vibecode proxy start-up (blocked). The browser aborted only the Google Fonts link, which the unchanged backend `index.ts` injects into served pages.
+- Evidence: [docs/home-invite-removal-20261126/evidence/](docs/home-invite-removal-20261126/evidence/).
+- **Not covered:** a native Android or iOS device run; no before-and-after screenshot of `adcfdf6`.
+- **Not changed here:** at 768 px and above, the existing 6-column product grid inside the phone frame squeezes the "Insurance" labels.
+
+### Next action
+1. The owner either supplies approved replacement artwork or accepts removal-only.
+2. After approval: push, open a PR, review checks, then merge only with authorization.
+3. Build a uniquely named frontend-only release and deploy it separately, under authorization.
+4. Verify the live Home UI.
+
+---
+
+# HANDOFF — Customer privacy fixes: application lists + "My eligible payouts" (25 Nov 2026) — previous state
 
 **Scope (owner decisions, 25 Nov):** the customer application-list privacy fix, then a narrow extension to verify "My eligible payouts" cache isolation and fix it only if it leaks. Matrix: [docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md](docs/pdf-requirements-20261124/REQUIREMENTS_MATRIX.md).
 
